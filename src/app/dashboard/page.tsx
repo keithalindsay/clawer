@@ -175,22 +175,17 @@ export default async function DashboardPage() {
               </span>
             </Link>
 
-            {/* Discord */}
-            <Link
-              href={isSubscribed ? '/discord' : '#'}
-              className={`p-4 rounded-xl border-2 transition-all block ${
-                isSubscribed 
-                  ? 'border-gray-200 hover:border-indigo-300 cursor-pointer' 
-                  : 'border-gray-200 bg-gray-50 opacity-50 pointer-events-none'
-              }`}
+            {/* Discord - Coming soon */}
+            <div
+              className="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 opacity-75"
             >
               <div className="text-2xl mb-2">🎮</div>
               <h3 className="font-semibold text-gray-900">Discord</h3>
               <p className="text-sm text-gray-600">For communities</p>
-              <span className="inline-block mt-2 text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                Available now
+              <span className="inline-block mt-2 text-xs font-medium text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                Coming soon
               </span>
-            </Link>
+            </div>
 
             {/* iMessage */}
             <div

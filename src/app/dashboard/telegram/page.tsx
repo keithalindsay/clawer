@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface TelegramStatus {
-  connected: boolean;
-  botUsername?: string;
+  configured: boolean;
+  running: boolean;
+  mode?: string | null;
 }
 
 export default function TelegramPage() {
@@ -49,8 +50,10 @@ export default function TelegramPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setStatus({ connected: true, botUsername: data.botUsername });
+        setStatus({ configured: true, running: true });
         setToken('');
+        // Refresh status after a moment
+        setTimeout(fetchStatus, 2000);
       } else {
         setError(data.error || 'Failed to connect bot');
       }
@@ -102,15 +105,14 @@ export default function TelegramPage() {
               </div>
             )}
 
-            {!loading && status?.connected && (
+            {!loading && status?.configured && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
                 <div className="text-5xl mb-4">✓</div>
                 <h2 className="text-2xl font-bold text-green-800">
-                  Connected!
+                  {status.running ? 'Connected!' : 'Configured'}
                 </h2>
                 <p className="mt-2 text-green-700">
-                  Your Telegram bot is active
-                  {status.botUsername && ` (@${status.botUsername})`}
+                  Your Telegram bot is {status.running ? 'active' : 'configured but not running'}
                 </p>
                 <p className="mt-4 text-gray-600">
                   You can now chat with your AI assistant via Telegram.
@@ -124,7 +126,7 @@ export default function TelegramPage() {
               </div>
             )}
 
-            {!loading && !status?.connected && (
+            {!loading && !status?.configured && (
               <>
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
                   <h3 className="font-semibold text-blue-900 mb-3">
