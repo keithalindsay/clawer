@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface WhatsAppStatus {
-  connected: boolean;
-  qr?: string;
-  phoneNumber?: string;
+  linked: boolean;
+  qrDataUrl?: string;
+  message?: string;
+  self?: {
+    e164?: string;
+    jid?: string;
+  };
 }
 
 export default function WhatsAppPage() {
@@ -39,10 +43,9 @@ export default function WhatsAppPage() {
       const data = await response.json();
       
       if (response.ok) {
-        setStatus(data);
-        
-        // Stop polling if connected
-        if (data.connected) {
+        // If now linked, update status
+        if (data.linked) {
+          setStatus({ linked: true, self: data.self });
           return true;
         }
       }
@@ -121,7 +124,7 @@ export default function WhatsAppPage() {
               </div>
             )}
 
-            {status?.connected && (
+            {status?.linked && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
                 <div className="text-5xl mb-4">✓</div>
                 <h2 className="text-2xl font-bold text-green-800">
@@ -129,7 +132,7 @@ export default function WhatsAppPage() {
                 </h2>
                 <p className="mt-2 text-green-700">
                   Your WhatsApp is now linked
-                  {status.phoneNumber && ` (${status.phoneNumber})`}
+                  {status.self?.e164 && ` (${status.self.e164})`}
                 </p>
                 <p className="mt-4 text-gray-600">
                   You can now chat with your AI assistant via WhatsApp.
@@ -143,11 +146,11 @@ export default function WhatsAppPage() {
               </div>
             )}
 
-            {!loading && !error && status && !status.connected && status.qr && (
+            {!loading && !error && status && !status.linked && status.qrDataUrl && (
               <div className="text-center">
                 <div className="inline-block bg-white p-4 rounded-xl border-2 border-gray-200">
                   <img 
-                    src={status.qr} 
+                    src={status.qrDataUrl} 
                     alt="WhatsApp QR Code" 
                     className="w-64 h-64"
                   />
@@ -168,6 +171,21 @@ export default function WhatsAppPage() {
                 <p className="mt-4 text-sm text-gray-500">
                   Waiting for connection...
                 </p>
+              </div>
+            )}
+
+            {!loading && !error && status && !status.linked && !status.qrDataUrl && status.message && (
+              <div className="text-center py-8">
+                <p className="text-gray-600">{status.message}</p>
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    fetchQR();
+                  }}
+                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-full font-medium hover:bg-blue-700"
+                >
+                  Refresh QR Code
+                </button>
               </div>
             )}
           </div>
