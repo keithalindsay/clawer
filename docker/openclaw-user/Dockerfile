@@ -22,14 +22,15 @@ RUN npm install -g /tmp/openclaw-2026.2.1.tgz && rm /tmp/openclaw-2026.2.1.tgz
 # Copy configuration files
 COPY config-template.json /home/user/.openclaw/openclaw.json.template
 COPY SOUL.md /home/user/clawd/SOUL.md
+COPY api-server.js /usr/local/bin/api-server.js
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/api-server.js
 
 # Set working directory
 WORKDIR /home/user/clawd
 
-# Expose OpenClaw gateway port
-EXPOSE 8080
+# Expose OpenClaw gateway port and API server port
+EXPOSE 8080 8081
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
