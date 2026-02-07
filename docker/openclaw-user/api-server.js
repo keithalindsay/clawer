@@ -169,12 +169,64 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200);
         res.end(JSON.stringify({ linked: true, self: waHealth.self }));
       } else {
+        // Start web login to get QR code
+        try {
+          const loginResult = await gatewayRequest('web.login.start', { 
+            force: false,
+            timeoutMs: 60000 
+          });
+          
+          if (loginResult.ok && loginResult.payload?.qrDataUrl) {
+            res.writeHead(200);
+            res.end(JSON.stringify({ 
+              linked: false,
+              qrDataUrl: loginResult.payload.qrDataUrl,
+              message: loginResult.payload.message
+            }));
+          } else {
+            res.writeHead(200);
+            res.end(JSON.stringify({ 
+              linked: false,
+              message: loginResult.payload?.message || 'QR generation in progress',
+              controlUrl: `http://localhost:${process.env.GATEWAY_PORT || 8080}`
+            }));
+          }
+        } catch (e) {
+          console.error('[api] web.login.start error:', e.message);
+          res.writeHead(200);
+          res.end(JSON.stringify({ 
+            linked: false,
+            message: 'WhatsApp not linked. Use Control UI to scan QR.',
+            controlUrl: `http://localhost:${process.env.GATEWAY_PORT || 8080}`
+          }));
+        }
+      }
+      
+    } else if (path === '/api/whatsapp/link' && req.method === 'POST') {
+      // Start WhatsApp linking flow
+      try {
+        const loginResult = await gatewayRequest('web.login.start', { 
+          force: true,
+          timeoutMs: 120000 
+        });
         res.writeHead(200);
-        res.end(JSON.stringify({ 
-          linked: false,
-          message: 'WhatsApp not linked. Use Control UI to scan QR.',
-          controlUrl: `http://localhost:${process.env.GATEWAY_PORT || 8080}`
-        }));
+        res.end(JSON.stringify(loginResult.payload || loginResult.error));
+      } catch (e) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
+    } else if (path === '/api/whatsapp/wait' && req.method === 'POST') {
+      // Wait for QR scan completion
+      try {
+        const waitResult = await gatewayRequest('web.login.wait', { 
+          timeoutMs: 120000 
+        });
+        res.writeHead(200);
+        res.end(JSON.stringify(waitResult.payload || waitResult.error));
+      } catch (e) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
       }
       
     } else if (path === '/api/whatsapp/status') {
@@ -188,6 +240,42 @@ const server = http.createServer(async (req, res) => {
       const tgHealth = health.payload?.channels?.telegram || {};
       res.writeHead(200);
       res.end(JSON.stringify(tgHealth));
+      
+    } else if (path === '/api/telegram/connect' && req.method === 'POST') {
+      // Configure Telegram bot token
+      let body = '';
+      for await (const chunk of req) {
+        body += chunk;
+      }
+      const { token } = JSON.parse(body || '{}');
+      
+      if (!token) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'Token required' }));
+        return;
+      }
+      
+      // Use config.patch to set telegram token
+      try {
+        const patchResult = await gatewayRequest('config.patch', {
+          raw: JSON.stringify({
+            channels: {
+              telegram: {
+                enabled: true,
+                token: token
+              }
+            }
+          })
+        });
+        res.writeHead(200);
+        res.end(JSON.stringify({ 
+          success: patchResult.ok,
+          message: patchResult.ok ? 'Telegram configured. Restarting...' : 'Failed to configure'
+        }));
+      } catch (e) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
       
     } else if (path === '/ready') {
       res.writeHead(wsConnected ? 200 : 503);
