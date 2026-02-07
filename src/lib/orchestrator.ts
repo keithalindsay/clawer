@@ -10,6 +10,7 @@ import { promisify } from 'util';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { alertProvisioningFailure, alertContainerFailure } from '@/lib/alerts';
 
 const execAsync = promisify(exec);
 
@@ -170,7 +171,11 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
     };
     
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Failed to provision container for user ${userId}:`, error);
+    
+    // Send alert
+    await alertProvisioningFailure(userId, errorMsg);
     
     // Update user status to error
     await db
@@ -180,7 +185,7 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMsg,
     };
   }
 }
@@ -222,7 +227,9 @@ export async function restartContainer(userId: string): Promise<boolean> {
     
     return true;
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Failed to restart container for user ${userId}:`, error);
+    await alertContainerFailure(userId, `Restart failed: ${errorMsg}`);
     return false;
   }
 }
