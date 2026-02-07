@@ -7,8 +7,8 @@
         "apiKey": "MOONSHOT_API_KEY_PLACEHOLDER",
         "models": [
           {
-            "id": "moonshot-v1-8k",
-            "name": "Moonshot V1 8K",
+            "id": "moonshot-v1-32k",
+            "name": "Moonshot V1 32K",
             "reasoning": false,
             "input": ["text"],
             "cost": {
@@ -17,8 +17,8 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 8000,
-            "maxTokens": 4096
+            "contextWindow": 32000,
+            "maxTokens": 8192
           }
         ]
       }
@@ -27,7 +27,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "moonshot/moonshot-v1-8k"
+        "primary": "moonshot/moonshot-v1-32k"
       },
       "workspace": "/home/user/clawd"
     }

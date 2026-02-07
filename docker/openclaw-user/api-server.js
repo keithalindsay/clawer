@@ -293,9 +293,11 @@ const server = http.createServer(async (req, res) => {
       
       try {
         // Use the gateway's agent endpoint
+        const idempotencyKey = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const agentResult = await gatewayRequest('agent', {
           message: message,
-          sessionKey: context || 'web-chat'
+          sessionKey: context || 'web-chat',
+          idempotencyKey: idempotencyKey
         });
         
         if (agentResult.ok) {
