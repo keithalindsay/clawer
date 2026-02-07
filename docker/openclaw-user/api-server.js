@@ -277,6 +277,46 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: e.message }));
       }
       
+    } else if (path === '/api/chat' && req.method === 'POST') {
+      // Handle chat message via agent endpoint
+      let body = '';
+      for await (const chunk of req) {
+        body += chunk;
+      }
+      const { message, context } = JSON.parse(body || '{}');
+      
+      if (!message) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'Message required' }));
+        return;
+      }
+      
+      try {
+        // Use the gateway's agent endpoint
+        const agentResult = await gatewayRequest('agent', {
+          message: message,
+          sessionKey: context || 'web-chat'
+        });
+        
+        if (agentResult.ok) {
+          res.writeHead(200);
+          res.end(JSON.stringify({ 
+            content: agentResult.payload?.content || agentResult.payload?.message || 'Response received'
+          }));
+        } else {
+          res.writeHead(200);
+          res.end(JSON.stringify({ 
+            content: 'I received your message but encountered an issue processing it. Please try again.'
+          }));
+        }
+      } catch (e) {
+        console.error('[api] chat error:', e.message);
+        res.writeHead(200);
+        res.end(JSON.stringify({ 
+          content: 'The AI is thinking... but taking longer than expected. Please try again.'
+        }));
+      }
+      
     } else if (path === '/ready') {
       res.writeHead(wsConnected ? 200 : 503);
       res.end(JSON.stringify({ ready: wsConnected }));
