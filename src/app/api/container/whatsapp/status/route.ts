@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { containerApi } from '@/lib/container-client';
 
 export async function GET() {
   const { userId } = await auth();
@@ -15,42 +16,45 @@ export async function GET() {
     // Get user's container port
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
-      columns: { containerPort: true },
+      columns: { containerPort: true, whatsappConnected: true },
     });
 
     if (!user?.containerPort) {
-      return NextResponse.json(
-        { error: 'Container not provisioned' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        linked: false,
+        message: 'Container not provisioned',
+      });
     }
 
-    // Proxy request to user's container API server (gateway port + 1)
-    const apiPort = user.containerPort + 1;
-    const containerUrl = `http://localhost:${apiPort}/api/whatsapp/status`;
-    const response = await fetch(containerUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Get status from container
+    const { data, error } = await containerApi.whatsappStatus(user.containerPort);
+    
+    if (error) {
+      return NextResponse.json({
+        linked: false,
+        message: error,
+      });
+    }
 
-    const data = await response.json();
-
-    // Update database if status changed
-    if (data.connected !== undefined) {
+    // Update DB if connection status changed
+    if (data?.linked && user.whatsappConnected !== 1) {
       await db
         .update(users)
-        .set({ whatsappConnected: data.connected ? 1 : 0 })
+        .set({ whatsappConnected: 1 })
+        .where(eq(users.id, userId));
+    } else if (!data?.linked && user.whatsappConnected === 1) {
+      await db
+        .update(users)
+        .set({ whatsappConnected: 0 })
         .where(eq(users.id, userId));
     }
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data);
 
   } catch (error) {
-    console.error('Failed to fetch WhatsApp status:', error);
+    console.error('Failed to get WhatsApp status:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch status' },
+      { linked: false, error: 'Failed to get status' },
       { status: 500 }
     );
   }

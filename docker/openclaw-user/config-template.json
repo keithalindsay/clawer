@@ -2,7 +2,7 @@
   "models": {
     "providers": {
       "moonshot": {
-        "baseUrl": "https://api.moonshot.cn/v1",
+        "baseUrl": "https://api.moonshot.ai/v1",
         "api": "openai-completions",
         "apiKey": "MOONSHOT_API_KEY_PLACEHOLDER",
         "models": [

@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { containerApi } from '@/lib/container-client';
+import { provisionContainer } from '@/lib/orchestrator';
 
 export async function GET() {
   const { userId } = await auth();
@@ -13,10 +15,27 @@ export async function GET() {
 
   try {
     // Get user's container port
-    const user = await db.query.users.findFirst({
+    let user = await db.query.users.findFirst({
       where: eq(users.id, userId),
-      columns: { containerPort: true },
+      columns: { containerPort: true, containerId: true },
     });
+
+    // Auto-provision container if not exists
+    if (!user?.containerPort) {
+      const result = await provisionContainer(userId);
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || 'Failed to provision container' },
+          { status: 500 }
+        );
+      }
+      
+      // Refresh user data
+      user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { containerPort: true, containerId: true },
+      });
+    }
 
     if (!user?.containerPort) {
       return NextResponse.json(
@@ -25,18 +44,14 @@ export async function GET() {
       );
     }
 
-    // Proxy request to user's container API server (gateway port + 1)
-    const apiPort = user.containerPort + 1;
-    const containerUrl = `http://localhost:${apiPort}/api/whatsapp/qr`;
-    const response = await fetch(containerUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Request QR from container
+    const { data, error, status } = await containerApi.whatsappQR(user.containerPort);
+    
+    if (error) {
+      return NextResponse.json({ error }, { status });
+    }
 
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Failed to fetch WhatsApp QR:', error);

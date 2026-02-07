@@ -12,7 +12,6 @@ interface ContainerStatusData {
 export function ContainerStatus() {
   const [status, setStatus] = useState<ContainerStatusData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [restarting, setRestarting] = useState(false);
 
   const fetchStatus = async () => {
     try {
@@ -23,25 +22,6 @@ export function ContainerStatus() {
       console.error('Failed to fetch container status:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRestart = async () => {
-    setRestarting(true);
-    try {
-      const response = await fetch('/api/container/restart', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        // Wait a moment for container to restart
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await fetchStatus();
-      }
-    } catch (error) {
-      console.error('Failed to restart container:', error);
-    } finally {
-      setRestarting(false);
     }
   };
 
@@ -101,44 +81,32 @@ export function ContainerStatus() {
   const getStatusText = () => {
     switch (status.status) {
       case 'running':
-        return 'Container Running';
+        return 'Your AI is ready';
       case 'stopped':
-        return 'Container Stopped';
+        return 'Starting your AI...';
       case 'error':
-        return 'Container Error';
+        return 'Something went wrong';
       case 'not_found':
-        return 'Container Not Found';
+        return 'Setting up...';
       case 'not_provisioned':
-        return 'Container Not Provisioned';
+        return 'Setting up your AI assistant...';
       default:
-        return 'Unknown Status';
+        return 'Checking status...';
     }
   };
 
   return (
     <div className={`rounded-2xl border p-6 mb-8 ${getStatusColor()}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {getStatusIndicator()}
-          <div>
-            <h3 className="font-semibold text-gray-900">{getStatusText()}</h3>
-            {status.port && (
-              <p className="text-sm text-gray-600">
-                Port: {status.port}
-              </p>
-            )}
-          </div>
+      <div className="flex items-center gap-3">
+        {getStatusIndicator()}
+        <div>
+          <h3 className="font-semibold text-gray-900">{getStatusText()}</h3>
+          {status.status === 'running' && (
+            <p className="text-sm text-gray-600">
+              Connect via WhatsApp, Telegram, or chat here
+            </p>
+          )}
         </div>
-
-        {status.status !== 'not_provisioned' && (
-          <button
-            onClick={handleRestart}
-            disabled={restarting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {restarting ? 'Restarting...' : 'Restart Container'}
-          </button>
-        )}
       </div>
 
       {status.status === 'not_provisioned' && (
@@ -152,7 +120,8 @@ export function ContainerStatus() {
       {(status.status === 'error' || status.status === 'not_found') && (
         <div className="mt-4 pt-4 border-t border-red-200">
           <p className="text-sm text-red-800">
-            There's an issue with your container. Try restarting it or contact support if the problem persists.
+            We're having trouble connecting. This usually resolves itself in a few minutes. 
+            If it persists, please contact support.
           </p>
         </div>
       )}

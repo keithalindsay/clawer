@@ -18,6 +18,10 @@ let ws = null;
 let wsConnected = false;
 let connecting = false;
 let reconnectTimer = null;
+// Store pending chat requests by runId to receive async responses
+const pendingChatByRunId = new Map();
+// Store accumulated text for streaming responses
+const chatTextByRunId = new Map();
 
 function connectGateway() {
   // Prevent multiple simultaneous connection attempts
@@ -63,6 +67,10 @@ function connectGateway() {
   ws.addEventListener('message', (event) => {
     try {
       const msg = JSON.parse(event.data);
+      // Log all messages for debugging
+      if (msg.type !== 'res' || msg.id !== 'connect') {
+        console.log('[api] ws message:', msg.type, msg.event || msg.id, msg.payload?.status || '');
+      }
       if (msg.type === 'res' && msg.id === 'connect') {
         connecting = false;
         if (msg.ok) {
@@ -75,8 +83,48 @@ function connectGateway() {
       } else if (msg.type === 'res') {
         const pending = pendingRequests.get(msg.id);
         if (pending) {
-          pendingRequests.delete(msg.id);
-          pending.resolve(msg);
+          // For chat.send, we need to wait for the agent event
+          if (msg.payload?.runId && msg.payload?.status === 'started') {
+            // Move to runId-based tracking, remove from id-based
+            pendingRequests.delete(msg.id);
+            pendingChatByRunId.set(msg.payload.runId, pending);
+            console.log('[api] chat started, waiting for runId:', msg.payload.runId);
+            // Don't resolve yet, wait for agent.complete event
+          } else {
+            pendingRequests.delete(msg.id);
+            pending.resolve(msg);
+          }
+        }
+      } else if (msg.type === 'event' && msg.event === 'agent') {
+        // Agent event - handle streaming response
+        const runId = msg.payload?.runId;
+        const stream = msg.payload?.stream;
+        const data = msg.payload?.data;
+        
+        // Log agent events for debugging
+        if (stream === 'assistant' || stream === 'lifecycle') {
+          console.log('[api] agent stream:', stream, 'runId:', runId, 'data:', JSON.stringify(data).slice(0, 100));
+        }
+        
+        // Track text from assistant stream
+        if (stream === 'assistant' && data?.text) {
+          chatTextByRunId.set(runId, data.text);
+        }
+        
+        // When lifecycle ends, resolve the pending request
+        if (stream === 'lifecycle' && data?.phase === 'end') {
+          const pending = pendingChatByRunId.get(runId);
+          if (pending) {
+            const content = chatTextByRunId.get(runId) || 'Response complete';
+            pendingChatByRunId.delete(runId);
+            chatTextByRunId.delete(runId);
+            console.log('[api] agent complete, content:', content);
+            pending.resolve({
+              type: 'res',
+              ok: true,
+              payload: { content }
+            });
+          }
         }
       }
     } catch (e) {
@@ -117,11 +165,13 @@ async function gatewayRequest(method, params = {}) {
   }
   
   const id = String(++requestId);
+  // Use longer timeout for chat requests
+  const timeoutMs = method === 'chat.send' ? 120000 : 30000;
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       pendingRequests.delete(id);
       reject(new Error('Gateway request timeout'));
-    }, 30000);
+    }, timeoutMs);
     
     pendingRequests.set(id, {
       resolve: (msg) => {
@@ -279,33 +329,47 @@ const server = http.createServer(async (req, res) => {
       
     } else if (path === '/api/chat' && req.method === 'POST') {
       // Handle chat message via agent endpoint
-      let body = '';
-      for await (const chunk of req) {
-        body += chunk;
-      }
+      console.log('[api] /api/chat received');
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      await new Promise(resolve => req.on('end', resolve));
+      const body = Buffer.concat(chunks).toString();
+      console.log('[api] body:', body);
       const { message, context } = JSON.parse(body || '{}');
       
       if (!message) {
+        console.log('[api] no message in body');
         res.writeHead(400);
         res.end(JSON.stringify({ error: 'Message required' }));
         return;
       }
+      console.log('[api] message:', message);
       
       try {
-        // Use the gateway's agent endpoint
+        // Use the gateway's chat.send endpoint which waits for response
+        // Use unique session key per request to avoid stream mixing
         const idempotencyKey = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const agentResult = await gatewayRequest('agent', {
+        const sessionKey = context || `web-chat-${Date.now()}`;
+        const chatResult = await gatewayRequest('chat.send', {
           message: message,
-          sessionKey: context || 'web-chat',
-          idempotencyKey: idempotencyKey
+          sessionKey: sessionKey,
+          idempotencyKey: idempotencyKey,
+          timeoutMs: 60000  // Wait up to 60 seconds for response
         });
         
-        if (agentResult.ok) {
+        console.log('[api] chat.send response:', JSON.stringify(chatResult, null, 2));
+        if (chatResult.ok) {
+          // Extract content from the response
+          const content = chatResult.payload?.content 
+            || chatResult.payload?.message 
+            || chatResult.payload?.text
+            || chatResult.payload?.response
+            || (typeof chatResult.payload === 'string' ? chatResult.payload : null)
+            || 'Response received';
           res.writeHead(200);
-          res.end(JSON.stringify({ 
-            content: agentResult.payload?.content || agentResult.payload?.message || 'Response received'
-          }));
+          res.end(JSON.stringify({ content }));
         } else {
+          console.log('[api] chat.send error:', chatResult.error);
           res.writeHead(200);
           res.end(JSON.stringify({ 
             content: 'I received your message but encountered an issue processing it. Please try again.'
