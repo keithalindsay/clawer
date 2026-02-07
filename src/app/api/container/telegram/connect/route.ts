@@ -35,8 +35,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Proxy request to user's container
-    const containerUrl = `http://localhost:${user.containerPort}/api/telegram/connect`;
+    // Proxy request to user's container API server (gateway port + 1)
+    const apiPort = user.containerPort + 1;
+    const containerUrl = `http://localhost:${apiPort}/api/telegram/connect`;
     const response = await fetch(containerUrl, {
       method: 'POST',
       headers: {

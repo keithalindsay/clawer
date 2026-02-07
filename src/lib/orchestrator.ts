@@ -37,7 +37,8 @@ async function dockerExec(command: string): Promise<{ stdout: string; stderr: st
 }
 
 /**
- * Allocate the next available port for a new container
+ * Allocate the next available port pair for a new container
+ * Each container uses 2 ports: gateway (port) and API server (port+1)
  */
 async function allocatePort(): Promise<number> {
   // Get all used ports from DB
@@ -51,9 +52,9 @@ async function allocatePort(): Promise<number> {
       .filter((p): p is number => p !== null)
   );
   
-  // Find next available port
-  for (let port = BASE_PORT; port <= MAX_PORT; port++) {
-    if (!usedPorts.has(port)) {
+  // Find next available port pair (step by 2)
+  for (let port = BASE_PORT; port <= MAX_PORT - 1; port += 2) {
+    if (!usedPorts.has(port) && !usedPorts.has(port + 1)) {
       return port;
     }
   }
@@ -132,13 +133,17 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
     }
     
     // Create and start container
+    // Port mapping: gateway on port, API server on port+1
+    const apiPort = port + 1;
     const createCmd = [
       'run -d',
       `--name ${containerName}`,
-      `--memory=512m`,
-      `--cpus=0.5`,
-      `-p ${port}:8080`,
+      `--memory=1g`,      // 1GB needed for openclaw commands
+      `--cpus=1`,
+      `-p ${port}:8080`,  // Gateway (Control UI + WebSocket)
+      `-p ${apiPort}:8081`,  // API server (REST endpoints)
       `-e MOONSHOT_API_KEY=${moonshotApiKey}`,
+      `-e GATEWAY_TOKEN=$(openssl rand -hex 16)`,  // Auto-generate gateway token
       `-e USER_ID=${userId}`,
       `--restart=unless-stopped`,
       CONTAINER_IMAGE,

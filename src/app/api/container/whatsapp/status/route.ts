@@ -25,8 +25,9 @@ export async function GET() {
       );
     }
 
-    // Proxy request to user's container
-    const containerUrl = `http://localhost:${user.containerPort}/api/whatsapp/status`;
+    // Proxy request to user's container API server (gateway port + 1)
+    const apiPort = user.containerPort + 1;
+    const containerUrl = `http://localhost:${apiPort}/api/whatsapp/status`;
     const response = await fetch(containerUrl, {
       method: 'GET',
       headers: {
