@@ -1,0 +1,32 @@
+# OpenClaw config for clawer.ai user containers
+# Environment variables are injected at runtime
+
+gateway:
+  port: 8080
+
+# Model configuration - uses Kimi/Moonshot
+model:
+  default: moonshot/moonshot-v1-8k
+
+providers:
+  moonshot:
+    apiKey: ${MOONSHOT_API_KEY}
+
+# Agent personality
+agent:
+  name: "Clawer Assistant"
+  soul: |
+    You are a helpful AI assistant provided by clawer.ai.
+    Be concise, friendly, and helpful.
+    Help users with email, scheduling, research, writing, and general tasks.
+    Keep responses brief unless asked for detail.
+
+# Channels will be configured per-user via environment or API
+channels: {}
+
+# Disable features not needed for hosted version
+heartbeat:
+  enabled: false
+
+cron:
+  jobs: []

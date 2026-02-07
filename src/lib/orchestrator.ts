@@ -1,0 +1,295 @@
+/**
+ * Container Orchestrator for clawer.ai
+ * 
+ * Manages Docker containers running OpenClaw for each user.
+ * Uses shell commands instead of dockerode to avoid bundling issues.
+ */
+
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema/users';
+import { eq } from 'drizzle-orm';
+
+const execAsync = promisify(exec);
+
+const CONTAINER_IMAGE = 'clawer-openclaw:latest';
+const BASE_PORT = 4001;
+const MAX_PORT = 5000;
+
+interface ProvisionResult {
+  success: boolean;
+  containerId?: string;
+  port?: number;
+  error?: string;
+}
+
+/**
+ * Execute a Docker command
+ */
+async function dockerExec(command: string): Promise<{ stdout: string; stderr: string }> {
+  try {
+    return await execAsync(`docker ${command}`);
+  } catch (error: any) {
+    console.error(`Docker command failed: docker ${command}`, error);
+    throw error;
+  }
+}
+
+/**
+ * Allocate the next available port for a new container
+ */
+async function allocatePort(): Promise<number> {
+  // Get all used ports from DB
+  const usersWithPorts = await db.query.users.findMany({
+    columns: { containerPort: true },
+  });
+  
+  const usedPorts = new Set(
+    usersWithPorts
+      .map(u => u.containerPort)
+      .filter((p): p is number => p !== null)
+  );
+  
+  // Find next available port
+  for (let port = BASE_PORT; port <= MAX_PORT; port++) {
+    if (!usedPorts.has(port)) {
+      return port;
+    }
+  }
+  
+  throw new Error('No available ports');
+}
+
+/**
+ * Check if a container exists
+ */
+async function containerExists(containerName: string): Promise<boolean> {
+  try {
+    const { stdout } = await dockerExec(`ps -a --filter name=${containerName} --format "{{.Names}}"`);
+    return stdout.trim().includes(containerName);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get container state
+ */
+async function getContainerState(containerName: string): Promise<string | null> {
+  try {
+    const { stdout } = await dockerExec(`ps -a --filter name=${containerName} --format "{{.State}}"`);
+    return stdout.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Provision a new OpenClaw container for a user
+ */
+export async function provisionContainer(userId: string): Promise<ProvisionResult> {
+  const containerName = `clawer_user_${userId}`;
+  
+  try {
+    // Check if container already exists
+    const exists = await containerExists(containerName);
+    
+    if (exists) {
+      const state = await getContainerState(containerName);
+      
+      // Start if not running
+      if (state !== 'running') {
+        await dockerExec(`start ${containerName}`);
+      }
+      
+      // Get user's port from DB
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { containerPort: true, containerId: true },
+      });
+      
+      // Update status
+      await db
+        .update(users)
+        .set({ containerStatus: 'running' })
+        .where(eq(users.id, userId));
+      
+      return {
+        success: true,
+        containerId: user?.containerId || containerName,
+        port: user?.containerPort || undefined,
+      };
+    }
+    
+    // Allocate new port
+    const port = await allocatePort();
+    
+    // Get Moonshot API key from environment
+    const moonshotApiKey = process.env.MOONSHOT_API_KEY;
+    if (!moonshotApiKey) {
+      throw new Error('MOONSHOT_API_KEY not configured');
+    }
+    
+    // Create and start container
+    const createCmd = [
+      'run -d',
+      `--name ${containerName}`,
+      `--memory=512m`,
+      `--cpus=0.5`,
+      `-p ${port}:8080`,
+      `-e MOONSHOT_API_KEY=${moonshotApiKey}`,
+      `-e USER_ID=${userId}`,
+      `--restart=unless-stopped`,
+      CONTAINER_IMAGE,
+    ].join(' ');
+    
+    const { stdout } = await dockerExec(createCmd);
+    const containerId = stdout.trim();
+    
+    // Update user record
+    await db
+      .update(users)
+      .set({
+        containerId,
+        containerPort: port,
+        containerStatus: 'running',
+        containerCreatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+    
+    return {
+      success: true,
+      containerId,
+      port,
+    };
+    
+  } catch (error) {
+    console.error(`Failed to provision container for user ${userId}:`, error);
+    
+    // Update user status to error
+    await db
+      .update(users)
+      .set({ containerStatus: 'error' })
+      .where(eq(users.id, userId));
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Stop a user's container
+ */
+export async function stopContainer(userId: string): Promise<boolean> {
+  const containerName = `clawer_user_${userId}`;
+  
+  try {
+    await dockerExec(`stop ${containerName}`);
+    
+    await db
+      .update(users)
+      .set({ containerStatus: 'stopped' })
+      .where(eq(users.id, userId));
+    
+    return true;
+  } catch (error) {
+    console.error(`Failed to stop container for user ${userId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Restart a user's container
+ */
+export async function restartContainer(userId: string): Promise<boolean> {
+  const containerName = `clawer_user_${userId}`;
+  
+  try {
+    await dockerExec(`restart ${containerName}`);
+    
+    await db
+      .update(users)
+      .set({ containerStatus: 'running' })
+      .where(eq(users.id, userId));
+    
+    return true;
+  } catch (error) {
+    console.error(`Failed to restart container for user ${userId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Remove a user's container entirely
+ */
+export async function removeContainer(userId: string): Promise<boolean> {
+  const containerName = `clawer_user_${userId}`;
+  
+  try {
+    // Stop first (ignore errors if already stopped)
+    await dockerExec(`stop ${containerName}`).catch(() => {});
+    await dockerExec(`rm ${containerName}`);
+    
+    await db
+      .update(users)
+      .set({
+        containerId: null,
+        containerPort: null,
+        containerStatus: null,
+      })
+      .where(eq(users.id, userId));
+    
+    return true;
+  } catch (error) {
+    console.error(`Failed to remove container for user ${userId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Get container status for a user
+ */
+export async function getContainerStatus(userId: string): Promise<'running' | 'stopped' | 'error' | 'not_found'> {
+  const containerName = `clawer_user_${userId}`;
+  
+  try {
+    const state = await getContainerState(containerName);
+    
+    if (!state) return 'not_found';
+    if (state === 'running') return 'running';
+    if (state === 'exited' || state === 'stopped') return 'stopped';
+    return 'error';
+    
+  } catch (error) {
+    console.error(`Failed to get container status for user ${userId}:`, error);
+    return 'error';
+  }
+}
+
+/**
+ * Health check all containers and restart unhealthy ones
+ */
+export async function healthCheckAllContainers(): Promise<void> {
+  try {
+    const { stdout } = await dockerExec('ps -a --filter name=clawer_user_ --format "{{.Names}} {{.State}}"');
+    
+    const lines = stdout.trim().split('\n').filter(Boolean);
+    
+    for (const line of lines) {
+      const [name, state] = line.split(' ');
+      
+      if (state !== 'running') {
+        const userId = name?.replace('clawer_user_', '');
+        if (userId) {
+          console.log(`Restarting unhealthy container for user ${userId}`);
+          await restartContainer(userId);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Health check failed:', error);
+  }
+}

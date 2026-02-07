@@ -1,0 +1,7 @@
+# Ignore documentation
+DOCKER-BUILD-COMPLETE.md
+README.md
+
+# Ignore old files (if any)
+worker.js
+openclaw.yaml

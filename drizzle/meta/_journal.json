@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1770395858506,
+      "tag": "0000_unknown_lockjaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770409209051,
+      "tag": "0001_far_stark_industries",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770409422454,
+      "tag": "0002_nappy_monster_badoon",
+      "breakpoints": true
+    }
+  ]
+}
