@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate price difference
-    const currentPriceCents = currentConfig.totalMonthlyCents;
+    const currentPriceCents = currentConfig!.totalMonthlyCents;
     const differenceCents = previewTotalCents - currentPriceCents;
     const percentageChange = currentPriceCents > 0 
       ? ((differenceCents / currentPriceCents) * 100)
