@@ -849,3 +849,44 @@ The system is:
 - **Practical** — Real work gets done, not just conversation
 
 This is the foundation. Future phases add collaboration, learning, and integrations, but the core — a team that just works — ships now.
+
+---
+
+## UX: Team Sidebar & Activity Feed
+
+### Design Direction: Hybrid (Office Manager + Direct Access)
+
+**Default Mode: Office Manager Routes Everything**
+- User talks to ONE chat interface
+- Sidebar shows team members with live status:
+  - 🟢 Maya (Marketing) — *Writing Instagram caption...*
+  - 🔄 Sam (Analyst) — *Analyzing Q4 sales data...*
+  - 💤 Alex (Support) — Idle
+  - ✅ Jordan (Writer) — *Blog post draft complete*
+- Click a persona → see their recent work/outputs (not a direct chat)
+- Feels like managing a real team — watch them work in real-time
+
+**Power User Mode: Direct Chat**
+- Click a persona → "pull them into chat" for direct interaction
+- Bypasses the Office Manager routing
+- For users who know exactly which team member they need
+- Visual indicator shows you're talking directly to a specific agent
+
+**Why Hybrid:**
+- Default is zero-config magic (Office Manager handles routing)
+- Power users get direct control when they want it
+- Activity feed is addictive — watching your team work in real-time
+- Differentiator: "I have a chatbot" vs "I have a team"
+
+**Sidebar Components:**
+1. Team member avatar + name + role
+2. Status indicator (idle/working/complete)
+3. Current task description (streaming)
+4. Click → expand to see recent outputs
+5. Optional: "Talk directly" button for power users
+
+**Implementation Notes:**
+- Activity feed powered by sub-agent session events (already available via OpenClaw gateway)
+- Status updates from sessions_list / sessions_history
+- Real-time via WebSocket from container → Clawer app → browser
+- Team member personas stored in container's team config
