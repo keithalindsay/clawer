@@ -1,0 +1,9 @@
+{
+  "name": "clawer-bot-worker",
+  "version": "1.0.0",
+  "description": "Isolated bot worker container",
+  "main": "worker.js",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

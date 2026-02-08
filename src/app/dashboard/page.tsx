@@ -16,6 +16,7 @@ import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { TelegramCard } from '@/components/TelegramCard';
 import { ContainerStatus } from '@/components/ContainerStatus';
+import { CheckoutButton } from '@/components/CheckoutButton';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -24,12 +25,25 @@ export default async function DashboardPage() {
     redirect('/sign-in');
   }
 
-  // Get user from database
-  const user = await db.query.users.findFirst({
+  const clerkUser = await currentUser();
+  const userEmail = clerkUser?.emailAddresses[0]?.emailAddress;
+
+  // Get user from database - try by ID first, then fallback to email
+  let user = await db.query.users.findFirst({
     where: eq(users.id, userId),
   });
 
-  const clerkUser = await currentUser();
+  // Fallback: lookup by email if ID not found (handles pre-webhook users)
+  if (!user && userEmail) {
+    user = await db.query.users.findFirst({
+      where: eq(users.email, userEmail),
+    });
+    
+    // Update the user ID to match Clerk's ID for future lookups
+    if (user) {
+      await db.update(users).set({ id: userId }).where(eq(users.email, userEmail));
+    }
+  }
   const isSubscribed = user?.stripeSubscriptionId !== null;
 
   return (
@@ -58,14 +72,9 @@ export default async function DashboardPage() {
             <p className="mt-2 text-yellow-700">
               You're signed up but haven't subscribed yet. Get started for $49/month.
             </p>
-            <form action="/api/stripe/checkout" method="POST" className="mt-4">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:bg-blue-700 transition-colors"
-              >
-                Subscribe Now — $49/month
-              </button>
-            </form>
+            <CheckoutButton className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:bg-blue-700 transition-colors">
+              Subscribe Now — $49/month
+            </CheckoutButton>
           </div>
         ) : (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8">
