@@ -114,6 +114,10 @@ export const requestLog = pgTable('request_log', {
  * Token tier limits
  */
 export const TOKEN_LIMITS = {
+  free: {
+    weeklyOet: 100_000,      // ~400K monthly (trial/limited)
+    priceMonthly: 0,
+  },
   basic: {
     weeklyOet: 3_750_000,    // ~15M monthly
     priceMonthly: 49,
