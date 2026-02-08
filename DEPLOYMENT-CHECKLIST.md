@@ -1,3 +1,7 @@
+> ⚠️ **OUTDATED** - See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/RUNBOOK.md](docs/RUNBOOK.md) for current documentation
+> 
+> This document is preserved for historical reference only.
+
 # Maintenance Agent - Deployment Checklist
 
 Use this checklist when deploying the maintenance agent to production.

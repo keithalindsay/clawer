@@ -1,3 +1,7 @@
+> ⚠️ **OUTDATED** - See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/RUNBOOK.md](docs/RUNBOOK.md) for current documentation
+> 
+> This document is preserved for historical reference only.
+
 # 🚀 Quick Test - Telegram Integration
 
 ## 1-Minute Test

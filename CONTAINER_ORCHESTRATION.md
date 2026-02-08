@@ -1,3 +1,7 @@
+> ⚠️ **OUTDATED** - See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/RUNBOOK.md](docs/RUNBOOK.md) for current documentation
+> 
+> This document is preserved for historical reference only.
+
 # Container Orchestration Layer
 
 Auto-provision isolated Docker containers per user when they subscribe.
