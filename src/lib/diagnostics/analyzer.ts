@@ -6,7 +6,11 @@
 
 import { DiagnosticContext, DiagnosticResult, DiagnosticIssue } from './types';
 import { matchPatterns, getHighestSeverity, ISSUE_PATTERNS } from './patterns';
-import { v4 as uuidv4 } from 'uuid';
+
+// Simple ID generator (no uuid dependency)
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 10);
+}
 
 /**
  * Analyze diagnostic context and generate result
@@ -199,7 +203,7 @@ export function analyze(context: DiagnosticContext): DiagnosticResult {
       cpuUsage: context.cpuPercent !== null ? `${context.cpuPercent}%` : null,
     },
     recommendation,
-    diagnosisId: `diag_${uuidv4().slice(0, 8)}`,
+    diagnosisId: `diag_${generateId()}`,
     timestamp: new Date().toISOString(),
   };
 }
