@@ -45,8 +45,7 @@ export default async function DashboardPage() {
       await db.update(users).set({ id: userId }).where(eq(users.email, userEmail));
     }
   }
-  // User is subscribed if they have an active Stripe subscription OR a pro/admin tier (manual override)
-  const isSubscribed = user?.stripeSubscriptionId !== null || user?.tier === 'pro' || user?.tier === 'admin';
+  const isSubscribed = user?.stripeSubscriptionId !== null;
 
   return (
     <div className="min-h-screen bg-gray-50">
