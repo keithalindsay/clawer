@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clawer
 
-## Getting Started
+## What You Hoped AI Would Be? Yeah, It's That.
 
-First, run the development server:
+Enterprise-grade AI assistant, deployed in 5 minutes. Not 5 weeks.
+
+---
+
+### The Problem
+
+Consultants charge $10-20K to implement AI for businesses. Then $2-5K/month to maintain it. Most companies can't afford that, so they either:
+- Try DIY, hit a wall at day 2-3, give up
+- Settle for chatbots that don't actually DO anything
+- Go without
+
+### The Solution
+
+Managed OpenClaw. All the power, none of the Docker.
+
+**What you get:**
+- 🚀 Deploy in 5 minutes (not 5 weeks)
+- 💬 One AI across WhatsApp, Telegram, Slack, Discord
+- 🔒 Your data, your control (self-hosted options)
+- 🧠 An AI that takes action, not just chats
+
+**What consultants charge $15K for, we do for $49/month.**
+
+---
+
+## Quick Start
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Who This Is For
 
-## Learn More
+- **Law firms** — Client privilege + AI automation
+- **PE firms** — Deal flow without data leaks
+- **Accounting firms** — Tax season survival
+- **Healthcare ops** — HIPAA-compliant admin AI
+- **Any team** that needs AI but can't babysit Docker
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js 14
+- TypeScript
+- Drizzle ORM
+- Deployed wherever you want
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Docs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Positioning](docs/POSITIONING.md) — Market position & messaging
+- [Landing Page Copy](docs/LANDING-PAGE-COPY.md) — Website content
+- [Auth Setup](AUTH_README.md) — Authentication configuration
+- [Container Deployment](README_CONTAINERS.md) — Docker deployment
+
+---
+
+## License
+
+MIT
+
+---
+
+*Your AI employee that never sleeps.*

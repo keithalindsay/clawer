@@ -18,6 +18,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.37.3",
+    "svix": "^1.24.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "@slack/web-api": "^7.0.0",
+    "@slack/bolt": "^4.0.0",
     "bufferutil": "^4.0.8",
     "clsx": "^2.1.1",
     "discord.js": "^14.17.3",
