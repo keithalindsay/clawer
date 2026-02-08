@@ -30,11 +30,18 @@ export const adminSettings = pgTable('admin_settings', {
  * Known setting keys
  */
 export const SETTING_KEYS = {
-  // LLM Provider Settings
+  // LLM Provider Settings (legacy - single provider)
   LLM_PROVIDER: 'llm_provider',           // 'openai' | 'anthropic' | 'google' | 'openrouter'
-  LLM_API_KEY: 'llm_api_key',             // Encrypted API key
+  LLM_API_KEY: 'llm_api_key',             // Primary/fallback API key
   LLM_MODEL: 'llm_model',                  // Model ID (e.g., 'gpt-4o-mini')
   LLM_BASE_URL: 'llm_base_url',           // Optional custom base URL
+  
+  // Provider-specific API Keys
+  LLM_API_KEY_OPENAI: 'llm_api_key_openai',
+  LLM_API_KEY_ANTHROPIC: 'llm_api_key_anthropic',
+  LLM_API_KEY_GOOGLE: 'llm_api_key_google',
+  LLM_API_KEY_XAI: 'llm_api_key_xai',
+  LLM_API_KEY_DEEPSEEK: 'llm_api_key_deepseek',
   
   // Support Agent Settings
   SUPPORT_AGENT_ENABLED: 'support_agent_enabled',

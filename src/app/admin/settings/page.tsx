@@ -12,9 +12,15 @@ interface Setting {
 }
 
 const SETTING_GROUPS = {
-  "AI Provider": [
+  "API Keys": [
+    "llm_api_key_openai",
+    "llm_api_key_anthropic",
+    "llm_api_key_google",
+    "llm_api_key_xai",
+    "llm_api_key_deepseek",
+  ],
+  "Default Models": [
     "llm_provider",
-    "llm_api_key",
     "llm_model",
     "llm_base_url",
   ],

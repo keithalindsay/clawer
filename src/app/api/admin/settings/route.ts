@@ -186,10 +186,15 @@ function isSensitiveKey(key: string): boolean {
 
 function getDefaultDescription(key: string): string {
   const descriptions: Record<string, string> = {
-    [SETTING_KEYS.LLM_PROVIDER]: 'AI provider (openai, anthropic, google, openrouter)',
-    [SETTING_KEYS.LLM_API_KEY]: 'API key for the AI provider',
+    [SETTING_KEYS.LLM_PROVIDER]: 'Default AI provider (openai, anthropic, google)',
+    [SETTING_KEYS.LLM_API_KEY]: 'Fallback API key (used if provider-specific key missing)',
     [SETTING_KEYS.LLM_MODEL]: 'Default model ID (e.g., gpt-4o-mini)',
     [SETTING_KEYS.LLM_BASE_URL]: 'Custom API base URL (optional)',
+    [SETTING_KEYS.LLM_API_KEY_OPENAI]: 'OpenAI API key (for GPT-4o, GPT-4o-mini)',
+    [SETTING_KEYS.LLM_API_KEY_ANTHROPIC]: 'Anthropic API key (for Claude models)',
+    [SETTING_KEYS.LLM_API_KEY_GOOGLE]: 'Google API key (for Gemini models)',
+    [SETTING_KEYS.LLM_API_KEY_XAI]: 'xAI API key (for Grok models)',
+    [SETTING_KEYS.LLM_API_KEY_DEEPSEEK]: 'DeepSeek API key',
     [SETTING_KEYS.SUPPORT_AGENT_ENABLED]: 'Enable AI support agent',
     [SETTING_KEYS.SUPPORT_AGENT_MODEL]: 'Model for support agent diagnostics',
     [SETTING_KEYS.SUPPORT_AGENT_MAX_DIAGNOSES_HOUR]: 'Max diagnoses per user per hour',
