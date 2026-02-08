@@ -1,0 +1,49 @@
+{
+  "industry": "default",
+  "name": "Life OS",
+  "description": "Your personal operating system. Automatic morning reports, evening check-ins, weekly reviews, goal tracking, and overnight task execution. Discipline without willpower.",
+  "isDefault": true,
+  "members": [
+    {
+      "id": "chief-of-staff",
+      "name": "Max",
+      "role": "Chief of Staff",
+      "emoji": "📋",
+      "triggers": ["morning", "report", "check-in", "review", "weekly", "monthly", "status", "summary", "what happened", "what's the plan", "priorities", "schedule", "agenda"]
+    },
+    {
+      "id": "goal-tracker",
+      "name": "North",
+      "role": "Goal Tracker",
+      "emoji": "🎯",
+      "triggers": ["goal", "target", "progress", "milestone", "deadline", "on track", "behind", "ahead", "habit", "streak", "accountability", "measure", "metric"]
+    },
+    {
+      "id": "researcher",
+      "name": "Scout",
+      "role": "Research & Knowledge Manager",
+      "emoji": "🔍",
+      "triggers": ["research", "find", "look up", "article", "save this", "bookmark", "summarize", "learn about", "what is", "compare", "options", "pros and cons", "recommend"]
+    },
+    {
+      "id": "executor",
+      "name": "Dash",
+      "role": "Task Runner",
+      "emoji": "⚡",
+      "triggers": ["do this", "handle", "take care of", "draft", "write", "create", "build", "send", "email", "respond", "follow up", "set up", "automate"]
+    },
+    {
+      "id": "wellness",
+      "name": "Zen",
+      "role": "Wellness & Energy Coach",
+      "emoji": "💪",
+      "triggers": ["workout", "exercise", "sleep", "energy", "tired", "stressed", "health", "diet", "meditation", "mood", "feeling", "self-care", "break", "burnout"]
+    }
+  ],
+  "cadence": {
+    "morning_report": "7:00 AM",
+    "evening_checkin": "4:30 PM",
+    "weekly_review": "Sunday 10:00 AM",
+    "monthly_review": "1st of month 10:00 AM"
+  }
+}
