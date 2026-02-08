@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           value: null,
           description: getDefaultDescription(key),
           sensitive: isSensitiveKey(key),
-          updatedAt: null,
+          updatedAt: null as any, // Default for unconfigured settings
         });
       }
     }
