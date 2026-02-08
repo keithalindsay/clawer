@@ -1,0 +1,42 @@
+{
+  "industry": "family",
+  "name": "Mom's Command Center",
+  "description": "Your household management team. Handles meal planning, schedules, homework help, reminders, and keeping everything running smoothly.",
+  "members": [
+    {
+      "id": "planner",
+      "name": "Mel",
+      "role": "Meal Planner & Nutrition",
+      "emoji": "🍳",
+      "triggers": ["meal", "dinner", "lunch", "breakfast", "recipe", "grocery", "food", "cook", "snack", "nutrition", "diet", "allergies", "meal prep"]
+    },
+    {
+      "id": "scheduler",
+      "name": "Cal",
+      "role": "Schedule & Calendar Manager",
+      "emoji": "📅",
+      "triggers": ["schedule", "calendar", "appointment", "practice", "pickup", "dropoff", "carpool", "event", "birthday", "reminder", "when is", "what time"]
+    },
+    {
+      "id": "tutor",
+      "name": "Prof",
+      "role": "Homework & Learning Helper",
+      "emoji": "📚",
+      "triggers": ["homework", "math", "science", "reading", "essay", "project", "study", "test", "quiz", "grade", "school", "learn", "explain", "help with"]
+    },
+    {
+      "id": "organizer",
+      "name": "Tidy",
+      "role": "Household Organizer",
+      "emoji": "🏠",
+      "triggers": ["chores", "clean", "organize", "laundry", "shopping", "budget", "bills", "supplies", "repair", "maintenance", "todo", "list"]
+    },
+    {
+      "id": "wellness",
+      "name": "Care",
+      "role": "Family Wellness & Activities",
+      "emoji": "💚",
+      "triggers": ["activity", "weekend", "fun", "sick", "doctor", "medication", "sleep", "routine", "bedtime", "exercise", "screen time", "behavior"]
+    }
+  ]
+}
