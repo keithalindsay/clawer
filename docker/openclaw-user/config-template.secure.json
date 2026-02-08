@@ -1,0 +1,178 @@
+{
+  "models": {
+    "providers": {
+      "moonshot": {
+        "baseUrl": "https://api.moonshot.ai/v1",
+        "api": "openai-completions",
+        "apiKey": "MOONSHOT_API_KEY_PLACEHOLDER",
+        "models": [
+          {
+            "id": "moonshot-v1-32k",
+            "name": "Moonshot V1 32K",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 32000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "moonshot/moonshot-v1-32k"
+      },
+      "workspace": "/home/openclaw/workspace"
+    }
+  },
+  "gateway": {
+    "port": 8080,
+    "mode": "local",
+    "auth": {
+      "token": "GATEWAY_TOKEN_PLACEHOLDER"
+    },
+    "rateLimiting": {
+      "enabled": true,
+      "prompts": {
+        "perMinute": 20,
+        "perHour": 200,
+        "maxComplexPerHour": 50
+      },
+      "maxPromptLength": 50000,
+      "maxOutputLength": 100000
+    }
+  },
+  "security": {
+    "toolRestrictions": {
+      "exec": {
+        "enabled": false,
+        "reason": "Shell execution disabled for security"
+      },
+      "process": {
+        "enabled": false,
+        "reason": "Process management disabled for security"
+      },
+      "fileSystem": {
+        "enabled": true,
+        "allowedPaths": [
+          "/home/openclaw/workspace/**",
+          "/home/openclaw/clawd/**",
+          "/tmp/openclaw/**"
+        ],
+        "blockedPaths": [
+          "/home/openclaw/.openclaw/**",
+          "/home/openclaw/.ssh/**",
+          "**/.env",
+          "**/.env.*",
+          "**/secrets/**",
+          "**/credentials/**",
+          "**/.aws/**",
+          "**/.gcp/**",
+          "**/.azure/**",
+          "**/id_rsa*",
+          "**/id_ed25519*",
+          "**/*.pem",
+          "**/*.key",
+          "**/serviceAccountKey.json"
+        ],
+        "maxFileSize": 52428800,
+        "maxFilesPerOperation": 100
+      },
+      "network": {
+        "enabled": true,
+        "allowedDomains": [
+          "api.moonshot.ai",
+          "api.anthropic.com",
+          "api.openai.com",
+          "api.github.com",
+          "registry.npmjs.org",
+          "pypi.org"
+        ],
+        "blockedDomains": [
+          "169.254.169.254",
+          "metadata.google.internal",
+          "metadata.azure.com"
+        ],
+        "blockPrivateNetworks": true,
+        "maxEgressPerHour": 1000
+      }
+    },
+    "outputFiltering": {
+      "enabled": true,
+      "redactSecrets": true,
+      "secretPatterns": [
+        {
+          "type": "api_key",
+          "regex": "(sk-|pk_|api[_-]?key)[a-zA-Z0-9]{20,}"
+        },
+        {
+          "type": "aws_access_key",
+          "regex": "AKIA[0-9A-Z]{16}"
+        },
+        {
+          "type": "jwt",
+          "regex": "eyJ[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*"
+        },
+        {
+          "type": "private_key",
+          "regex": "-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"
+        },
+        {
+          "type": "github_token",
+          "regex": "gh[pousr]_[A-Za-z0-9_]{36,}"
+        }
+      ],
+      "maskPII": false
+    },
+    "promptGuard": {
+      "enabled": true,
+      "blockInjectionPatterns": true,
+      "suspiciousPatterns": [
+        "ignore (previous|all|above) (instructions?|prompts?)",
+        "disregard (your|the) (instructions?|rules?)",
+        "forget (everything|what) you",
+        "you are now (a|an) (different|new|evil)",
+        "pretend you (are|have) no (restrictions?|rules?)",
+        "(show|reveal|display|print) (your|the) (system|initial) prompt",
+        "what (are|were) your (instructions?|guidelines?)",
+        "repeat (your|the) (system|initial) (message|prompt)"
+      ],
+      "onDetection": "block_and_log"
+    },
+    "audit": {
+      "enabled": true,
+      "logAllToolCalls": true,
+      "logSecurityEvents": true,
+      "retentionDays": 30
+    }
+  },
+  "plugins": {
+    "entries": {
+      "whatsapp": {
+        "enabled": true
+      },
+      "telegram": {
+        "enabled": true
+      }
+    }
+  },
+  "channels": {
+    "whatsapp": {
+      "dmPolicy": "open",
+      "allowFrom": ["*"]
+    }
+  },
+  "resourceLimits": {
+    "maxConcurrentSessions": 5,
+    "maxMessagesPerSession": 1000,
+    "sessionTimeoutMinutes": 60,
+    "maxSubAgents": 3
+  }
+}

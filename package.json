@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "discord": "tsx src/discord-bot/index.ts",
+    "maintenance": "tsx scripts/maintenance-check.ts",
+    "maintenance:daemon": "tsx scripts/maintenance-check.ts --daemon",
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",

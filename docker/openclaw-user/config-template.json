@@ -1,33 +1,15 @@
 {
   "models": {
     "providers": {
-      "moonshot": {
-        "baseUrl": "https://api.moonshot.ai/v1",
-        "api": "openai-completions",
-        "apiKey": "MOONSHOT_API_KEY_PLACEHOLDER",
-        "models": [
-          {
-            "id": "moonshot-v1-32k",
-            "name": "Moonshot V1 32K",
-            "reasoning": false,
-            "input": ["text"],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 32000,
-            "maxTokens": 8192
-          }
-        ]
+      "openai": {
+        "apiKey": "OPENAI_API_KEY_PLACEHOLDER"
       }
     }
   },
   "agents": {
     "defaults": {
       "model": {
-        "primary": "moonshot/moonshot-v1-32k"
+        "primary": "openai/gpt-4o-mini"
       },
       "workspace": "/home/user/clawd"
     }

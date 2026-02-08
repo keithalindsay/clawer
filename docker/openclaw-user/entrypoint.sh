@@ -5,8 +5,8 @@ set -e
 mkdir -p /home/user/.openclaw
 
 # Check required environment variables
-if [ -z "$MOONSHOT_API_KEY" ]; then
-    echo "ERROR: MOONSHOT_API_KEY environment variable not set"
+if [ -z "$OPENAI_API_KEY" ]; then
+    echo "ERROR: OPENAI_API_KEY environment variable not set"
     exit 1
 fi
 
@@ -19,7 +19,7 @@ fi
 export GATEWAY_TOKEN
 
 # Copy template and substitute placeholders
-sed -e "s/MOONSHOT_API_KEY_PLACEHOLDER/${MOONSHOT_API_KEY}/g" \
+sed -e "s/OPENAI_API_KEY_PLACEHOLDER/${OPENAI_API_KEY}/g" \
     -e "s/GATEWAY_TOKEN_PLACEHOLDER/${GATEWAY_TOKEN}/g" \
     /home/user/.openclaw/openclaw.json.template \
     > /home/user/.openclaw/openclaw.json

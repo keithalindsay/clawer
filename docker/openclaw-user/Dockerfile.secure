@@ -1,0 +1,72 @@
+# Hardened OpenClaw Container Image
+# Based on SECURITY-IMPLEMENTATION.md
+# Version: 2026.2.1 (TODO: upgrade to 2026.2.6-3 when available)
+
+FROM node:22-slim
+
+# Install minimal system dependencies (no build tools in production)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root user and group
+RUN groupadd -r -g 1000 openclaw && \
+    useradd -r -u 1000 -g openclaw -m -d /home/openclaw -s /bin/bash openclaw
+
+# Set HOME environment variable
+ENV HOME=/home/openclaw
+
+# Create directory structure with proper permissions
+RUN mkdir -p /home/openclaw/clawd \
+    /home/openclaw/.openclaw \
+    /home/openclaw/workspace \
+    /tmp/openclaw && \
+    chown -R openclaw:openclaw /home/openclaw /tmp/openclaw
+
+# Copy and install OpenClaw from tarball
+# NOTE: Using current version (2026.2.1). Upgrade to 2026.2.6-3+ when available.
+COPY openclaw-2026.2.1.tgz /tmp/
+RUN npm install -g /tmp/openclaw-2026.2.1.tgz && \
+    rm /tmp/openclaw-2026.2.1.tgz && \
+    npm cache clean --force
+
+# Copy configuration files
+COPY config-template.secure.json /home/openclaw/.openclaw/openclaw.json.template
+COPY SOUL.md /home/openclaw/clawd/SOUL.md
+COPY api-server.js /usr/local/bin/api-server.js
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Set ownership and make scripts executable
+RUN chown openclaw:openclaw /home/openclaw/.openclaw/openclaw.json.template \
+    /home/openclaw/clawd/SOUL.md \
+    /usr/local/bin/api-server.js \
+    /usr/local/bin/entrypoint.sh && \
+    chmod 755 /usr/local/bin/entrypoint.sh /usr/local/bin/api-server.js
+
+# Set resource limits in the image (orchestrator also enforces these)
+ENV NODE_OPTIONS="--max-old-space-size=3072 --max-http-header-size=16384"
+
+# Switch to non-root user
+USER openclaw
+
+# Set working directory
+WORKDIR /home/openclaw/clawd
+
+# Expose ports
+EXPOSE 8080 8081
+
+# Improved health check with timeout and proper status validation
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f -s http://localhost:8080/health | grep -q '"status":"ok"' || exit 1
+
+# Security labels
+LABEL security.hardened="true" \
+      security.user="openclaw:1000" \
+      security.version="2026.2.1" \
+      maintainer="security@clawer.ai"
+
+# Run entrypoint script
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

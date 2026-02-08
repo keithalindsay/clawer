@@ -127,10 +127,10 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
     // Allocate new port
     const port = await allocatePort();
     
-    // Get Moonshot API key from environment
-    const moonshotApiKey = process.env.MOONSHOT_API_KEY;
-    if (!moonshotApiKey) {
-      throw new Error('MOONSHOT_API_KEY not configured');
+    // Get OpenAI API key from environment
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
     
     // Create and start container
@@ -143,7 +143,7 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
       `--cpus=1`,
       `-p ${port}:8080`,  // Gateway (Control UI + WebSocket)
       `-p ${apiPort}:8081`,  // API server (REST endpoints)
-      `-e MOONSHOT_API_KEY=${moonshotApiKey}`,
+      `-e OPENAI_API_KEY=${openaiApiKey}`,
       `-e GATEWAY_TOKEN=$(openssl rand -hex 16)`,  // Auto-generate gateway token
       `-e USER_ID=${userId}`,
       `--restart=unless-stopped`,
