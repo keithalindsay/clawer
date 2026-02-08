@@ -116,6 +116,10 @@ export const containerApi = {
     customInstructions?: string;
     communicationStyle?: string;
     responseLength?: string;
+    // Routing info
+    routingTier?: string;
+    routingModel?: string;
+    routingConfidence?: number;
   }) =>
     containerRequest<ChatResponse>(port, '/api/chat', {
       method: 'POST',

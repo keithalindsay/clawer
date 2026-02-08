@@ -5,6 +5,7 @@ import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { provisionContainer } from '@/lib/orchestrator';
+import { routeRequest } from '@/lib/router';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       responseLength: settings.responseLength,
     } : undefined;
 
-    // Get user's container port
+    // Get user's container port and model preferences
     let user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { 
@@ -74,19 +75,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Send message to container
+    // ─── Smart Routing ───
+    // Classify the message and decide which model to use
+    const routing = routeRequest({
+      prompt: message,
+      systemPrompt: botSettings?.customInstructions,
+      // TODO: Get user's model preferences from modelConfigs table
+      userOrchestratorModel: 'gpt-4o-mini',  // Default orchestrator
+      userWorkerModel: 'gpt-4o-mini',         // Default worker (same for now)
+    });
+
+    console.log('[chat] Routing decision:', {
+      tier: routing.tier,
+      useOrchestrator: routing.useOrchestrator,
+      model: routing.model,
+      confidence: routing.confidence.toFixed(2),
+      signals: routing.signals.slice(0, 3),
+      costEstimate: `$${routing.costEstimate.toFixed(6)}`,
+    });
+
+    // Send message to container with routing info
     const { data, error, status } = await containerApi.chat(
       user.containerPort,
       message,
       context || 'web-chat',
-      botSettings
+      {
+        ...botSettings,
+        // Pass routing decision to container
+        routingTier: routing.tier,
+        routingModel: routing.model,
+        routingConfidence: routing.confidence,
+      }
     );
 
     if (error) {
       return NextResponse.json({ error }, { status });
     }
 
-    return NextResponse.json(data);
+    // Return response with routing metadata
+    return NextResponse.json({
+      ...data,
+      _routing: {
+        tier: routing.tier,
+        model: routing.model,
+        confidence: routing.confidence,
+        signals: routing.signals,
+        costEstimate: routing.costEstimate,
+        savings: routing.savings,
+      },
+    });
 
   } catch (error) {
     console.error('Chat error:', error);

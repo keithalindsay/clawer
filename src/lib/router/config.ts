@@ -11,19 +11,29 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
   version: '1.0',
 
   scoring: {
-    tokenCountThresholds: { simple: 50, complex: 500 },
+    tokenCountThresholds: { simple: 20, complex: 200 },  // Lower thresholds
 
     // Multilingual keywords
     codeKeywords: [
       'function', 'class', 'import', 'def', 'SELECT', 'async', 'await',
       'const', 'let', 'var', 'return', '```',
+      // Frameworks and patterns (avoid short words that match substrings)
+      'react', 'component', 'endpoint', 'database', 'query',
+      'typescript', 'javascript', 'python', 'golang',
+      'authentication', 'jwt token', 'oauth', 'caching', 'redis',
+      'docker', 'kubernetes', 'terraform', 'pipeline',
+      'rest api', 'graphql', 'microservice',
       '函数', '类', '导入', '定义', '查询', '异步', '等待', '常量', '变量', '返回',
     ],
     
     reasoningKeywords: [
       'prove', 'theorem', 'derive', 'step by step', 'chain of thought',
       'formally', 'mathematical', 'proof', 'logically',
+      'analyze', 'compare', 'evaluate', 'explain why', 'reason through',
+      'what are the pros and cons', 'trade-offs', 'implications',
+      'think through', 'consider all', 'weigh the options',
       '证明', '定理', '推导', '逐步', '思维链', '形式化', '数学', '逻辑',
+      '分析', '比较', '评估', '解释为什么', '权衡',
     ],
     
     simpleKeywords: [
@@ -81,31 +91,32 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
     ],
 
     // Dimension weights (sum to 1.0)
+    // Tuned for Clawer: imperative tasks (build/create) should be COMPLEX
     dimensionWeights: {
-      tokenCount: 0.08,
-      codePresence: 0.15,
-      reasoningMarkers: 0.18,
-      technicalTerms: 0.10,
+      tokenCount: 0.05,           // Reduced - short prompts can be complex
+      codePresence: 0.18,         // Increased - code = orchestrator
+      reasoningMarkers: 0.18,     // Keep high
+      technicalTerms: 0.12,       // Increased
       creativeMarkers: 0.05,
-      simpleIndicators: 0.12,
-      multiStepPatterns: 0.12,
-      questionComplexity: 0.05,
-      imperativeVerbs: 0.03,
+      simpleIndicators: 0.10,     // Reduced
+      multiStepPatterns: 0.10,
+      questionComplexity: 0.04,
+      imperativeVerbs: 0.08,      // Increased - "build/create" = complex
       constraintCount: 0.04,
       outputFormat: 0.03,
-      referenceComplexity: 0.02,
+      referenceComplexity: 0.01,
       negationComplexity: 0.01,
-      domainSpecificity: 0.02,
+      domainSpecificity: 0.01,
     },
 
     tierBoundaries: {
-      simpleMedium: 0.0,
-      mediumComplex: 0.15,
-      complexReasoning: 0.25,
+      simpleMedium: -0.05,        // Lower bar for MEDIUM
+      mediumComplex: 0.10,        // Lower bar for COMPLEX
+      complexReasoning: 0.20,     // Lower bar for REASONING
     },
 
-    confidenceSteepness: 12,
-    confidenceThreshold: 0.7,
+    confidenceSteepness: 8,       // Gentler sigmoid curve
+    confidenceThreshold: 0.5,     // Lower threshold - allow more classifications
   },
 
   // Default tier → model mapping
