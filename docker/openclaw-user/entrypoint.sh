@@ -24,6 +24,17 @@ sed -e "s/OPENAI_API_KEY_PLACEHOLDER/${OPENAI_API_KEY}/g" \
     /home/user/.openclaw/openclaw.json.template \
     > /home/user/.openclaw/openclaw.json
 
+# Patch web_search to use local SearXNG proxy instead of Brave API
+SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}"
+WEB_SEARCH_JS="/usr/local/lib/node_modules/openclaw/dist/agents/tools/web-search.js"
+if [ -f "$WEB_SEARCH_JS" ]; then
+    sed -i "s|https://api.search.brave.com/res/v1/web/search|${SEARXNG_PROXY_URL}|g" "$WEB_SEARCH_JS"
+    echo "Patched web_search to use SearXNG proxy: ${SEARXNG_PROXY_URL}"
+fi
+
+# Set a dummy Brave API key so the tool is enabled
+export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
+
 echo "OpenClaw configuration created"
 
 # Start API server in background (exposes REST endpoints for dashboard)
