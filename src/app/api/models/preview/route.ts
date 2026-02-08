@@ -44,7 +44,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate model IDs
-    const config: Partial<ModelConfig> = { orchestrator, worker };
+    const config: Partial<ModelConfig> = { 
+      orchestrator: orchestrator as OrchestratorModelId, 
+      worker: worker as WorkerModelId 
+    };
     if (!validateConfig(config)) {
       return NextResponse.json(
         { error: 'Invalid model IDs. Please select valid models.' },
