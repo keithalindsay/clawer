@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { message, context } = await req.json();
+    const { message, context, settings } = await req.json();
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -22,6 +22,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Extract bot settings if provided
+    const botSettings = settings ? {
+      botName: settings.botName,
+      personality: settings.personality,
+      customInstructions: settings.customInstructions,
+      communicationStyle: settings.communicationStyle,
+      responseLength: settings.responseLength,
+    } : undefined;
 
     // Get user's container port
     let user = await db.query.users.findFirst({
@@ -69,7 +78,8 @@ export async function POST(req: NextRequest) {
     const { data, error, status } = await containerApi.chat(
       user.containerPort,
       message,
-      context || 'web-chat'
+      context || 'web-chat',
+      botSettings
     );
 
     if (error) {

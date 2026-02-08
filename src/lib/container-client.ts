@@ -110,9 +110,15 @@ export const containerApi = {
     }),
   
   // Chat
-  chat: (port: number, message: string, context?: string) =>
+  chat: (port: number, message: string, context?: string, settings?: {
+    botName?: string;
+    personality?: string;
+    customInstructions?: string;
+    communicationStyle?: string;
+    responseLength?: string;
+  }) =>
     containerRequest<ChatResponse>(port, '/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, context }),
+      body: JSON.stringify({ message, context, settings }),
     }),
 };

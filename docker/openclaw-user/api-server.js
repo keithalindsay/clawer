@@ -335,7 +335,7 @@ const server = http.createServer(async (req, res) => {
       await new Promise(resolve => req.on('end', resolve));
       const body = Buffer.concat(chunks).toString();
       console.log('[api] body:', body);
-      const { message, context } = JSON.parse(body || '{}');
+      const { message, context, settings } = JSON.parse(body || '{}');
       
       if (!message) {
         console.log('[api] no message in body');
@@ -345,13 +345,52 @@ const server = http.createServer(async (req, res) => {
       }
       console.log('[api] message:', message);
       
+      // Build personalized system prompt if settings provided
+      let systemPrompt = '';
+      if (settings) {
+        const parts = [];
+        if (settings.botName) {
+          parts.push(`You are ${settings.botName}, a personal AI assistant.`);
+        }
+        if (settings.personality) {
+          parts.push(`Your personality is ${settings.personality}.`);
+        }
+        if (settings.communicationStyle) {
+          const styles = {
+            'casual': 'Use a casual, conversational tone.',
+            'balanced': 'Use a balanced, professional but approachable tone.',
+            'formal': 'Use a formal, business-appropriate tone.'
+          };
+          parts.push(styles[settings.communicationStyle] || '');
+        }
+        if (settings.responseLength) {
+          const lengths = {
+            'brief': 'Keep responses concise and to-the-point.',
+            'balanced': 'Provide well-rounded responses.',
+            'detailed': 'Provide comprehensive, thorough responses.'
+          };
+          parts.push(lengths[settings.responseLength] || '');
+        }
+        if (settings.customInstructions) {
+          parts.push(`Additional context: ${settings.customInstructions}`);
+        }
+        systemPrompt = parts.filter(Boolean).join(' ');
+        console.log('[api] system prompt:', systemPrompt);
+      }
+      
       try {
         // Use the gateway's chat.send endpoint which waits for response
         // Use unique session key per request to avoid stream mixing
         const idempotencyKey = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const sessionKey = context || `web-chat-${Date.now()}`;
+        
+        // Build the full message with system context if provided
+        const fullMessage = systemPrompt 
+          ? `[System: ${systemPrompt}]\n\nUser: ${message}`
+          : message;
+        
         const chatResult = await gatewayRequest('chat.send', {
-          message: message,
+          message: fullMessage,
           sessionKey: sessionKey,
           idempotencyKey: idempotencyKey,
           timeoutMs: 60000  // Wait up to 60 seconds for response
