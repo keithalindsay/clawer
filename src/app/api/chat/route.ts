@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
+import { modelConfigs, getDefaultConfig } from '@/lib/db/schema/model-configs';
 import { eq } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { provisionContainer } from '@/lib/orchestrator';
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
       responseLength: settings.responseLength,
     } : undefined;
 
-    // Get user's container port and model preferences
+    // Get user's container port
     let user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { 
@@ -42,6 +43,15 @@ export async function POST(req: NextRequest) {
         stripeSubscriptionId: true,
       },
     });
+
+    // Get user's model preferences (or use defaults)
+    const userModelConfig = await db.query.modelConfigs.findFirst({
+      where: eq(modelConfigs.userId, userId),
+    });
+    
+    const defaultConfig = getDefaultConfig();
+    const orchestratorModel = userModelConfig?.orchestratorModel ?? defaultConfig.orchestrator;
+    const workerModel = userModelConfig?.workerModel ?? defaultConfig.worker;
 
     // Check subscription
     if (!user?.stripeSubscriptionId) {
@@ -80,9 +90,8 @@ export async function POST(req: NextRequest) {
     const routing = routeRequest({
       prompt: message,
       systemPrompt: botSettings?.customInstructions,
-      // TODO: Get user's model preferences from modelConfigs table
-      userOrchestratorModel: 'gpt-4o-mini',  // Default orchestrator
-      userWorkerModel: 'gpt-4o-mini',         // Default worker (same for now)
+      userOrchestratorModel: orchestratorModel,
+      userWorkerModel: workerModel,
     });
 
     console.log('[chat] Routing decision:', {
@@ -92,6 +101,9 @@ export async function POST(req: NextRequest) {
       confidence: routing.confidence.toFixed(2),
       signals: routing.signals.slice(0, 3),
       costEstimate: `$${routing.costEstimate.toFixed(6)}`,
+      userConfig: userModelConfig ? 'custom' : 'default',
+      orchestrator: orchestratorModel,
+      worker: workerModel,
     });
 
     // Send message to container with routing info
@@ -122,6 +134,11 @@ export async function POST(req: NextRequest) {
         signals: routing.signals,
         costEstimate: routing.costEstimate,
         savings: routing.savings,
+        userConfig: {
+          orchestrator: orchestratorModel,
+          worker: workerModel,
+          isCustom: !!userModelConfig,
+        },
       },
     });
 
