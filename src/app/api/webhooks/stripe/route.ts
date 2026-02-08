@@ -30,12 +30,17 @@ export async function POST(request: NextRequest) {
   try {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
+    // SECURITY: NEVER allow unsigned webhooks - reject if secret not configured
     if (!webhookSecret) {
-      console.warn('STRIPE_WEBHOOK_SECRET not set, skipping signature verification');
-      event = JSON.parse(body) as Stripe.Event;
-    } else {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      console.error('STRIPE_WEBHOOK_SECRET not configured - blocking webhook request');
+      return NextResponse.json(
+        { error: 'Webhook not configured' },
+        { status: 500 }
+      );
     }
+    
+    // Always verify signature
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
     return NextResponse.json(
