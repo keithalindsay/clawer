@@ -17,6 +17,7 @@ import { eq } from 'drizzle-orm';
 import { TelegramCard } from '@/components/TelegramCard';
 import { ContainerStatus } from '@/components/ContainerStatus';
 import { CheckoutButton } from '@/components/CheckoutButton';
+import { LogoutButton } from '@/components/LogoutButton';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -58,6 +59,7 @@ export default async function DashboardPage() {
             <span className="text-sm text-gray-600">
               {clerkUser?.emailAddresses[0]?.emailAddress}
             </span>
+            <LogoutButton />
           </div>
         </div>
       </header>
