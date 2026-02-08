@@ -16,8 +16,8 @@ WORKDIR /home/user
 RUN mkdir -p /home/user/clawd /home/user/.openclaw
 
 # Copy and install OpenClaw from tarball
-COPY openclaw-2026.2.1.tgz /tmp/
-RUN npm install -g /tmp/openclaw-2026.2.1.tgz && rm /tmp/openclaw-2026.2.1.tgz
+COPY openclaw-2026.2.6-3.tgz /tmp/
+RUN npm install -g /tmp/openclaw-2026.2.6-3.tgz && rm /tmp/openclaw-2026.2.6-3.tgz
 
 # Copy configuration files
 COPY config-template.json /home/user/.openclaw/openclaw.json.template

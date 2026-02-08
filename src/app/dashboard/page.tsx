@@ -18,6 +18,7 @@ import { TelegramCard } from '@/components/TelegramCard';
 import { ContainerStatus } from '@/components/ContainerStatus';
 import { CheckoutButton } from '@/components/CheckoutButton';
 import { LogoutButton } from '@/components/LogoutButton';
+import { UsageWidget } from '@/components/UsageWidget';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -96,6 +97,9 @@ export default async function DashboardPage() {
 
         {/* Container Status */}
         {isSubscribed && <ContainerStatus />}
+
+        {/* Usage Widget */}
+        {isSubscribed && <UsageWidget />}
 
         {/* Chat Connections */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">

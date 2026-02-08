@@ -22,6 +22,13 @@
       "when": 1770409422454,
       "tag": "0002_nappy_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770524266383,
+      "tag": "0003_futuristic_the_order",
+      "breakpoints": true
     }
   ]
 }
