@@ -1,4 +1,7 @@
 {
+  "$schema": "https://openclaw.dev/schemas/config-v1.json",
+  "$comment": "Hardened configuration for Clawer multi-tenant deployment",
+  
   "models": {
     "providers": {
       "moonshot": {
@@ -24,33 +27,28 @@
       }
     }
   },
+
   "agents": {
     "defaults": {
       "model": {
         "primary": "moonshot/moonshot-v1-32k"
       },
-      "workspace": "/home/openclaw/workspace"
+      "workspace": "/home/agent/clawd"
     }
   },
+
   "gateway": {
     "port": 8080,
     "mode": "local",
     "auth": {
       "token": "GATEWAY_TOKEN_PLACEHOLDER"
-    },
-    "rateLimiting": {
-      "enabled": true,
-      "prompts": {
-        "perMinute": 20,
-        "perHour": 200,
-        "maxComplexPerHour": 50
-      },
-      "maxPromptLength": 50000,
-      "maxOutputLength": 100000
     }
   },
+
   "security": {
-    "toolRestrictions": {
+    "mode": "strict",
+    
+    "tools": {
       "exec": {
         "enabled": false,
         "reason": "Shell execution disabled for security"
@@ -59,100 +57,214 @@
         "enabled": false,
         "reason": "Process management disabled for security"
       },
-      "fileSystem": {
+      "read": {
         "enabled": true,
         "allowedPaths": [
-          "/home/openclaw/workspace/**",
-          "/home/openclaw/clawd/**",
+          "/home/agent/clawd/**",
           "/tmp/openclaw/**"
         ],
         "blockedPaths": [
-          "/home/openclaw/.openclaw/**",
-          "/home/openclaw/.ssh/**",
+          "/home/agent/.openclaw/**",
           "**/.env",
           "**/.env.*",
           "**/secrets/**",
-          "**/credentials/**",
-          "**/.aws/**",
-          "**/.gcp/**",
-          "**/.azure/**",
-          "**/id_rsa*",
-          "**/id_ed25519*",
           "**/*.pem",
           "**/*.key",
-          "**/serviceAccountKey.json"
-        ],
-        "maxFileSize": 52428800,
-        "maxFilesPerOperation": 100
+          "**/id_rsa*",
+          "**/id_ed25519*"
+        ]
       },
-      "network": {
+      "write": {
         "enabled": true,
-        "allowedDomains": [
-          "api.moonshot.ai",
-          "api.anthropic.com",
-          "api.openai.com",
-          "api.github.com",
-          "registry.npmjs.org",
-          "pypi.org"
+        "allowedPaths": [
+          "/home/agent/clawd/**",
+          "/tmp/openclaw/**"
         ],
+        "blockedPaths": [
+          "/home/agent/.openclaw/**",
+          "**/.env",
+          "**/*.pem",
+          "**/*.key"
+        ],
+        "maxFileSize": "10MB"
+      },
+      "edit": {
+        "enabled": true,
+        "allowedPaths": [
+          "/home/agent/clawd/**"
+        ]
+      },
+      "browser": {
+        "enabled": true,
+        "sandboxed": true,
         "blockedDomains": [
+          "localhost",
+          "127.0.0.1",
           "169.254.169.254",
           "metadata.google.internal",
-          "metadata.azure.com"
+          "*.internal"
+        ]
+      },
+      "web_search": {
+        "enabled": true,
+        "maxResultsPerQuery": 10
+      },
+      "web_fetch": {
+        "enabled": true,
+        "blockedDomains": [
+          "localhost",
+          "127.0.0.1",
+          "169.254.169.254",
+          "metadata.google.internal",
+          "10.*",
+          "172.16.*",
+          "172.17.*",
+          "172.18.*",
+          "172.19.*",
+          "172.20.*",
+          "172.21.*",
+          "172.22.*",
+          "172.23.*",
+          "172.24.*",
+          "172.25.*",
+          "172.26.*",
+          "172.27.*",
+          "172.28.*",
+          "172.29.*",
+          "172.30.*",
+          "172.31.*",
+          "192.168.*"
         ],
-        "blockPrivateNetworks": true,
-        "maxEgressPerHour": 1000
+        "maxResponseSize": "5MB"
+      },
+      "message": {
+        "enabled": true,
+        "rateLimitPerMinute": 30
+      },
+      "nodes": {
+        "enabled": false,
+        "reason": "Node control disabled in multi-tenant environment"
+      },
+      "canvas": {
+        "enabled": true
+      },
+      "image": {
+        "enabled": true
+      },
+      "tts": {
+        "enabled": true
       }
     },
-    "outputFiltering": {
-      "enabled": true,
-      "redactSecrets": true,
-      "secretPatterns": [
+
+    "paths": {
+      "workspace": "/home/agent/clawd",
+      "blocked": [
+        "/root/**",
+        "/etc/shadow",
+        "/etc/passwd",
+        "/home/agent/.ssh/**",
+        "/home/agent/.openclaw/openclaw.json",
+        "**/.git/config",
+        "**/.env",
+        "**/.env.*",
+        "**/secrets/**",
+        "**/credentials/**",
+        "**/.aws/**",
+        "**/.gcp/**",
+        "**/.azure/**",
+        "**/serviceAccountKey.json"
+      ]
+    },
+
+    "network": {
+      "egressPolicy": "restricted",
+      "allowedHosts": [
+        "api.moonshot.ai",
+        "api.anthropic.com",
+        "api.openai.com",
+        "api.github.com",
+        "registry.npmjs.org",
+        "pypi.org",
+        "cdn.jsdelivr.net"
+      ],
+      "blockedHosts": [
+        "169.254.169.254",
+        "metadata.google.internal",
+        "localhost",
+        "127.0.0.1"
+      ],
+      "blockedCIDRs": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16"
+      ]
+    },
+
+    "secrets": {
+      "scanOutputs": true,
+      "redactOnDetect": true,
+      "patterns": [
         {
-          "type": "api_key",
-          "regex": "(sk-|pk_|api[_-]?key)[a-zA-Z0-9]{20,}"
+          "name": "api_key",
+          "pattern": "(sk-|pk_|api[_-]?key)[a-zA-Z0-9]{20,}"
         },
         {
-          "type": "aws_access_key",
-          "regex": "AKIA[0-9A-Z]{16}"
+          "name": "aws_access_key",
+          "pattern": "AKIA[0-9A-Z]{16}"
         },
         {
-          "type": "jwt",
-          "regex": "eyJ[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*"
+          "name": "jwt",
+          "pattern": "eyJ[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*\\.[a-zA-Z0-9_-]*"
         },
         {
-          "type": "private_key",
-          "regex": "-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"
+          "name": "private_key",
+          "pattern": "-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"
         },
         {
-          "type": "github_token",
-          "regex": "gh[pousr]_[A-Za-z0-9_]{36,}"
+          "name": "github_token",
+          "pattern": "gh[pousr]_[A-Za-z0-9_]{36,}"
         }
-      ],
-      "maskPII": false
-    },
-    "promptGuard": {
-      "enabled": true,
-      "blockInjectionPatterns": true,
-      "suspiciousPatterns": [
-        "ignore (previous|all|above) (instructions?|prompts?)",
-        "disregard (your|the) (instructions?|rules?)",
-        "forget (everything|what) you",
-        "you are now (a|an) (different|new|evil)",
-        "pretend you (are|have) no (restrictions?|rules?)",
-        "(show|reveal|display|print) (your|the) (system|initial) prompt",
-        "what (are|were) your (instructions?|guidelines?)",
-        "repeat (your|the) (system|initial) (message|prompt)"
-      ],
-      "onDetection": "block_and_log"
-    },
-    "audit": {
-      "enabled": true,
-      "logAllToolCalls": true,
-      "logSecurityEvents": true,
-      "retentionDays": 30
+      ]
     }
   },
+
+  "rateLimits": {
+    "global": {
+      "requestsPerMinute": 60,
+      "requestsPerHour": 500,
+      "tokensPerMinute": 100000,
+      "tokensPerHour": 1000000
+    },
+    "perTool": {
+      "web_search": {
+        "requestsPerMinute": 10,
+        "requestsPerHour": 100
+      },
+      "web_fetch": {
+        "requestsPerMinute": 20,
+        "requestsPerHour": 200
+      },
+      "browser": {
+        "requestsPerMinute": 5,
+        "requestsPerHour": 50
+      },
+      "message": {
+        "requestsPerMinute": 30,
+        "requestsPerHour": 300
+      },
+      "write": {
+        "requestsPerMinute": 30,
+        "requestsPerHour": 500
+      }
+    },
+    "prompt": {
+      "maxLength": 50000,
+      "complexPromptThreshold": 1000,
+      "complexPromptsPerHour": 100
+    }
+  },
+
   "plugins": {
     "entries": {
       "whatsapp": {
@@ -163,16 +275,35 @@
       }
     }
   },
+
   "channels": {
     "whatsapp": {
       "dmPolicy": "open",
       "allowFrom": ["*"]
     }
   },
-  "resourceLimits": {
-    "maxConcurrentSessions": 5,
-    "maxMessagesPerSession": 1000,
-    "sessionTimeoutMinutes": 60,
-    "maxSubAgents": 3
+
+  "audit": {
+    "enabled": true,
+    "logLevel": "standard",
+    "logToolCalls": true,
+    "logPathAccess": true,
+    "logNetworkEgress": true,
+    "signReceipts": true,
+    "retentionDays": 30
+  },
+
+  "jailbreak": {
+    "detection": {
+      "enabled": true,
+      "mode": "strict",
+      "onDetection": "block_and_log"
+    },
+    "heuristics": [
+      "instruction_override",
+      "role_manipulation", 
+      "system_prompt_extraction",
+      "delimiter_injection"
+    ]
   }
 }

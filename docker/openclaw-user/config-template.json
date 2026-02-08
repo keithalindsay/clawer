@@ -2,7 +2,22 @@
   "models": {
     "providers": {
       "openai": {
-        "apiKey": "OPENAI_API_KEY_PLACEHOLDER"
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKey": "OPENAI_API_KEY_PLACEHOLDER",
+        "models": [
+          {
+            "id": "gpt-4o-mini",
+            "name": "GPT-4o Mini",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0.15,
+              "output": 0.60
+            },
+            "contextWindow": 128000,
+            "maxTokens": 16384
+          }
+        ]
       }
     }
   },
