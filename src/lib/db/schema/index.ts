@@ -16,3 +16,4 @@ export * from './whatsapp';
 export * from './discord';
 export * from './model-configs';
 export * from './bot-settings';
+export * from './admin-settings';

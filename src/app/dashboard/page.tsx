@@ -19,6 +19,7 @@ import { ContainerStatus } from '@/components/ContainerStatus';
 import { CheckoutButton } from '@/components/CheckoutButton';
 import { LogoutButton } from '@/components/LogoutButton';
 import { UsageWidget } from '@/components/UsageWidget';
+import { DiagnoseButton } from '@/components/DiagnoseButton';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -57,6 +58,7 @@ export default async function DashboardPage() {
             🦞 CLAWER<span className="text-blue-600">.AI</span>
           </Link>
           <div className="flex items-center gap-4">
+            <DiagnoseButton variant="icon" />
             <span className="text-sm text-gray-600">
               {clerkUser?.emailAddresses[0]?.emailAddress}
             </span>

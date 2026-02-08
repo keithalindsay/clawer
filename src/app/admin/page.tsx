@@ -45,6 +45,9 @@ export default async function AdminPage() {
             <Link href="/admin/users" className="text-gray-300 hover:text-white">
               Users
             </Link>
+            <Link href="/admin/settings" className="text-gray-300 hover:text-white">
+              Settings
+            </Link>
             <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm">
               Exit Admin →
             </Link>
@@ -91,6 +94,12 @@ export default async function AdminPage() {
               className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               View All Users
+            </Link>
+            <Link
+              href="/admin/settings"
+              className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              ⚙️ System Settings
             </Link>
             <button
               className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
