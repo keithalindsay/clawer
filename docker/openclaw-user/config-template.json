@@ -46,6 +46,17 @@
       }
     }
   },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true,
+        "apiKey": "searxng-local-proxy"
+      },
+      "fetch": {
+        "enabled": true
+      }
+    }
+  },
   "channels": {
     "whatsapp": {
       "dmPolicy": "open",
