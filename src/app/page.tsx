@@ -119,6 +119,12 @@ export default function Home() {
           </Link>
           <div className="flex items-center gap-4">
             <Link 
+              href="/use-cases" 
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Use Cases
+            </Link>
+            <Link 
               href="/sign-in" 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >

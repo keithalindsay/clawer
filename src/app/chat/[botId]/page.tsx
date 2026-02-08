@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { StarterPrompts } from '@/components/StarterPrompts';
 
 interface Message {
   id: string;
@@ -23,6 +24,15 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleSelectPrompt = (prompt: string) => {
+    setInput(prompt);
+    // Auto-submit after a brief delay so user can see what's being sent
+    setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) form.requestSubmit();
+    }, 100);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,16 +118,7 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {messages.length === 0 && (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4">👋</div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Welcome!
-              </h2>
-              <p className="mt-2 text-gray-600 max-w-md mx-auto">
-                Start a conversation with your AI assistant. 
-                Ask questions, get help with tasks, or just chat.
-              </p>
-            </div>
+            <StarterPrompts onSelectPrompt={handleSelectPrompt} />
           )}
 
           {messages.map((message) => (
