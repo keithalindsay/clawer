@@ -55,6 +55,9 @@ export const users = pgTable('users', {
   /** Container created timestamp */
   containerCreatedAt: timestamp('container_created_at'),
   
+  /** Gateway token for container API authentication */
+  gatewayToken: text('gateway_token'),
+  
   /** WhatsApp connected status */
   whatsappConnected: integer('whatsapp_connected').default(0),
   

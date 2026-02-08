@@ -5,6 +5,10 @@
  * typed methods for all container endpoints.
  */
 
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema/users';
+import { eq } from 'drizzle-orm';
+
 // Container host - defaults to localhost for same-server deployment
 const CONTAINER_HOST = process.env.CONTAINER_HOST || 'localhost';
 
@@ -17,23 +21,42 @@ export function getContainerApiUrl(containerPort: number): string {
 }
 
 /**
+ * Get gateway token for a user by container port
+ */
+async function getGatewayToken(containerPort: number): Promise<string | null> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.containerPort, containerPort),
+    columns: { gatewayToken: true },
+  });
+  return user?.gatewayToken || null;
+}
+
+/**
  * Make a request to a user's container
  */
 export async function containerRequest<T>(
   containerPort: number,
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  gatewayToken?: string
 ): Promise<{ data: T | null; error: string | null; status: number }> {
   const baseUrl = getContainerApiUrl(containerPort);
   const url = `${baseUrl}${path}`;
   
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options.headers as Record<string, string>,
+    };
+    
+    // Add authentication if token provided and not a health check
+    if (gatewayToken && !path.includes('/health') && !path.includes('/ready')) {
+      headers['Authorization'] = `Bearer ${gatewayToken}`;
+    }
+    
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
     
     const data = await response.json();
@@ -83,34 +106,48 @@ export interface HealthResponse {
 
 export const containerApi = {
   // Health check
-  health: (port: number) => 
-    containerRequest<HealthResponse>(port, '/api/health'),
+  health: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<HealthResponse>(port, '/api/health', {}, token || undefined);
+  },
   
-  ready: (port: number) =>
-    containerRequest<{ ready: boolean }>(port, '/ready'),
+  ready: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ ready: boolean }>(port, '/ready', {}, token || undefined);
+  },
   
   // WhatsApp
-  whatsappQR: (port: number) =>
-    containerRequest<WhatsAppQRResponse>(port, '/api/whatsapp/qr'),
+  whatsappQR: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<WhatsAppQRResponse>(port, '/api/whatsapp/qr', {}, token || undefined);
+  },
   
-  whatsappStatus: (port: number) =>
-    containerRequest<WhatsAppStatusResponse>(port, '/api/whatsapp/status'),
+  whatsappStatus: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<WhatsAppStatusResponse>(port, '/api/whatsapp/status', {}, token || undefined);
+  },
   
-  whatsappLink: (port: number) =>
-    containerRequest<WhatsAppQRResponse>(port, '/api/whatsapp/link', { method: 'POST' }),
+  whatsappLink: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<WhatsAppQRResponse>(port, '/api/whatsapp/link', { method: 'POST' }, token || undefined);
+  },
   
   // Telegram
-  telegramStatus: (port: number) =>
-    containerRequest<{ connected: boolean; username?: string }>(port, '/api/telegram/status'),
+  telegramStatus: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ connected: boolean; username?: string }>(port, '/api/telegram/status', {}, token || undefined);
+  },
   
-  telegramConnect: (port: number, botToken: string) =>
-    containerRequest<{ success: boolean }>(port, '/api/telegram/connect', {
+  telegramConnect: async (port: number, botToken: string) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ success: boolean }>(port, '/api/telegram/connect', {
       method: 'POST',
       body: JSON.stringify({ botToken }),
-    }),
+    }, token || undefined);
+  },
   
   // Chat
-  chat: (port: number, message: string, context?: string, settings?: {
+  chat: async (port: number, message: string, context?: string, settings?: {
     botName?: string;
     personality?: string;
     customInstructions?: string;
@@ -120,9 +157,11 @@ export const containerApi = {
     routingTier?: string;
     routingModel?: string;
     routingConfidence?: number;
-  }) =>
-    containerRequest<ChatResponse>(port, '/api/chat', {
+  }) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<ChatResponse>(port, '/api/chat', {
       method: 'POST',
       body: JSON.stringify({ message, context, settings }),
-    }),
+    }, token || undefined);
+  },
 };

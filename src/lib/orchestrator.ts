@@ -133,18 +133,24 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
       throw new Error('OPENAI_API_KEY not configured');
     }
     
+    // Generate unique gateway token for container API authentication
+    const gatewayToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
     // Create and start container
     // Port mapping: gateway on port, API server on port+1
+    // SECURITY: Bind to localhost only to prevent direct internet access
     const apiPort = port + 1;
     const createCmd = [
       'run -d',
       `--name ${containerName}`,
       `--memory=1g`,      // 1GB needed for openclaw commands
       `--cpus=1`,
-      `-p ${port}:8080`,  // Gateway (Control UI + WebSocket)
-      `-p ${apiPort}:8081`,  // API server (REST endpoints)
+      `-p 127.0.0.1:${port}:8080`,  // Gateway (Control UI + WebSocket) - localhost only
+      `-p 127.0.0.1:${apiPort}:8081`,  // API server (REST endpoints) - localhost only
       `-e OPENAI_API_KEY=${openaiApiKey}`,
-      `-e GATEWAY_TOKEN=$(openssl rand -hex 16)`,  // Auto-generate gateway token
+      `-e GATEWAY_TOKEN=${gatewayToken}`,  // Use generated token
       `-e USER_ID=${userId}`,
       `--restart=unless-stopped`,
       CONTAINER_IMAGE,
@@ -161,6 +167,7 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
         containerPort: port,
         containerStatus: 'running',
         containerCreatedAt: new Date(),
+        gatewayToken,
       })
       .where(eq(users.id, userId));
     

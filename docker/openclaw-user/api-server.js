@@ -200,6 +200,19 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${API_PORT}`);
   const path = url.pathname;
   
+  // SECURITY: Verify authentication for all /api/* routes except health checks
+  if (path.startsWith('/api/') && path !== '/api/health' && path !== '/api/status') {
+    const authHeader = req.headers['authorization'];
+    const expectedAuth = `Bearer ${GATEWAY_TOKEN}`;
+    
+    if (!authHeader || authHeader !== expectedAuth) {
+      console.warn('[api] Unauthorized request to', path, 'from', req.socket.remoteAddress);
+      res.writeHead(401);
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+  }
+  
   try {
     if (path === '/api/health' || path === '/health') {
       const result = await gatewayRequest('health');
