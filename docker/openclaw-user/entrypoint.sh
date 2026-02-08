@@ -24,6 +24,11 @@ sed -e "s/OPENAI_API_KEY_PLACEHOLDER/${OPENAI_API_KEY}/g" \
     /home/user/.openclaw/openclaw.json.template \
     > /home/user/.openclaw/openclaw.json
 
+# SECURITY: Remove sensitive env vars from process environment after config is written
+# This prevents them from being visible via 'docker inspect'
+unset OPENAI_API_KEY
+unset GATEWAY_TOKEN
+
 # Patch web_search to use local SearXNG proxy instead of Brave API
 SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}"
 PATCHED=0
