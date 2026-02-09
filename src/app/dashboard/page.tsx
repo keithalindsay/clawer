@@ -69,7 +69,7 @@ export default async function DashboardPage() {
 
   const isSubscribed = user?.stripeSubscriptionId !== null;
   const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
-  const FREE_MESSAGE_LIMIT = 50;
+  const FREE_MESSAGE_LIMIT = 200;
   const isFreeTrial = !isSubscribed;
   const hasFreeTrial = isFreeTrial && freeMessagesUsed < FREE_MESSAGE_LIMIT;
 

@@ -50,7 +50,7 @@ export async function GET() {
 
     const isSubscribed = user?.stripeSubscriptionId !== null;
     const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
-    const FREE_MESSAGE_LIMIT = 50;
+    const FREE_MESSAGE_LIMIT = 200;
     
     const profile = {
       id: userId,

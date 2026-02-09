@@ -13,8 +13,9 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   typescript: true,
 });
 
-// Price ID for $49/mo subscription
-export const PRICE_ID = process.env.STRIPE_PRICE_ID || 'price_1SxtZMKtZGLqQJF6DYKV6Cup';
+// Price IDs for subscriptions
+export const MONTHLY_PRICE_ID = process.env.STRIPE_PRICE_ID || 'price_1SxtZMKtZGLqQJF6DYKV6Cup';
+export const ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || 'price_1SxtZMKtZGLqQJF6DYKV6Cup'; // Fallback to monthly until configured
 
 /**
  * Create a Stripe Checkout session for subscription
@@ -24,18 +25,22 @@ export async function createCheckoutSession({
   userEmail,
   successUrl,
   cancelUrl,
+  plan = 'monthly',
 }: {
   userId: string;
   userEmail: string;
   successUrl: string;
   cancelUrl: string;
+  plan?: 'monthly' | 'annual';
 }): Promise<Stripe.Checkout.Session> {
+  const priceId = plan === 'annual' ? ANNUAL_PRICE_ID : MONTHLY_PRICE_ID;
+  
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [
       {
-        price: PRICE_ID,
+        price: priceId,
         quantity: 1,
       },
     ],
@@ -46,10 +51,12 @@ export async function createCheckoutSession({
     subscription_data: {
       metadata: {
         userId,
+        plan,
       },
     },
     metadata: {
       userId,
+      plan,
     },
   });
 

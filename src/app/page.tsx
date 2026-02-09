@@ -119,7 +119,7 @@ export default function Home() {
               href="/sign-up"
               className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/25"
             >
-              Start Free — 50 Messages
+              Start Free — 200 Messages
             </Link>
             <p className="text-sm text-gray-500">
               No credit card required. Works in 60 seconds.
@@ -415,7 +415,7 @@ export default function Home() {
               {
                 step: "1",
                 title: "Create your account",
-                desc: "Sign up with email. 50 free messages to try it out.",
+                desc: "Sign up with email. 200 free messages to try it out.",
               },
               {
                 step: "2",

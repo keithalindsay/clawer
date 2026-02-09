@@ -16,7 +16,7 @@ export function FreeTrialBanner({
   const percentage = Math.min(100, (freeMessagesUsed / freeMessageLimit) * 100);
   const [showModal, setShowModal] = useState(false);
 
-  // Show full-screen modal at 50 messages
+  // Show full-screen modal when messages exhausted
   useEffect(() => {
     if (remaining === 0) {
       setShowModal(true);

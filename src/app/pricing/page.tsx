@@ -1,135 +1,15 @@
 /**
  * CLAWER.AI Pricing Page
  *
- * Three tiers: Free (trial), Pro ($49/mo), Enterprise (contact us)
+ * Three tiers: Free (trial), Pro ($49/mo or $39/mo annual), Enterprise (contact us)
  * Comparison table + FAQ section
+ * Annual pricing with 20% discount
  */
 
+"use client";
+
 import Link from "next/link";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Pricing - CLAWER.AI",
-  description:
-    "Simple, transparent pricing. Start free, upgrade when you're ready. AI assistants for WhatsApp, Telegram, Slack, and more.",
-};
-
-/* ------------------------------------------------------------------ */
-/*  Data                                                               */
-/* ------------------------------------------------------------------ */
-
-const TIERS = [
-  {
-    name: "Free",
-    badge: "Trial",
-    price: "$0",
-    period: "/forever",
-    description: "Try it out — no credit card required.",
-    features: [
-      "50 messages per month",
-      "Web chat only",
-      "1 AI model (GPT-4o)",
-      "Basic email assistant",
-      "Community support",
-    ],
-    cta: "Start Free",
-    ctaHref: "/sign-up",
-    highlighted: false,
-    ctaStyle:
-      "border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600",
-  },
-  {
-    name: "Pro",
-    badge: "Most Popular",
-    price: "$49",
-    period: "/month",
-    description: "Everything you need. Cancel anytime.",
-    features: [
-      "Unlimited messages",
-      "WhatsApp + Telegram + Slack",
-      "Smart model routing",
-      "All 12 AI assistants",
-      "Gmail & Calendar sync",
-      "Priority support (real humans)",
-      "99.9% uptime guarantee",
-    ],
-    cta: "Get Started →",
-    ctaHref: "/api/stripe/checkout",
-    highlighted: true,
-    ctaStyle: "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25",
-  },
-  {
-    name: "Enterprise",
-    badge: "Custom",
-    price: "Custom",
-    period: "",
-    description: "For teams that need more control.",
-    features: [
-      "Everything in Pro",
-      "Custom AI models",
-      "Full API access",
-      "Dedicated instance",
-      "SLA & uptime guarantee",
-      "Team management & SSO",
-      "Onboarding & training",
-    ],
-    cta: "Contact Us",
-    ctaHref: "mailto:hello@clawer.ai",
-    highlighted: false,
-    ctaStyle:
-      "border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600",
-  },
-] as const;
-
-const COMPARISON_FEATURES = [
-  { name: "Monthly messages", free: "50", pro: "Unlimited", enterprise: "Unlimited" },
-  { name: "Channels", free: "Web only", pro: "WhatsApp, Telegram, Slack", enterprise: "All + custom" },
-  { name: "AI models", free: "1 (GPT-4o)", pro: "Smart routing (4+ models)", enterprise: "Custom models" },
-  { name: "Assistants", free: "1 (email)", pro: "All 12", enterprise: "All + custom" },
-  { name: "Gmail & Calendar", free: false, pro: true, enterprise: true },
-  { name: "Smart model routing", free: false, pro: true, enterprise: true },
-  { name: "API access", free: false, pro: false, enterprise: true },
-  { name: "Dedicated instance", free: false, pro: false, enterprise: true },
-  { name: "Team management & SSO", free: false, pro: false, enterprise: true },
-  { name: "SLA guarantee", free: false, pro: false, enterprise: true },
-  { name: "Priority support", free: false, pro: true, enterprise: true },
-  { name: "Custom onboarding", free: false, pro: false, enterprise: true },
-] as const;
-
-const FAQS = [
-  {
-    q: "What happens when my free 50 messages run out?",
-    a: "You can keep using Clawer on the free plan — the counter resets every month. Or upgrade to Pro for unlimited messages and access to WhatsApp, Telegram, and Slack.",
-  },
-  {
-    q: "Can I switch plans later?",
-    a: "Absolutely. Upgrade, downgrade, or cancel anytime from your dashboard. No lock-in contracts, no hidden fees.",
-  },
-  {
-    q: "What's 'smart model routing'?",
-    a: "Pro uses the best AI model for each task automatically — faster models for quick answers, more powerful models for complex work. You get better results without thinking about it.",
-  },
-  {
-    q: "Do I need a credit card to start?",
-    a: "Nope. The free plan is completely free — no credit card required. You only pay when you upgrade to Pro.",
-  },
-  {
-    q: "What channels does Pro include?",
-    a: "WhatsApp, Telegram, Slack, Discord, iMessage, and Web Chat — all included at no extra cost. Most competitors charge extra for WhatsApp.",
-  },
-  {
-    q: "What does the Enterprise plan include?",
-    a: "Custom AI models, full API access, a dedicated instance, SLA guarantees, team management with SSO, and a dedicated onboarding specialist. Email us at hello@clawer.ai and we'll build a plan for your team.",
-  },
-  {
-    q: "Is there a money-back guarantee?",
-    a: "Yes — 7-day money-back guarantee on Pro, no questions asked. If it's not for you, we'll refund you completely.",
-  },
-  {
-    q: "Is my data safe?",
-    a: "Yes. Conversations are encrypted end-to-end. We never train AI on your data. Enterprise customers get a dedicated instance with full data isolation.",
-  },
-];
+import { useState } from "react";
 
 /* ------------------------------------------------------------------ */
 /*  Helper: render a comparison cell value                             */
@@ -146,6 +26,126 @@ function CellValue({ value }: { value: string | boolean }) {
 /* ------------------------------------------------------------------ */
 
 export default function PricingPage() {
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+
+  const TIERS = [
+    {
+      name: "Free",
+      badge: "Trial",
+      price: "$0",
+      period: "/forever",
+      description: "Try it out — no credit card required.",
+      features: [
+        "200 messages per month",
+        "Web chat only",
+        "1 AI model (GPT-4o)",
+        "Basic email assistant",
+        "Community support",
+      ],
+      cta: "Start Free",
+      ctaHref: "/sign-up",
+      highlighted: false,
+      ctaStyle:
+        "border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600",
+    },
+    {
+      name: "Pro",
+      badge: "Most Popular",
+      price: billingPeriod === "monthly" ? "$49" : "$39",
+      period: billingPeriod === "monthly" ? "/month" : "/month",
+      billingNote: billingPeriod === "annual" ? "Billed annually ($468/yr)" : undefined,
+      description: "Everything you need. Cancel anytime.",
+      features: [
+        "Unlimited messages",
+        "WhatsApp + Telegram + Slack",
+        "Smart model routing",
+        "All 12 AI assistants",
+        "Gmail & Calendar sync",
+        "Priority support (real humans)",
+        "99.9% uptime guarantee",
+      ],
+      cta: "Get Started →",
+      ctaHref: billingPeriod === "monthly" ? "/api/stripe/checkout?plan=monthly" : "/api/stripe/checkout?plan=annual",
+      highlighted: true,
+      ctaStyle: "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25",
+    },
+    {
+      name: "Enterprise",
+      badge: "Custom",
+      price: "Custom",
+      period: "",
+      description: "For teams that need more control.",
+      features: [
+        "Everything in Pro",
+        "Custom AI models",
+        "Full API access",
+        "Dedicated instance",
+        "SLA & uptime guarantee",
+        "Team management & SSO",
+        "Onboarding & training",
+      ],
+      cta: "Contact Us",
+      ctaHref: "mailto:hello@clawer.ai",
+      highlighted: false,
+      ctaStyle:
+        "border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600",
+    },
+  ] as const;
+
+  const COMPARISON_FEATURES = [
+    { name: "Monthly messages", free: "200", pro: "Unlimited", enterprise: "Unlimited" },
+    { name: "Channels", free: "Web only", pro: "WhatsApp, Telegram, Slack", enterprise: "All + custom" },
+    { name: "AI models", free: "1 (GPT-4o)", pro: "Smart routing (4+ models)", enterprise: "Custom models" },
+    { name: "Assistants", free: "1 (email)", pro: "All 12", enterprise: "All + custom" },
+    { name: "Gmail & Calendar", free: false, pro: true, enterprise: true },
+    { name: "Smart model routing", free: false, pro: true, enterprise: true },
+    { name: "API access", free: false, pro: false, enterprise: true },
+    { name: "Dedicated instance", free: false, pro: false, enterprise: true },
+    { name: "Team management & SSO", free: false, pro: false, enterprise: true },
+    { name: "SLA guarantee", free: false, pro: false, enterprise: true },
+    { name: "Priority support", free: false, pro: true, enterprise: true },
+    { name: "Custom onboarding", free: false, pro: false, enterprise: true },
+  ] as const;
+
+  const FAQS = [
+    {
+      q: "What happens when my free 200 messages run out?",
+      a: "You can keep using Clawer on the free plan — the counter resets every month. Or upgrade to Pro for unlimited messages and access to WhatsApp, Telegram, and Slack.",
+    },
+    {
+      q: "Can I switch plans later?",
+      a: "Absolutely. Upgrade, downgrade, or cancel anytime from your dashboard. No lock-in contracts, no hidden fees.",
+    },
+    {
+      q: "What's the difference between monthly and annual billing?",
+      a: "Annual billing saves you 20% — $39/month instead of $49/month, billed as $468 annually. You get the exact same features, just at a lower price.",
+    },
+    {
+      q: "What's 'smart model routing'?",
+      a: "Pro uses the best AI model for each task automatically — faster models for quick answers, more powerful models for complex work. You get better results without thinking about it.",
+    },
+    {
+      q: "Do I need a credit card to start?",
+      a: "Nope. The free plan is completely free — no credit card required. You only pay when you upgrade to Pro.",
+    },
+    {
+      q: "What channels does Pro include?",
+      a: "WhatsApp, Telegram, Slack, Discord, iMessage, and Web Chat — all included at no extra cost. Most competitors charge extra for WhatsApp.",
+    },
+    {
+      q: "What does the Enterprise plan include?",
+      a: "Custom AI models, full API access, a dedicated instance, SLA guarantees, team management with SSO, and a dedicated onboarding specialist. Email us at hello@clawer.ai and we'll build a plan for your team.",
+    },
+    {
+      q: "Is there a money-back guarantee?",
+      a: "Yes — 7-day money-back guarantee on Pro, no questions asked. If it's not for you, we'll refund you completely.",
+    },
+    {
+      q: "Is my data safe?",
+      a: "Yes. Conversations are encrypted end-to-end. We never train AI on your data. Enterprise customers get a dedicated instance with full data isolation.",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -186,6 +186,33 @@ export default function PricingPage() {
           <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
             Start free. Upgrade when you&apos;re ready. No surprises.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="mt-8 inline-flex items-center gap-3 bg-gray-100 p-1.5 rounded-full">
+            <button
+              onClick={() => setBillingPeriod("monthly")}
+              className={`px-6 py-2.5 rounded-full font-medium transition-all ${
+                billingPeriod === "monthly"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod("annual")}
+              className={`px-6 py-2.5 rounded-full font-medium transition-all relative ${
+                billingPeriod === "annual"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Annual
+              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                Save 20%
+              </span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -222,6 +249,10 @@ export default function PricingPage() {
                   <span className="ml-1 text-lg text-gray-500">{tier.period}</span>
                 )}
               </div>
+
+              {tier.billingNote && (
+                <p className="mt-1 text-sm text-gray-500">{tier.billingNote}</p>
+              )}
 
               <p className="mt-2 text-gray-600 text-sm">{tier.description}</p>
 
@@ -332,7 +363,7 @@ export default function PricingPage() {
             Ready to get started?
           </h2>
           <p className="mt-4 text-blue-100 text-lg">
-            50 free messages. No credit card. Upgrade whenever you want.
+            200 free messages. No credit card. Upgrade whenever you want.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link

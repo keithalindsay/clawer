@@ -76,7 +76,7 @@ export const users = pgTable('users', {
   /** Telegram connected status */
   telegramConnected: integer('telegram_connected').default(0),
   
-  /** Free trial messages used (out of 50, no credit card required) */
+  /** Free trial messages used (out of 200, no credit card required) */
   freeMessagesUsed: integer('free_messages_used').notNull().default(0),
   
   /** Monthly message count */

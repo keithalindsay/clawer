@@ -186,11 +186,15 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [dismissedUpgradePrompts, setDismissedUpgradePrompts] = useState<Set<number>>(new Set());
   const [isFreeTier, setIsFreeTier] = useState(true); // TODO: Get from user context
+  const [showResumeIndicator, setShowResumeIndicator] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const [botSettings, setBotSettings] = useState<BotSettingsData>({
     botName: 'Assistant',
     botAvatar: '🤖',
@@ -203,6 +207,15 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Check speech recognition support
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      setSpeechSupported(!!SpeechRecognition);
+    }
+  }, []);
 
   // Load messages and settings on mount
   useEffect(() => {
@@ -229,14 +242,19 @@ export default function ChatPage() {
         if (messagesRes.ok) {
           const data = await messagesRes.json();
           setConversationId(data.conversationId);
-          setMessages(
-            data.messages.map((m: any) => ({
-              id: m.id,
-              role: m.role as 'user' | 'assistant',
-              content: m.content,
-              timestamp: new Date(m.timestamp),
-            }))
-          );
+          const loadedMessages = data.messages.map((m: any) => ({
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            timestamp: new Date(m.timestamp),
+          }));
+          setMessages(loadedMessages);
+          
+          // Show resume indicator if there are previous messages
+          if (loadedMessages.length > 0) {
+            setShowResumeIndicator(true);
+            setTimeout(() => setShowResumeIndicator(false), 5000);
+          }
         }
 
         if (userRes.ok) {
@@ -331,6 +349,136 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Failed to clear history:', error);
     }
+  };
+
+  // Export conversation as markdown
+  const exportConversation = () => {
+    if (messages.length === 0) return;
+
+    const markdown = messages.map(msg => {
+      const role = msg.role === 'user' ? 'User' : 'Assistant';
+      const timestamp = msg.timestamp.toLocaleString();
+      return `**${role}:** (${timestamp})\n${msg.content}\n`;
+    }).join('\n---\n\n');
+
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Copy full message text
+  const copyMessage = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  };
+
+  // Regenerate last response
+  const regenerateResponse = async () => {
+    if (messages.length < 2 || regenerating) return;
+    
+    // Find last user message
+    let lastUserMessage = null;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        lastUserMessage = messages[i];
+        break;
+      }
+    }
+    
+    if (!lastUserMessage) return;
+    
+    setRegenerating(true);
+    
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: lastUserMessage.content,
+          settings: botSettings,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.content) {
+        // Replace last assistant message
+        setMessages(prev => {
+          const newMessages = [...prev];
+          for (let i = newMessages.length - 1; i >= 0; i--) {
+            if (newMessages[i].role === 'assistant') {
+              newMessages[i] = {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: data.content,
+                timestamp: new Date(),
+                routing: data.routing,
+              };
+              break;
+            }
+          }
+          return newMessages;
+        });
+        saveMessage('assistant', data.content);
+      }
+    } catch (error) {
+      console.error('Failed to regenerate:', error);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  // Voice input
+  const startRecording = () => {
+    if (!speechSupported || isRecording) return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => prev + (prev ? ' ' : '') + transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsRecording(false);
   };
 
   const sendMessage = async (e?: React.FormEvent) => {
@@ -454,16 +602,28 @@ export default function ChatPage() {
 
           <div className="flex items-center gap-1">
             {messages.length > 0 && (
-              <button
-                onClick={clearHistory}
-                className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Clear history"
-                aria-label="Clear history"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-              </button>
+              <>
+                <button
+                  onClick={exportConversation}
+                  className="text-gray-400 hover:text-blue-500 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Export conversation"
+                  aria-label="Export conversation"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                </button>
+                <button
+                  onClick={clearHistory}
+                  className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Clear history"
+                  aria-label="Clear history"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </>
             )}
             <button
               onClick={() => setShowSettings(true)}
@@ -479,6 +639,13 @@ export default function ChatPage() {
           </div>
         </div>
       </header>
+
+      {/* ─── Resume Indicator ─── */}
+      {showResumeIndicator && (
+        <div className="bg-blue-50 border-b border-blue-100 py-2 px-4 text-center">
+          <p className="text-sm text-blue-700">💬 Continuing from earlier...</p>
+        </div>
+      )}
 
       {/* ─── Messages ─── */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overscroll-contain">
@@ -504,22 +671,35 @@ export default function ChatPage() {
                 <div className={`max-w-[85%] sm:max-w-[75%] ${message.role === 'user' ? 'order-1' : ''}`}>
                   {/* Bubble */}
                   <div
-                    className={`rounded-2xl px-4 py-2.5 ${
+                    className={`rounded-2xl px-4 py-2.5 relative group ${
                       message.role === 'user'
                         ? 'bg-blue-600 text-white rounded-br-md'
                         : 'bg-white border border-gray-200 text-gray-900 rounded-bl-md shadow-sm'
                     }`}
                   >
                     {message.role === 'assistant' ? (
-                      <div className="prose-sm max-w-none [&_pre]:!m-0">
-                        <MarkdownContent content={message.content} />
-                      </div>
+                      <>
+                        <div className="prose-sm max-w-none [&_pre]:!m-0">
+                          <MarkdownContent content={message.content} />
+                        </div>
+                        {/* Copy button on every AI message */}
+                        <button
+                          onClick={() => copyMessage(message.content)}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600"
+                          title="Copy message"
+                          aria-label="Copy message"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                          </svg>
+                        </button>
+                      </>
                     ) : (
                       <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</p>
                     )}
                   </div>
 
-                  {/* Meta line: timestamp + tier badge */}
+                  {/* Meta line: timestamp + tier badge + regenerate */}
                   <div
                     className={`flex items-center gap-2 mt-1 px-1 ${
                       message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -535,6 +715,18 @@ export default function ChatPage() {
                       >
                         {getTierBadge(message.routing.tier).emoji} {getTierBadge(message.routing.tier).label}
                       </span>
+                    )}
+                    {/* Regenerate button on last AI message */}
+                    {message.role === 'assistant' && index === messages.length - 1 && !loading && (
+                      <button
+                        onClick={regenerateResponse}
+                        disabled={regenerating}
+                        className="text-[11px] text-gray-400 hover:text-blue-600 transition-colors disabled:text-gray-300 flex items-center gap-1"
+                        title="Regenerate response"
+                      >
+                        <span className={regenerating ? 'animate-spin' : ''}>🔄</span>
+                        {regenerating ? 'Regenerating...' : 'Regenerate'}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -610,6 +802,24 @@ export default function ChatPage() {
                   {charCount}/{MAX_CHARS}
                 </span>
               )}
+              {/* Voice input button */}
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all flex-shrink-0 ${
+                    isRecording 
+                      ? 'bg-red-500 text-white animate-pulse' 
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                  title={isRecording ? 'Stop recording' : 'Voice input'}
+                  aria-label={isRecording ? 'Stop recording' : 'Voice input'}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={!input.trim() || loading}
@@ -624,6 +834,7 @@ export default function ChatPage() {
           </div>
           <p className="text-center text-[11px] text-gray-300 mt-1.5">
             <kbd className="font-sans">Enter</kbd> to send · <kbd className="font-sans">Shift+Enter</kbd> for new line
+            {speechSupported && <> · <kbd className="font-sans">🎤</kbd> for voice input</>}
           </p>
         </form>
       </div>
