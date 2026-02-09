@@ -12,22 +12,13 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { botName, botEmoji, useCase, communicationStyle, channels } = body;
+  const { botName, botEmoji, communicationStyle, channels } = body;
 
   // Map communication style to personality description
   const personalityMap: Record<string, string> = {
     casual: 'friendly, relaxed, uses emojis, approachable',
     professional: 'clear, polished, business-appropriate, concise',
     technical: 'precise, detailed, technical, no fluff',
-  };
-
-  // Map use case to custom instructions
-  const useCaseInstructionsMap: Record<string, string> = {
-    personal: 'Focus on personal productivity, life management, daily tasks, and reminders.',
-    business: 'Focus on business communication, email drafts, reports, and data analysis.',
-    support: 'Focus on customer support workflows, FAQ handling, and professional inquiry responses.',
-    creative: 'Focus on creative writing, blog posts, copywriting, and storytelling.',
-    code: 'Focus on coding assistance, debugging, code review, and technical explanations.',
   };
 
   try {
@@ -40,9 +31,9 @@ export async function POST(request: NextRequest) {
       botName: botName || 'Assistant',
       botAvatar: botEmoji || '🤖',
       personality: personalityMap[communicationStyle] || 'helpful and friendly',
-      communicationStyle: communicationStyle || 'balanced',
-      customInstructions: useCaseInstructionsMap[useCase] || '',
-      additionalSettings: { useCase, channels: channels || [] },
+      communicationStyle: communicationStyle || 'casual',
+      customInstructions: '', // Let the bot figure out use cases from conversation
+      additionalSettings: { channels: channels || [] },
       updatedAt: new Date(),
     };
 

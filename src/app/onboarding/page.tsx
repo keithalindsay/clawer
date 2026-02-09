@@ -17,12 +17,13 @@ export default function OnboardingPage() {
       console.error("Failed to save onboarding preferences:", e);
     }
 
-    // Redirect to dashboard with welcome flag
-    router.push("/dashboard?welcome=1");
+    // Redirect directly to chat with welcome flag — user gets to value IMMEDIATELY
+    router.push("/chat/assistant?welcome=1");
   };
 
   const handleSkip = () => {
-    router.push("/dashboard");
+    // Skip onboarding, use defaults, go straight to chat
+    router.push("/chat/assistant?welcome=1");
   };
 
   return (
