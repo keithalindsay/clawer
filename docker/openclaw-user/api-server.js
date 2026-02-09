@@ -298,6 +298,23 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200);
       res.end(JSON.stringify(waHealth));
       
+    } else if (path === '/api/whatsapp/disconnect' && req.method === 'POST') {
+      // Disconnect WhatsApp
+      try {
+        const logoutResult = await gatewayRequest('web.logout', {
+          timeoutMs: 10000
+        });
+        res.writeHead(200);
+        res.end(JSON.stringify({ 
+          success: logoutResult.ok,
+          message: logoutResult.ok ? 'WhatsApp disconnected' : 'Failed to disconnect'
+        }));
+      } catch (e) {
+        console.error('[api] web.logout error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
     } else if (path === '/api/telegram/status') {
       const health = await gatewayRequest('health');
       const tgHealth = health.payload?.channels?.telegram || {};
@@ -358,6 +375,19 @@ const server = http.createServer(async (req, res) => {
       }
       console.log('[api] message:', message);
       
+      // Extract routing info from settings
+      const routingModel = settings?.model;
+      const routingTier = settings?.tier;
+      const routingConfidence = settings?.confidence;
+      
+      if (routingTier) {
+        console.log('[api] Smart routing:', {
+          tier: routingTier,
+          model: routingModel,
+          confidence: routingConfidence
+        });
+      }
+      
       // Build personalized system prompt if settings provided
       let systemPrompt = '';
       if (settings) {
@@ -402,12 +432,20 @@ const server = http.createServer(async (req, res) => {
           ? `[System: ${systemPrompt}]\n\nUser: ${message}`
           : message;
         
-        const chatResult = await gatewayRequest('chat.send', {
+        // Prepare chat params with optional model override
+        const chatParams = {
           message: fullMessage,
           sessionKey: sessionKey,
           idempotencyKey: idempotencyKey,
           timeoutMs: 60000  // Wait up to 60 seconds for response
-        });
+        };
+        
+        // Add model override if provided by smart router
+        if (routingModel) {
+          chatParams.model = routingModel;
+        }
+        
+        const chatResult = await gatewayRequest('chat.send', chatParams);
         
         console.log('[api] chat.send response:', JSON.stringify(chatResult, null, 2));
         if (chatResult.ok) {
@@ -418,8 +456,19 @@ const server = http.createServer(async (req, res) => {
             || chatResult.payload?.response
             || (typeof chatResult.payload === 'string' ? chatResult.payload : null)
             || 'Response received';
+          
+          // Build response with routing metadata if available
+          const response = { content };
+          if (routingTier) {
+            response.routing = {
+              tier: routingTier,
+              model: routingModel,
+              confidence: routingConfidence,
+            };
+          }
+          
           res.writeHead(200);
-          res.end(JSON.stringify({ content }));
+          res.end(JSON.stringify(response));
         } else {
           console.log('[api] chat.send error:', chatResult.error);
           res.writeHead(200);

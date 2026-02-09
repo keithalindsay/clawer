@@ -11,7 +11,7 @@ import { stripe } from '@/lib/stripe';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
-import { provisionContainer, stopContainer } from '@/lib/orchestrator';
+import { provisionContainer, stopContainer } from '@/lib/provisioner';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -73,7 +73,14 @@ export async function POST(request: NextRequest) {
 
           // Provision Docker container for the user
           try {
-            const result = await provisionContainer(userId);
+            // Get user's team template preference
+            const userRecord = await db.query.users.findFirst({
+              where: eq(users.id, userId),
+              columns: { teamTemplate: true },
+            });
+            const teamTemplate = userRecord?.teamTemplate || 'lifeos';
+            
+            const result = await provisionContainer(userId, teamTemplate);
             if (result.success) {
               console.log(`🐳 Container provisioned for user ${userId} on port ${result.port}`);
             } else {

@@ -20,14 +20,26 @@ export GATEWAY_TOKEN
 
 # Copy template and substitute placeholders
 sed -e "s/OPENAI_API_KEY_PLACEHOLDER/${OPENAI_API_KEY}/g" \
+    -e "s|GEMINI_API_KEY_PLACEHOLDER|${GEMINI_API_KEY:-not-set}|g" \
     -e "s/GATEWAY_TOKEN_PLACEHOLDER/${GATEWAY_TOKEN}/g" \
     /home/user/.openclaw/openclaw.json.template \
     > /home/user/.openclaw/openclaw.json
 
-# SECURITY: Remove sensitive env vars from process environment after config is written
-# This prevents them from being visible via 'docker inspect'
+# If no Gemini key, remove the gemini provider block
+if [ -z "$GEMINI_API_KEY" ]; then
+    echo "No GEMINI_API_KEY set, removing Gemini provider from config"
+    node -e "
+      const fs = require('fs');
+      const c = JSON.parse(fs.readFileSync('/home/user/.openclaw/openclaw.json','utf8'));
+      delete c.models.providers.gemini;
+      fs.writeFileSync('/home/user/.openclaw/openclaw.json', JSON.stringify(c, null, 2));
+    "
+fi
+
+# SECURITY: Remove provider API keys from env (prevents docker inspect leak)
+# Keep GATEWAY_TOKEN — the api-server needs it to authenticate with the gateway
 unset OPENAI_API_KEY
-unset GATEWAY_TOKEN
+unset GEMINI_API_KEY
 
 # Copy AI team template files into workspace if TEAM_TEMPLATE is set
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
@@ -37,14 +49,11 @@ mkdir -p "$WORKSPACE"
 
 if [ -d "$TEAM_DIR" ]; then
     echo "Installing team template: ${TEAM_TEMPLATE}"
-    # Copy AGENTS.md (team routing rules)
     cp "$TEAM_DIR/AGENTS.md" "$WORKSPACE/AGENTS.md"
-    # Copy member files if they exist
     if [ -d "$TEAM_DIR/members" ]; then
         mkdir -p "$WORKSPACE/members"
         cp -r "$TEAM_DIR/members/"* "$WORKSPACE/members/" 2>/dev/null || true
     fi
-    # Copy templates if they exist
     if [ -d "$TEAM_DIR/templates" ]; then
         mkdir -p "$WORKSPACE/templates"
         cp -r "$TEAM_DIR/templates/"* "$WORKSPACE/templates/" 2>/dev/null || true
@@ -76,5 +85,5 @@ echo "API server started (PID: $API_PID)"
 # Cleanup on exit
 trap "kill $API_PID 2>/dev/null" EXIT
 
-# Start OpenClaw gateway in foreground mode (not as a systemd service)
-exec openclaw gateway --port 8080
+# Start OpenClaw gateway in foreground
+exec openclaw gateway

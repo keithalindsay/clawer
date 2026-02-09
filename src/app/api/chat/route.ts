@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
+import { routeRequest } from '@/lib/router';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -64,6 +65,30 @@ export async function POST(req: NextRequest) {
       responseLength: settings.responseLength || 'balanced',
     } : undefined;
 
+    // Build system prompt for routing classification
+    let systemPrompt = '';
+    if (botSettings) {
+      const parts = [];
+      if (botSettings.personality) parts.push(botSettings.personality);
+      if (botSettings.customInstructions) parts.push(botSettings.customInstructions);
+      systemPrompt = parts.join('. ');
+    }
+
+    // Classify request using smart router
+    const routing = routeRequest({
+      prompt: message,
+      systemPrompt,
+      userOrchestratorModel: 'openai/gpt-4o-mini',
+      userWorkerModel: 'openai/gpt-4o-mini',  // Both using same model for now
+    });
+
+    console.log('[chat] Smart routing decision:', {
+      tier: routing.tier,
+      model: routing.model,
+      confidence: routing.confidence,
+      signals: routing.signals.slice(0, 3),  // Log first 3 signals
+    });
+
     // Route message to user's OpenClaw container
     console.log('[chat] Routing to container:', {
       userId,
@@ -75,7 +100,12 @@ export async function POST(req: NextRequest) {
       user.containerPort,
       message,
       context,
-      botSettings
+      {
+        ...botSettings,
+        model: routing.model,
+        tier: routing.tier,
+        confidence: routing.confidence,
+      }
     );
 
     if (result.error) {
@@ -88,6 +118,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       content: result.data?.content || 'No response from assistant',
+      routing: {
+        tier: routing.tier,
+        model: routing.model,
+        confidence: routing.confidence,
+      },
     });
 
   } catch (error: any) {

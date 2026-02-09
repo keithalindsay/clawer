@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
-import { provisionContainer } from '@/lib/orchestrator';
+import { provisionContainer } from '@/lib/provisioner';
 
 export async function GET() {
   const { userId } = await auth();
@@ -14,15 +14,16 @@ export async function GET() {
   }
 
   try {
-    // Get user's container port
+    // Get user's container port and template
     let user = await db.query.users.findFirst({
       where: eq(users.id, userId),
-      columns: { containerPort: true, containerId: true },
+      columns: { containerPort: true, containerId: true, teamTemplate: true },
     });
 
     // Auto-provision container if not exists
     if (!user?.containerPort) {
-      const result = await provisionContainer(userId);
+      const teamTemplate = user?.teamTemplate || 'lifeos';
+      const result = await provisionContainer(userId, teamTemplate);
       if (!result.success) {
         return NextResponse.json(
           { error: result.error || 'Failed to provision container' },
@@ -33,7 +34,7 @@ export async function GET() {
       // Refresh user data
       user = await db.query.users.findFirst({
         where: eq(users.id, userId),
-        columns: { containerPort: true, containerId: true },
+        columns: { containerPort: true, containerId: true, teamTemplate: true },
       });
     }
 

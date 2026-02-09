@@ -17,15 +17,18 @@ export default function WhatsAppPage() {
   const [status, setStatus] = useState<WhatsAppStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   // Fetch QR code
   const fetchQR = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/container/whatsapp/qr');
       const data = await response.json();
       
       if (response.ok) {
         setStatus(data);
+        setError(null);
       } else {
         setError(data.error || 'Failed to fetch QR code');
       }
@@ -56,20 +59,65 @@ export default function WhatsAppPage() {
     }
   };
 
+  // Disconnect WhatsApp
+  const handleDisconnect = async () => {
+    if (!confirm('Are you sure you want to disconnect WhatsApp?')) {
+      return;
+    }
+    
+    setDisconnecting(true);
+    try {
+      const response = await fetch('/api/container/whatsapp/disconnect', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        setStatus({ linked: false });
+        // Refresh QR for reconnection
+        await fetchQR();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to disconnect');
+      }
+    } catch (err) {
+      setError('Failed to disconnect');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
   useEffect(() => {
     // Initial fetch
     fetchQR();
 
-    // Poll every 3 seconds
-    const interval = setInterval(async () => {
-      const connected = await pollStatus();
-      if (connected) {
-        clearInterval(interval);
+    let statusInterval: NodeJS.Timeout | null = null;
+    let qrRefreshInterval: NodeJS.Timeout | null = null;
+
+    // Poll status every 3 seconds (only if not connected)
+    statusInterval = setInterval(async () => {
+      if (!status?.linked) {
+        const connected = await pollStatus();
+        if (connected && statusInterval) {
+          clearInterval(statusInterval);
+          if (qrRefreshInterval) {
+            clearInterval(qrRefreshInterval);
+          }
+        }
       }
     }, 3000);
 
-    return () => clearInterval(interval);
-  }, []);
+    // Refresh QR every 30 seconds (only if not connected)
+    qrRefreshInterval = setInterval(() => {
+      if (!status?.linked) {
+        fetchQR();
+      }
+    }, 30000);
+
+    return () => {
+      if (statusInterval) clearInterval(statusInterval);
+      if (qrRefreshInterval) clearInterval(qrRefreshInterval);
+    };
+  }, [status?.linked]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -137,18 +185,27 @@ export default function WhatsAppPage() {
                 <p className="mt-4 text-gray-600">
                   You can now chat with your AI assistant via WhatsApp.
                 </p>
-                <Link
-                  href="/dashboard"
-                  className="mt-6 inline-block bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Return to Dashboard
-                </Link>
+                <div className="mt-6 flex gap-3 justify-center">
+                  <Link
+                    href="/dashboard"
+                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Return to Dashboard
+                  </Link>
+                  <button
+                    onClick={handleDisconnect}
+                    disabled={disconnecting}
+                    className="bg-red-50 text-red-600 border-2 border-red-200 px-6 py-3 rounded-full font-medium hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+                  </button>
+                </div>
               </div>
             )}
 
             {!loading && !error && status && !status.linked && status.qrDataUrl && (
               <div className="text-center">
-                <div className="inline-block bg-white p-4 rounded-xl border-2 border-gray-200">
+                <div className="inline-block bg-white p-4 rounded-xl border-2 border-gray-200 relative">
                   <img 
                     src={status.qrDataUrl} 
                     alt="WhatsApp QR Code" 
@@ -168,9 +225,10 @@ export default function WhatsAppPage() {
                   </ol>
                 </div>
 
-                <p className="mt-4 text-sm text-gray-500">
-                  Waiting for connection...
-                </p>
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>Waiting for connection... (QR refreshes every 30s)</span>
+                </div>
               </div>
             )}
 

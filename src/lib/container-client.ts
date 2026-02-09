@@ -16,8 +16,8 @@ const CONTAINER_HOST = process.env.CONTAINER_HOST || 'localhost';
  * Get the base URL for a user's container API
  */
 export function getContainerApiUrl(containerPort: number): string {
-  const apiPort = containerPort + 1; // API server is gateway port + 1
-  return `http://${CONTAINER_HOST}:${apiPort}`;
+  // containerPort in DB is the exposed API server port directly
+  return `http://${CONTAINER_HOST}:${containerPort}`;
 }
 
 /**
@@ -132,6 +132,11 @@ export const containerApi = {
     return containerRequest<WhatsAppQRResponse>(port, '/api/whatsapp/link', { method: 'POST' }, token || undefined);
   },
   
+  whatsappDisconnect: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ success: boolean }>(port, '/api/whatsapp/disconnect', { method: 'POST' }, token || undefined);
+  },
+  
   // Telegram
   telegramStatus: async (port: number) => {
     const token = await getGatewayToken(port);
@@ -154,9 +159,9 @@ export const containerApi = {
     communicationStyle?: string;
     responseLength?: string;
     // Routing info
-    routingTier?: string;
-    routingModel?: string;
-    routingConfidence?: number;
+    model?: string;
+    tier?: string;
+    confidence?: number;
   }) => {
     const token = await getGatewayToken(port);
     return containerRequest<ChatResponse>(port, '/api/chat', {

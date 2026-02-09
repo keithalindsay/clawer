@@ -10,6 +10,22 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  routing?: {
+    tier: string;
+    model: string;
+    confidence: number;
+  };
+}
+
+// Helper to get tier badge
+function getTierBadge(tier: string) {
+  const badges: Record<string, { emoji: string; label: string; color: string }> = {
+    SIMPLE: { emoji: '⚡', label: 'SIMPLE', color: 'bg-green-100 text-green-700' },
+    MEDIUM: { emoji: '🔧', label: 'MEDIUM', color: 'bg-blue-100 text-blue-700' },
+    COMPLEX: { emoji: '🧠', label: 'COMPLEX', color: 'bg-purple-100 text-purple-700' },
+    REASONING: { emoji: '🎯', label: 'REASONING', color: 'bg-orange-100 text-orange-700' },
+  };
+  return badges[tier] || badges.MEDIUM;
 }
 
 export default function ChatPage() {
@@ -176,6 +192,7 @@ export default function ChatPage() {
           role: 'assistant',
           content: data.content,
           timestamp: new Date(),
+          routing: data.routing,  // Include routing metadata
         };
         setMessages(prev => [...prev, assistantMessage]);
         
@@ -281,6 +298,19 @@ export default function ChatPage() {
                     : 'bg-white border border-gray-200 text-gray-900'
                 }`}
               >
+                {message.role === 'assistant' && message.routing && (
+                  <div className="mb-2">
+                    <span 
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                        getTierBadge(message.routing.tier).color
+                      }`}
+                      title={`Model: ${message.routing.model} | Confidence: ${(message.routing.confidence * 100).toFixed(0)}%`}
+                    >
+                      <span>{getTierBadge(message.routing.tier).emoji}</span>
+                      <span>{getTierBadge(message.routing.tier).label}</span>
+                    </span>
+                  </div>
+                )}
                 <p className="whitespace-pre-wrap">{message.content}</p>
                 <p
                   className={`text-xs mt-1 ${

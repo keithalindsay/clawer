@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { restartContainer } from '@/lib/orchestrator';
+import { restartContainer } from '@/lib/provisioner';
 
 export async function POST() {
   const { userId } = await auth();

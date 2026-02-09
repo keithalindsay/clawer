@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { restartContainer } from '@/lib/orchestrator';
+import { restartContainer } from '@/lib/provisioner';
 
 // Admin user check
 const ADMIN_USER_IDS = [process.env.ADMIN_USER_ID].filter(Boolean);

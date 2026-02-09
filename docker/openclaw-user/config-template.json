@@ -18,6 +18,24 @@
             "maxTokens": 16384
           }
         ]
+      },
+      "gemini": {
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "apiKey": "GEMINI_API_KEY_PLACEHOLDER",
+        "models": [
+          {
+            "id": "gemini-2.0-flash",
+            "name": "Gemini 2.0 Flash",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0.075,
+              "output": 0.30
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 8192
+          }
+        ]
       }
     }
   },
