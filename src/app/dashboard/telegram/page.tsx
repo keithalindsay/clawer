@@ -209,37 +209,84 @@ export default function TelegramPage() {
             {!loading && !status?.configured && (
               <>
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-                  <h3 className="font-semibold text-blue-900 mb-3">
+                  <h3 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                    <span className="text-xl">🤖</span>
                     Step 1: Create a Bot on Telegram
                   </h3>
-                  <ol className="text-sm text-blue-800 space-y-3">
-                    <li className="flex gap-3">
-                      <span className="font-bold text-blue-600 shrink-0">1.</span>
-                      <span>
-                        Open Telegram and search for{' '}
-                        <a
-                          href="https://t.me/BotFather"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-semibold underline hover:text-blue-900"
-                        >
-                          @BotFather
-                        </a>
-                      </span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-bold text-blue-600 shrink-0">2.</span>
-                      <span>
-                        Send <code className="bg-blue-100 px-2 py-0.5 rounded font-mono text-xs">/newbot</code> and follow the prompts to name your bot
-                      </span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-bold text-blue-600 shrink-0">3.</span>
-                      <span>
-                        BotFather will give you a <strong>bot token</strong> — copy it
-                      </span>
-                    </li>
-                  </ol>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        1
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <p className="text-blue-900 font-medium">Open BotFather</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          In Telegram, search for{' '}
+                          <a
+                            href="https://t.me/BotFather"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold underline hover:text-blue-900"
+                          >
+                            @BotFather
+                          </a>
+                          {' '}or tap this link
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        2
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <p className="text-blue-900 font-medium">Create your bot</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Send the command:{' '}
+                          <code className="bg-blue-100 px-2 py-0.5 rounded font-mono text-xs">/newbot</code>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        3
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <p className="text-blue-900 font-medium">Choose a name</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          BotFather will ask for a display name (e.g., "My AI Assistant")
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        4
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <p className="text-blue-900 font-medium">Choose a username</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Must end in "bot" (e.g., "myassistant_bot")
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        5
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <p className="text-blue-900 font-medium">Copy your token</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          BotFather will send you a <strong>bot token</strong> — it looks like:<br/>
+                          <code className="bg-blue-100 px-2 py-0.5 rounded font-mono text-xs mt-1 inline-block">
+                            123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+                          </code>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <form onSubmit={handleConnect}>
