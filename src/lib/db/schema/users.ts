@@ -58,6 +58,9 @@ export const users = pgTable('users', {
   /** Gateway token for container API authentication */
   gatewayToken: text('gateway_token'),
   
+  /** Selected AI team template */
+  teamTemplate: text('team_template').default('lifeos'),
+  
   /** WhatsApp connected status */
   whatsappConnected: integer('whatsapp_connected').default(0),
   

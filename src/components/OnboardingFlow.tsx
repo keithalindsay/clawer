@@ -11,6 +11,7 @@ interface OnboardingPreferences {
   primaryGoal: string;
   useCases: string[];
   industry?: string;
+  teamTemplate: string;
 }
 
 const GOALS = [
@@ -65,11 +66,44 @@ const INDUSTRIES = [
   { id: "other", label: "Other" },
 ];
 
+const TEAM_TEMPLATES = [
+  {
+    id: "lifeos",
+    emoji: "🧬",
+    title: "Life OS",
+    subtitle: "Personal command center",
+    description: "5 AI employees manage your goals, tasks, research, schedule, and wellness. Like having a personal chief of staff.",
+    members: ["Max (Chief of Staff)", "North (Goals)", "Scout (Research)", "Dash (Tasks)", "Zen (Wellness)"],
+    color: "blue",
+  },
+  {
+    id: "ecommerce",
+    emoji: "🛒",
+    title: "E-Commerce",
+    subtitle: "Your online store team",
+    description: "AI team handles analytics, marketing, content, customer support, and operations for your store.",
+    members: ["Analyst", "Marketing", "Content Writer", "Support", "Operations"],
+    color: "green",
+  },
+  {
+    id: "mom",
+    emoji: "👩‍👧‍👦",
+    title: "Mom's Command Center",
+    subtitle: "Family life, organized",
+    description: "AI team manages meals, calendars, homework help, housekeeping, and family care coordination.",
+    members: ["Mel (Meals)", "Cal (Calendar)", "Prof (Homework)", "Tidy (House)", "Care (Health)"],
+    color: "pink",
+  },
+];
+
+const TOTAL_STEPS = 4;
+
 export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   const [step, setStep] = useState(1);
   const [primaryGoal, setPrimaryGoal] = useState("");
   const [selectedUseCases, setSelectedUseCases] = useState<string[]>([]);
   const [industry, setIndustry] = useState("");
+  const [teamTemplate, setTeamTemplate] = useState("lifeos");
 
   const toggleUseCase = (id: string) => {
     setSelectedUseCases((prev) =>
@@ -82,7 +116,14 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
       primaryGoal,
       useCases: selectedUseCases,
       industry: industry || undefined,
+      teamTemplate,
     });
+  };
+
+  const colorClasses: Record<string, { border: string; bg: string; ring: string }> = {
+    blue: { border: "border-blue-600", bg: "bg-blue-50", ring: "ring-blue-600" },
+    green: { border: "border-green-600", bg: "bg-green-50", ring: "ring-green-600" },
+    pink: { border: "border-pink-500", bg: "bg-pink-50", ring: "ring-pink-500" },
   };
 
   return (
@@ -90,7 +131,7 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
       <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full p-8">
         {/* Progress */}
         <div className="flex gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full ${
@@ -104,10 +145,10 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
         {step === 1 && (
           <>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              What's your main goal?
+              What&apos;s your main goal?
             </h2>
             <p className="text-gray-500 mb-6">
-              We'll customize your experience based on this
+              We&apos;ll customize your experience based on this
             </p>
 
             <div className="space-y-3">
@@ -220,10 +261,84 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
                 Back
               </button>
               <button
+                onClick={() => setStep(4)}
+                disabled={!industry}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Step 4: AI Team Template */}
+        {step === 4 && (
+          <>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Choose your AI team
+            </h2>
+            <p className="text-gray-500 mb-6">
+              Pick a pre-built team of AI employees — they start working for you immediately
+            </p>
+
+            <div className="space-y-4 mb-6">
+              {TEAM_TEMPLATES.map((team) => {
+                const colors = colorClasses[team.color] || colorClasses.blue;
+                const isSelected = teamTemplate === team.id;
+                return (
+                  <button
+                    key={team.id}
+                    onClick={() => setTeamTemplate(team.id)}
+                    className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
+                      isSelected
+                        ? `${colors.border} ${colors.bg} ring-1 ${colors.ring}`
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <span className="text-3xl mt-0.5">{team.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-gray-900">{team.title}</span>
+                          <span className="text-xs text-gray-400">— {team.subtitle}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{team.description}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {team.members.map((member) => (
+                            <span
+                              key={member}
+                              className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full"
+                            >
+                              {member}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <span className="text-blue-600 text-xl">✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-xs text-gray-400 text-center mb-4">
+              More teams coming soon: Law, Finance, Real Estate, SaaS, Marketing Agency
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(3)}
+                className="px-6 py-3 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Back
+              </button>
+              <button
                 onClick={handleComplete}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
               >
-                Get Started →
+                Launch My Team →
               </button>
             </div>
           </>

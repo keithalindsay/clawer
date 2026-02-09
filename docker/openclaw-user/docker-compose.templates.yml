@@ -1,0 +1,93 @@
+version: '3.8'
+
+# Docker Compose for Clawer Template Images
+# Usage:
+#   docker-compose -f docker-compose.templates.yml up ecommerce
+#   docker-compose -f docker-compose.templates.yml up lifeos
+#   docker-compose -f docker-compose.templates.yml up mom
+
+services:
+  ecommerce:
+    build:
+      context: .
+      dockerfile: Dockerfile.ecommerce
+    image: clawer-openclaw:ecommerce
+    container_name: clawer-ecommerce
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
+      - SEARXNG_PROXY_URL=${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-searxng-local-proxy}
+    ports:
+      - "8080:8080"  # Gateway
+      - "8081:8081"  # API server
+    volumes:
+      # Mount workspace to persist data
+      - ./workspace-ecommerce:/home/user/clawd/workspace:rw
+      # Mount memory to persist notes
+      - ./memory-ecommerce:/home/user/clawd/memory:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  lifeos:
+    build:
+      context: .
+      dockerfile: Dockerfile.lifeos
+    image: clawer-openclaw:lifeos
+    container_name: clawer-lifeos
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
+      - SEARXNG_PROXY_URL=${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-searxng-local-proxy}
+    ports:
+      - "8082:8080"  # Gateway (different host port to avoid conflict)
+      - "8083:8081"  # API server
+    volumes:
+      - ./workspace-lifeos:/home/user/clawd/workspace:rw
+      - ./memory-lifeos:/home/user/clawd/memory:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mom:
+    build:
+      context: .
+      dockerfile: Dockerfile.mom
+    image: clawer-openclaw:mom
+    container_name: clawer-mom
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
+      - SEARXNG_PROXY_URL=${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-searxng-local-proxy}
+    ports:
+      - "8084:8080"  # Gateway
+      - "8085:8081"  # API server
+    volumes:
+      - ./workspace-mom:/home/user/clawd/workspace:rw
+      - ./memory-mom:/home/user/clawd/memory:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# To run all templates simultaneously (not recommended unless you have resources):
+# docker-compose -f docker-compose.templates.yml up
+
+# To run a specific template:
+# docker-compose -f docker-compose.templates.yml up ecommerce
+# docker-compose -f docker-compose.templates.yml up lifeos
+# docker-compose -f docker-compose.templates.yml up mom

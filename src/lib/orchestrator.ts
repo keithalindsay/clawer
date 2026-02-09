@@ -133,6 +133,13 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
       throw new Error('OPENAI_API_KEY not configured');
     }
     
+    // Get user's selected team template
+    const userRecord = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { teamTemplate: true },
+    });
+    const teamTemplate = userRecord?.teamTemplate || 'lifeos';
+    
     // Generate unique gateway token for container API authentication
     const gatewayToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0'))
@@ -152,6 +159,7 @@ export async function provisionContainer(userId: string): Promise<ProvisionResul
       `-e OPENAI_API_KEY=${openaiApiKey}`,
       `-e GATEWAY_TOKEN=${gatewayToken}`,  // Use generated token
       `-e USER_ID=${userId}`,
+      `-e TEAM_TEMPLATE=${teamTemplate}`,
       `--restart=unless-stopped`,
       CONTAINER_IMAGE,
     ].join(' ');

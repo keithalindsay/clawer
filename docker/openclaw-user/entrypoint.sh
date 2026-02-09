@@ -29,6 +29,31 @@ sed -e "s/OPENAI_API_KEY_PLACEHOLDER/${OPENAI_API_KEY}/g" \
 unset OPENAI_API_KEY
 unset GATEWAY_TOKEN
 
+# Copy AI team template files into workspace if TEAM_TEMPLATE is set
+TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
+TEAM_DIR="/opt/teams/${TEAM_TEMPLATE}"
+WORKSPACE="/home/user/clawd"
+mkdir -p "$WORKSPACE"
+
+if [ -d "$TEAM_DIR" ]; then
+    echo "Installing team template: ${TEAM_TEMPLATE}"
+    # Copy AGENTS.md (team routing rules)
+    cp "$TEAM_DIR/AGENTS.md" "$WORKSPACE/AGENTS.md"
+    # Copy member files if they exist
+    if [ -d "$TEAM_DIR/members" ]; then
+        mkdir -p "$WORKSPACE/members"
+        cp -r "$TEAM_DIR/members/"* "$WORKSPACE/members/" 2>/dev/null || true
+    fi
+    # Copy templates if they exist
+    if [ -d "$TEAM_DIR/templates" ]; then
+        mkdir -p "$WORKSPACE/templates"
+        cp -r "$TEAM_DIR/templates/"* "$WORKSPACE/templates/" 2>/dev/null || true
+    fi
+    echo "Team template installed: $(ls -la $WORKSPACE/AGENTS.md)"
+else
+    echo "WARNING: Team template directory not found: $TEAM_DIR"
+fi
+
 # Patch web_search to use local SearXNG proxy instead of Brave API
 SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}"
 PATCHED=0

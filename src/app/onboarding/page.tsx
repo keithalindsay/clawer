@@ -10,10 +10,21 @@ export default function OnboardingPage() {
     primaryGoal: string;
     useCases: string[];
     industry?: string;
+    teamTemplate: string;
   }) => {
-    // Store preferences in localStorage for now
-    // TODO: Save to database via API
+    // Store preferences in localStorage
     localStorage.setItem("clawer_preferences", JSON.stringify(preferences));
+    
+    // Save team template to database
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamTemplate: preferences.teamTemplate }),
+      });
+    } catch (e) {
+      console.error("Failed to save onboarding preferences:", e);
+    }
     
     // Redirect to dashboard
     router.push("/dashboard");

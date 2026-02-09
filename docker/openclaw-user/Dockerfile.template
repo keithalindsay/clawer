@@ -1,3 +1,8 @@
+# Template-aware OpenClaw Docker image
+# Build with: docker build --build-arg TEMPLATE=<template-name> -f Dockerfile.template -t clawer-openclaw:<template> .
+
+ARG TEMPLATE=lifeos
+
 FROM node:22-slim
 
 # Install system dependencies
@@ -21,13 +26,31 @@ RUN npm install -g /tmp/openclaw-2026.2.6-3.tgz && rm /tmp/openclaw-2026.2.6-3.t
 
 # Copy configuration files
 COPY config-template.json /home/user/.openclaw/openclaw.json.template
-COPY SOUL.md /home/user/clawd/SOUL.md
 COPY api-server.js /usr/local/bin/api-server.js
-# Copy AI team templates
-COPY teams/ /opt/teams/
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+# Copy base SOUL.md (generic)
+COPY SOUL.md /home/user/clawd/SOUL.md.base
+
+# Copy entrypoint script (template-aware version)
+COPY entrypoint-template.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/api-server.js
+
+# Set build argument for template selection
+ARG TEMPLATE
+
+# Copy template-specific team configuration
+COPY teams/${TEMPLATE}/ /home/user/clawd/team/
+
+# Copy universal skills (available to all templates)
+COPY skills/universal/ /home/user/clawd/skills/
+
+# Copy template-specific skills
+COPY skills/${TEMPLATE}/ /home/user/clawd/skills/
+
+# Label for identification
+LABEL com.clawer.template="${TEMPLATE}" \
+      com.clawer.version="2026.2.6-3" \
+      com.clawer.description="OpenClaw AI agent with ${TEMPLATE} team template"
 
 # Set working directory
 WORKDIR /home/user/clawd
