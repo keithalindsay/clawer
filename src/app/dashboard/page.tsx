@@ -47,6 +47,25 @@ export default async function DashboardPage() {
       await db.update(users).set({ id: userId }).where(eq(users.email, userEmail));
     }
   }
+  // If user doesn't exist in DB yet (webhook delay/failure), create them now
+  if (!user) {
+    const userName = `${clerkUser?.firstName || ''} ${clerkUser?.lastName || ''}`.trim() || undefined;
+    await db.insert(users).values({
+      id: userId,
+      email: userEmail || 'unknown@clawer.ai',
+      name: userName,
+      tier: 'free',
+    }).onConflictDoNothing();
+    
+    // Fetch the newly created user
+    user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    
+    // Brand new user — send to onboarding
+    redirect('/onboarding');
+  }
+
   const isSubscribed = user?.stripeSubscriptionId !== null;
 
   return (
