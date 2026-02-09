@@ -189,6 +189,8 @@ export default function ChatPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [dismissedUpgradePrompts, setDismissedUpgradePrompts] = useState<Set<number>>(new Set());
+  const [isFreeTier, setIsFreeTier] = useState(true); // TODO: Get from user context
   const [botSettings, setBotSettings] = useState<BotSettingsData>({
     botName: 'Assistant',
     botAvatar: '🤖',
@@ -206,9 +208,10 @@ export default function ChatPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [settingsRes, messagesRes] = await Promise.all([
+        const [settingsRes, messagesRes, userRes] = await Promise.all([
           fetch('/api/bot/settings'),
           fetch('/api/messages?limit=50'),
+          fetch('/api/user'),
         ]);
 
         if (settingsRes.ok) {
@@ -234,6 +237,11 @@ export default function ChatPage() {
               timestamp: new Date(m.timestamp),
             }))
           );
+        }
+
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setIsFreeTier(!userData.stripeSubscriptionId);
         }
       } catch (error) {
         console.error('Failed to load data:', error);
@@ -479,57 +487,95 @@ export default function ChatPage() {
             <StarterPrompts onSelectPrompt={handleSelectPrompt} />
           )}
 
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`mb-4 flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              } items-end gap-2`}
-            >
-              {/* AI avatar */}
-              {message.role === 'assistant' && (
-                <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-sm flex-shrink-0">
-                  {botSettings.botAvatar}
-                </div>
-              )}
+          {messages.map((message, index) => (
+            <div key={message.id}>
+              <div
+                className={`mb-4 flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                } items-end gap-2`}
+              >
+                {/* AI avatar */}
+                {message.role === 'assistant' && (
+                  <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-sm flex-shrink-0">
+                    {botSettings.botAvatar}
+                  </div>
+                )}
 
-              <div className={`max-w-[85%] sm:max-w-[75%] ${message.role === 'user' ? 'order-1' : ''}`}>
-                {/* Bubble */}
-                <div
-                  className={`rounded-2xl px-4 py-2.5 ${
-                    message.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-md'
-                      : 'bg-white border border-gray-200 text-gray-900 rounded-bl-md shadow-sm'
-                  }`}
-                >
-                  {message.role === 'assistant' ? (
-                    <div className="prose-sm max-w-none [&_pre]:!m-0">
-                      <MarkdownContent content={message.content} />
-                    </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</p>
-                  )}
-                </div>
+                <div className={`max-w-[85%] sm:max-w-[75%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                  {/* Bubble */}
+                  <div
+                    className={`rounded-2xl px-4 py-2.5 ${
+                      message.role === 'user'
+                        ? 'bg-blue-600 text-white rounded-br-md'
+                        : 'bg-white border border-gray-200 text-gray-900 rounded-bl-md shadow-sm'
+                    }`}
+                  >
+                    {message.role === 'assistant' ? (
+                      <div className="prose-sm max-w-none [&_pre]:!m-0">
+                        <MarkdownContent content={message.content} />
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</p>
+                    )}
+                  </div>
 
-                {/* Meta line: timestamp + tier badge */}
-                <div
-                  className={`flex items-center gap-2 mt-1 px-1 ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <span className={`text-[11px] ${message.role === 'user' ? 'text-gray-400' : 'text-gray-400'}`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  {message.role === 'assistant' && message.routing && (
-                    <span
-                      className={`text-[11px] ${getTierBadge(message.routing.tier).color}`}
-                      title={`Model: ${message.routing.model} · Confidence: ${(message.routing.confidence * 100).toFixed(0)}%`}
-                    >
-                      {getTierBadge(message.routing.tier).emoji} {getTierBadge(message.routing.tier).label}
+                  {/* Meta line: timestamp + tier badge */}
+                  <div
+                    className={`flex items-center gap-2 mt-1 px-1 ${
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    <span className={`text-[11px] ${message.role === 'user' ? 'text-gray-400' : 'text-gray-400'}`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                  )}
+                    {message.role === 'assistant' && message.routing && (
+                      <span
+                        className={`text-[11px] ${getTierBadge(message.routing.tier).color}`}
+                        title={`Model: ${message.routing.model} · Confidence: ${(message.routing.confidence * 100).toFixed(0)}%`}
+                      >
+                        {getTierBadge(message.routing.tier).emoji} {getTierBadge(message.routing.tier).label}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Upgrade prompt after every 10th message on free tier */}
+              {isFreeTier && 
+               (index + 1) % 10 === 0 && 
+               index === messages.length - 1 &&
+               !dismissedUpgradePrompts.has(index) && (
+                <div className="mb-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 max-w-[85%] sm:max-w-[75%]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-lg">💡</span>
+                          <h4 className="font-semibold text-gray-900 text-sm">Enjoying your AI?</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          Upgrade for unlimited messages + WhatsApp + Telegram
+                        </p>
+                        <Link
+                          href="/pricing"
+                          className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                        >
+                          See upgrade options →
+                        </Link>
+                      </div>
+                      <button
+                        onClick={() => setDismissedUpgradePrompts(prev => new Set([...prev, index]))}
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                        aria-label="Dismiss"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
 

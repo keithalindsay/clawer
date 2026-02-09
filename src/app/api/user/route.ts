@@ -5,6 +5,9 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { apiSuccess, apiErrors } from '@/lib/api/response';
 import { checkUserRateLimit } from '@/lib/rate-limit';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema/users';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -32,33 +35,56 @@ export async function GET() {
       );
     }
     
-    // TODO: Fetch user profile from database
-    // For now, return mock data with Clerk user info
+    // Fetch user from database
+    const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
+    let user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    // Fallback: lookup by email if ID not found
+    if (!user && userEmail) {
+      user = await db.query.users.findFirst({
+        where: eq(users.email, userEmail),
+      });
+    }
+
+    const isSubscribed = user?.stripeSubscriptionId !== null;
+    const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
+    const FREE_MESSAGE_LIMIT = 50;
+    
     const profile = {
       id: userId,
-      email: clerkUser.emailAddresses[0]?.emailAddress || '',
-      name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
-      tier: 'free', // TODO: Get from database
+      email: userEmail || '',
+      name: user?.name || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
+      tier: user?.tier || 'free',
+      stripeSubscriptionId: user?.stripeSubscriptionId || null,
+      stripeCustomerId: user?.stripeCustomerId || null,
       limits: {
-        messagesPerDay: 100,
+        messagesPerDay: isSubscribed ? -1 : 100, // -1 = unlimited
         maxBots: 5,
         maxIntegrations: 2,
-        availableModels: ['qwen3'],
+        availableModels: isSubscribed ? ['gpt-4', 'claude-3', 'qwen3'] : ['qwen3'],
         maxTokensPerMessage: 2000,
-        customBotsAllowed: false,
+        customBotsAllowed: isSubscribed,
       },
       usage: {
-        messagesToday: 0,
-        messagesRemaining: 100,
-        tokensThisMonth: 0,
-        costThisMonth: 0,
+        messagesToday: user?.dailyMessageCount || 0,
+        messagesThisMonth: user?.monthlyMessageCount || 0,
+        freeMessagesUsed,
+        freeMessageLimit: FREE_MESSAGE_LIMIT,
+        freeMessagesRemaining: Math.max(0, FREE_MESSAGE_LIMIT - freeMessagesUsed),
         resetsAt: new Date(
           new Date().setHours(24, 0, 0, 0)
         ).toISOString(),
       },
+      connected: {
+        whatsapp: user?.whatsappConnected || false,
+        telegram: user?.telegramConnected || false,
+        slack: user?.slackConnected || false,
+      },
       integrationCount: 0,
       botCount: 0,
-      createdAt: new Date(clerkUser.createdAt).toISOString(),
+      createdAt: user?.createdAt ? new Date(user.createdAt).toISOString() : new Date(clerkUser.createdAt).toISOString(),
     };
     
     return apiSuccess(profile);

@@ -148,6 +148,93 @@ export default async function DashboardPage() {
 
         {(isSubscribed || hasFreeTrial) && (
           <>
+            {/* Empty State Welcome Card */}
+            {recentConversations.length === 0 && (
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white mb-6">
+                <div className="max-w-3xl mx-auto">
+                  <h2 className="text-3xl font-bold mb-2">👋 Welcome! Your AI assistant is ready.</h2>
+                  <p className="text-blue-100 mb-6">Start chatting to unlock the power of AI for your work</p>
+                  
+                  <Link
+                    href="/chat/assistant"
+                    className="inline-block bg-white text-blue-600 px-8 py-3 rounded-full font-semibold text-lg hover:bg-blue-50 transition-colors mb-8"
+                  >
+                    Start Chatting →
+                  </Link>
+
+                  {/* Suggested First Tasks */}
+                  <div className="grid sm:grid-cols-3 gap-3 mb-6">
+                    <Link
+                      href="/chat/assistant?prompt=Draft%20an%20email"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:bg-white/20 transition-colors text-left"
+                    >
+                      <div className="text-2xl mb-2">✍️</div>
+                      <div className="font-semibold">Draft an email</div>
+                      <div className="text-sm text-blue-100">Professional emails in seconds</div>
+                    </Link>
+                    <Link
+                      href="/chat/assistant?prompt=Research%20a%20topic"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:bg-white/20 transition-colors text-left"
+                    >
+                      <div className="text-2xl mb-2">🔍</div>
+                      <div className="font-semibold">Research a topic</div>
+                      <div className="text-sm text-blue-100">Deep insights on any subject</div>
+                    </Link>
+                    <Link
+                      href="/chat/assistant?prompt=Brainstorm%20ideas"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:bg-white/20 transition-colors text-left"
+                    >
+                      <div className="text-2xl mb-2">💡</div>
+                      <div className="font-semibold">Brainstorm ideas</div>
+                      <div className="text-sm text-blue-100">Creative solutions instantly</div>
+                    </Link>
+                  </div>
+
+                  {/* Platform Connections Suggestion */}
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <Link
+                      href="/dashboard/whatsapp"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:bg-white/20 transition-colors flex items-center gap-3"
+                    >
+                      <span className="text-3xl">📱</span>
+                      <div>
+                        <div className="font-semibold">Connect WhatsApp</div>
+                        <div className="text-sm text-blue-100">Chat from your phone</div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/dashboard/telegram"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:bg-white/20 transition-colors flex items-center gap-3"
+                    >
+                      <span className="text-3xl">✈️</span>
+                      <div>
+                        <div className="font-semibold">Connect Telegram</div>
+                        <div className="text-sm text-blue-100">Chat from anywhere</div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* AI Status - even with no conversations */}
+            {recentConversations.length === 0 && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-2xl">
+                      🤖
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Your AI is online and ready</h3>
+                    <p className="text-sm text-gray-600">💡 Tip: Try asking me to draft an email or research a competitor</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Container Status Widget - only for paid users */}
             {isSubscribed && <ContainerStatusWidget />}
 
