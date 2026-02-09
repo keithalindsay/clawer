@@ -20,6 +20,9 @@ import { LogoutButton } from '@/components/LogoutButton';
 import { DiagnoseButton } from '@/components/DiagnoseButton';
 import { ContainerStatusWidget } from '@/components/ContainerStatusWidget';
 import { QuickActions } from '@/components/QuickActions';
+import { FreeTrialBanner } from '@/components/FreeTrialBanner';
+import { WelcomeToast } from '@/components/WelcomeToast';
+import { Suspense } from 'react';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -65,10 +68,14 @@ export default async function DashboardPage() {
   }
 
   const isSubscribed = user?.stripeSubscriptionId !== null;
+  const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
+  const FREE_MESSAGE_LIMIT = 50;
+  const isFreeTrial = !isSubscribed;
+  const hasFreeTrial = isFreeTrial && freeMessagesUsed < FREE_MESSAGE_LIMIT;
 
   // Fetch recent conversations with messages
   let recentConversations: any[] = [];
-  if (isSubscribed) {
+  if (isSubscribed || hasFreeTrial) {
     const convos = await db.query.conversations.findMany({
       where: and(
         eq(conversations.userId, userId),
@@ -99,6 +106,24 @@ export default async function DashboardPage() {
           </Link>
           <div className="flex items-center gap-3 sm:gap-4">
             <DiagnoseButton variant="icon" />
+            <Link
+              href="/dashboard/api-keys"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="API Keys"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />
+              </svg>
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Settings"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+              </svg>
+            </Link>
             <span className="hidden sm:inline text-sm text-gray-600">
               {clerkUser?.emailAddresses[0]?.emailAddress}
             </span>
@@ -108,34 +133,23 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Subscription Gate */}
-        {!isSubscribed && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 sm:p-8 mb-6 sm:mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex-1">
-                <h2 className="text-xl sm:text-2xl font-bold text-blue-900">
-                  Welcome to Clawer! 👋
-                </h2>
-                <p className="mt-2 text-blue-800">
-                  Subscribe to unlock your personal AI assistant. Start chatting on WhatsApp, Telegram, or the web.
-                </p>
-              </div>
-              <form action="/api/stripe/checkout" method="POST">
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl"
-                >
-                  Subscribe — $49/month
-                </button>
-              </form>
-            </div>
-          </div>
+        {/* Welcome Toast */}
+        <Suspense fallback={null}>
+          <WelcomeToast />
+        </Suspense>
+
+        {/* Free Trial Banner (for users without subscription) */}
+        {isFreeTrial && (
+          <FreeTrialBanner
+            freeMessagesUsed={freeMessagesUsed}
+            freeMessageLimit={FREE_MESSAGE_LIMIT}
+          />
         )}
 
-        {isSubscribed && (
+        {(isSubscribed || hasFreeTrial) && (
           <>
-            {/* Container Status Widget */}
-            <ContainerStatusWidget />
+            {/* Container Status Widget - only for paid users */}
+            {isSubscribed && <ContainerStatusWidget />}
 
             {/* Main Grid: Stats + Actions */}
             <div className="grid lg:grid-cols-3 gap-6 mb-6 sm:mb-8">
@@ -151,9 +165,11 @@ export default async function DashboardPage() {
                       <span className="text-3xl font-bold text-blue-600">
                         {user?.dailyMessageCount || 0}
                       </span>
-                      <span className="text-sm text-gray-500">messages</span>
+                      <span className="text-sm text-gray-500">messages today</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">Unlimited on your plan</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {isSubscribed ? 'Unlimited on your plan' : `${Math.max(0, FREE_MESSAGE_LIMIT - freeMessagesUsed)} free messages remaining`}
+                    </p>
                   </div>
                   <div className="pt-3 border-t border-gray-100">
                     <div className="flex justify-between text-sm">
@@ -162,11 +178,22 @@ export default async function DashboardPage() {
                         {user?.monthlyMessageCount || 0}
                       </span>
                     </div>
+                    {isFreeTrial && (
+                      <div className="flex justify-between text-sm mt-1">
+                        <span className="text-gray-600">Free trial:</span>
+                        <span className="font-medium text-blue-600">
+                          {freeMessagesUsed} / {FREE_MESSAGE_LIMIT}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Quick Actions - Coming soon */}
+              {/* Quick Actions */}
+              <div className="lg:col-span-2">
+                <QuickActions />
+              </div>
             </div>
 
             {/* Recent Conversations */}
@@ -175,7 +202,7 @@ export default async function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Recent Conversations</h3>
                   <Link
-                    href="/chat/assistant"
+                    href="/dashboard/conversations"
                     className="text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
                     View all →

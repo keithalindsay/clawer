@@ -1,33 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { OnboardingFlow } from "@/components/OnboardingFlow";
+import { OnboardingFlow, OnboardingPreferences } from "@/components/OnboardingFlow";
 
 export default function OnboardingPage() {
   const router = useRouter();
 
-  const handleComplete = async (preferences: {
-    primaryGoal: string;
-    useCases: string[];
-    industry?: string;
-    teamTemplate: string;
-  }) => {
-    // Store preferences in localStorage
-    localStorage.setItem("clawer_preferences", JSON.stringify(preferences));
-    
-    // Save team template to database
+  const handleComplete = async (preferences: OnboardingPreferences) => {
     try {
       await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamTemplate: preferences.teamTemplate }),
+        body: JSON.stringify(preferences),
       });
     } catch (e) {
       console.error("Failed to save onboarding preferences:", e);
     }
-    
-    // Redirect to dashboard
-    router.push("/dashboard");
+
+    // Redirect to dashboard with welcome flag
+    router.push("/dashboard?welcome=1");
   };
 
   const handleSkip = () => {

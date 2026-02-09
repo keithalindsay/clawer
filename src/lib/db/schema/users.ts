@@ -34,8 +34,17 @@ export const users = pgTable('users', {
   /** Slack bot token (encrypted) - BYOB mode */
   slackBotToken: text('slack_bot_token'),
   
+  /** Slack app-level token (xapp-...) for Socket Mode */
+  slackAppToken: text('slack_app_token'),
+  
+  /** Slack signing secret */
+  slackSigningSecret: text('slack_signing_secret'),
+  
   /** Slack team/workspace ID */
   slackTeamId: text('slack_team_id'),
+  
+  /** Slack connected status (container-based) */
+  slackConnected: integer('slack_connected').default(0),
   
   /** Telegram bot token (encrypted) - BYOB mode */
   telegramBotToken: text('telegram_bot_token'),
@@ -66,6 +75,9 @@ export const users = pgTable('users', {
   
   /** Telegram connected status */
   telegramConnected: integer('telegram_connected').default(0),
+  
+  /** Free trial messages used (out of 50, no credit card required) */
+  freeMessagesUsed: integer('free_messages_used').notNull().default(0),
   
   /** Monthly message count */
   monthlyMessageCount: integer('monthly_message_count').notNull().default(0),

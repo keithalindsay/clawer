@@ -1,0 +1,39 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker/openclaw-user/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Sync Docker files to server
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+            docker/openclaw-user/ \
+            root@${{ secrets.DEPLOY_HOST }}:/opt/clawer/docker/openclaw-user/
+      
+      - name: Build Docker image on server
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} \
+            "cd /opt/clawer/docker/openclaw-user && docker build -t clawer-openclaw:ecommerce ."
+      
+      - name: Optional container restart
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} \
+            "cd /opt/clawer && docker compose restart || echo 'No compose file or containers to restart'"

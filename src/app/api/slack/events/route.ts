@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { sendSlackMessage } from '@/lib/slack/client';
+import crypto from 'crypto';
 
 const MOONSHOT_API_URL = 'https://api.moonshot.cn/v1/chat/completions';
 
@@ -20,7 +21,34 @@ Keep responses focused and actionable. When you need more context, ask specific 
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const slackSignature = request.headers.get('x-slack-signature');
+    const timestamp = request.headers.get('x-slack-request-timestamp');
+    const signingSecret = process.env.SLACK_SIGNING_SECRET;
+    
+    // Get raw body for signature verification
+    const rawBody = await request.text();
+    
+    // Verify Slack signature if signing secret is configured
+    if (signingSecret && slackSignature && timestamp) {
+      // Prevent replay attacks (5 min window)
+      if (Math.abs(Date.now() / 1000 - parseInt(timestamp)) > 300) {
+        return NextResponse.json({ error: 'Request too old' }, { status: 401 });
+      }
+      
+      const sigBasestring = `v0:${timestamp}:${rawBody}`;
+      const mySignature = 'v0=' + crypto.createHmac('sha256', signingSecret)
+        .update(sigBasestring).digest('hex');
+      
+      if (!crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature))) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+    } else if (signingSecret) {
+      // If signing secret is configured but headers missing, reject
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+    }
+    
+    // Parse the body (already consumed as text, need to parse)
+    const body = JSON.parse(rawBody);
 
     // Handle Slack URL verification challenge
     if (body.type === 'url_verification') {

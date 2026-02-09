@@ -1,12 +1,19 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 
-const execAsync = promisify(exec);
+const ADMIN_USER_IDS = (process.env.ADMIN_USER_IDS || 'user_39PgWfJYYrb2T36BqfnRgtwlsfM').split(',');
+const PRODUCTION_SERVER = process.env.PRODUCTION_SERVER || 'root@YOUR_DOCKER_HOST';
 
-// Admin user check
-const ADMIN_USER_IDS = [process.env.ADMIN_USER_ID].filter(Boolean);
+async function sshExec(command: string): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('ssh', ['-o', 'StrictHostKeyChecking=no', PRODUCTION_SERVER, command]);
+    let stdout = '', stderr = '';
+    proc.stdout.on('data', d => stdout += d);
+    proc.stderr.on('data', d => stderr += d);
+    proc.on('close', code => code === 0 ? resolve({stdout, stderr}) : reject(new Error(stderr || 'SSH command failed')));
+  });
+}
 
 export async function GET(req: NextRequest) {
   const { userId: adminId } = await auth();
@@ -18,13 +25,14 @@ export async function GET(req: NextRequest) {
   try {
     const userId = req.nextUrl.searchParams.get('userId');
     
-    if (!userId) {
-      return NextResponse.json({ error: 'userId required' }, { status: 400 });
+    // Validate userId is safe (Clerk format: user_XXXXX with alphanumeric)
+    if (!userId || !/^[a-zA-Z0-9_-]+$/.test(userId)) {
+      return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
     }
 
     const containerName = `clawer_user_${userId}`;
     
-    const { stdout } = await execAsync(`docker logs --tail 100 ${containerName} 2>&1`);
+    const { stdout } = await sshExec(`docker logs --tail 100 ${containerName} 2>&1`);
     
     return NextResponse.json({ logs: stdout });
   } catch (error: any) {

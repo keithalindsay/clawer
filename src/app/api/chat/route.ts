@@ -2,9 +2,11 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
+import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN } from '@/lib/constants';
+import { trackDailyUsage, checkDailyLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -30,30 +32,81 @@ export async function POST(req: NextRequest) {
         stripeSubscriptionId: true,
         containerPort: true,
         containerStatus: true,
+        freeMessagesUsed: true,
       },
     });
 
-    // Check subscription
-    if (!user?.stripeSubscriptionId) {
-      return NextResponse.json(
-        { error: 'Subscription required' },
-        { status: 403 }
-      );
-    }
+    // Free tier vs paid subscription routing
+    const hasSubscription = !!user?.stripeSubscriptionId;
+    let targetPort: number;
+    let targetToken: string | undefined;
+    
+    if (!hasSubscription) {
+      // Free tier: shared container
+      const freeUsed = user?.freeMessagesUsed ?? 0;
+      
+      // Check total message limit
+      if (freeUsed >= FREE_MESSAGE_LIMIT) {
+        return NextResponse.json(
+          { 
+            error: 'free_trial_exceeded',
+            message: `You've used all ${FREE_MESSAGE_LIMIT} free messages. Upgrade to keep chatting!`,
+            upgradeUrl: '/pricing',
+            freeMessagesUsed: freeUsed,
+            freeMessageLimit: FREE_MESSAGE_LIMIT,
+          },
+          { status: 403 }
+        );
+      }
+      
+      // Check daily rate limit
+      if (!checkDailyLimit(userId, FREE_DAILY_LIMIT)) {
+        return NextResponse.json(
+          {
+            error: 'daily_limit_exceeded',
+            message: `You've reached your daily limit of ${FREE_DAILY_LIMIT} messages. Try again tomorrow!`,
+            freeMessagesUsed: freeUsed,
+            freeMessageLimit: FREE_MESSAGE_LIMIT,
+          },
+          { status: 429 }
+        );
+      }
+      
+      // Track daily usage
+      trackDailyUsage(userId);
+      
+      // Route to shared free tier container
+      targetPort = FREE_TIER_PORT;
+      targetToken = FREE_TIER_TOKEN;
+      
+      // Increment free message counter
+      await db
+        .update(users)
+        .set({
+          freeMessagesUsed: sql`${users.freeMessagesUsed} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+        
+    } else {
+      // Paid tier: dedicated container
+      // Check container exists and is running
+      if (!user.containerPort) {
+        return NextResponse.json(
+          { error: 'Container not provisioned. Please wait or contact support.' },
+          { status: 503 }
+        );
+      }
 
-    // Check container exists and is running
-    if (!user.containerPort) {
-      return NextResponse.json(
-        { error: 'Container not provisioned. Please wait or contact support.' },
-        { status: 503 }
-      );
-    }
-
-    if (user.containerStatus !== 'running') {
-      return NextResponse.json(
-        { error: `Container is ${user.containerStatus || 'not ready'}. Please wait.` },
-        { status: 503 }
-      );
+      if (user.containerStatus !== 'running') {
+        return NextResponse.json(
+          { error: `Container is ${user.containerStatus || 'not ready'}. Please wait.` },
+          { status: 503 }
+        );
+      }
+      
+      targetPort = user.containerPort;
+      targetToken = undefined; // Will use default token lookup
     }
 
     // Extract bot settings if provided
@@ -89,15 +142,16 @@ export async function POST(req: NextRequest) {
       signals: routing.signals.slice(0, 3),  // Log first 3 signals
     });
 
-    // Route message to user's OpenClaw container
+    // Route message to appropriate container
     console.log('[chat] Routing to container:', {
       userId,
-      port: user.containerPort,
+      port: targetPort,
+      tier: hasSubscription ? 'paid' : 'free',
       messageLength: message.length,
     });
 
     const result = await containerApi.chat(
-      user.containerPort,
+      targetPort,
       message,
       context,
       {
@@ -105,7 +159,8 @@ export async function POST(req: NextRequest) {
         model: routing.model,
         tier: routing.tier,
         confidence: routing.confidence,
-      }
+      },
+      targetToken
     );
 
     if (result.error) {

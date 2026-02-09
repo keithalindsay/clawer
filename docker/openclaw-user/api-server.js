@@ -316,45 +316,166 @@ const server = http.createServer(async (req, res) => {
       }
       
     } else if (path === '/api/telegram/status') {
-      const health = await gatewayRequest('health');
-      const tgHealth = health.payload?.channels?.telegram || {};
+      // Read config to check if telegram is configured
+      const fs = require('fs');
+      const configPath = '/home/user/.openclaw/openclaw.json';
+      let configured = false;
+      let botUsername = null;
+      let configuredToken = null;
+      
+      try {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        configured = !!(config.channels?.telegram?.token);
+        configuredToken = config.channels?.telegram?.token || null;
+      } catch (e) {
+        console.error('[api] Failed to read config:', e.message);
+      }
+      
+      // Also check gateway health for running status
+      let running = false;
+      let gatewayTelegram = {};
+      try {
+        const health = await gatewayRequest('health');
+        gatewayTelegram = health.payload?.channels?.telegram || {};
+        running = gatewayTelegram.connected || gatewayTelegram.running || false;
+        if (gatewayTelegram.self?.username) {
+          botUsername = gatewayTelegram.self.username;
+        }
+      } catch (e) {
+        console.log('[api] Gateway health check failed:', e.message);
+      }
+      
+      // If we have a token but no username from gateway, try to fetch bot info directly
+      if (configured && configuredToken && !botUsername) {
+        try {
+          const tgResponse = await fetch(`https://api.telegram.org/bot${configuredToken}/getMe`);
+          const tgData = await tgResponse.json();
+          if (tgData.ok && tgData.result?.username) {
+            botUsername = tgData.result.username;
+          }
+        } catch (e) {
+          console.log('[api] Failed to fetch bot info from Telegram API:', e.message);
+        }
+      }
+      
       res.writeHead(200);
-      res.end(JSON.stringify(tgHealth));
+      res.end(JSON.stringify({
+        configured,
+        connected: configured && running,
+        running,
+        botUsername: botUsername || null,
+        ...gatewayTelegram
+      }));
       
     } else if (path === '/api/telegram/connect' && req.method === 'POST') {
-      // Configure Telegram bot token
+      // Configure Telegram bot token by writing to openclaw.json
+      const fs = require('fs');
+      const configPath = '/home/user/.openclaw/openclaw.json';
+      
       let body = '';
       for await (const chunk of req) {
         body += chunk;
       }
       const { token } = JSON.parse(body || '{}');
       
-      if (!token) {
+      if (!token || typeof token !== 'string') {
         res.writeHead(400);
-        res.end(JSON.stringify({ error: 'Token required' }));
+        res.end(JSON.stringify({ error: 'Bot token is required' }));
         return;
       }
       
-      // Use config.patch to set telegram token
+      // Validate token format (roughly: digits:alphanumeric)
+      if (!/^\d+:[A-Za-z0-9_-]+$/.test(token)) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'Invalid bot token format. It should look like: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz' }));
+        return;
+      }
+      
+      // Validate the token with Telegram API
+      let botUsername = null;
       try {
-        const patchResult = await gatewayRequest('config.patch', {
-          raw: JSON.stringify({
-            channels: {
-              telegram: {
-                enabled: true,
-                token: token
-              }
-            }
-          })
-        });
+        const tgResponse = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+        const tgData = await tgResponse.json();
+        if (!tgData.ok) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Invalid bot token. Telegram rejected it. Please check and try again.' }));
+          return;
+        }
+        botUsername = tgData.result?.username || null;
+        console.log('[api] Telegram bot validated:', botUsername);
+      } catch (e) {
+        console.error('[api] Telegram API validation failed:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Could not validate token with Telegram. Please try again.' }));
+        return;
+      }
+      
+      try {
+        // Read current config
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        
+        // Add telegram channel config
+        if (!config.channels) config.channels = {};
+        config.channels.telegram = {
+          adapter: 'telegram',
+          token: token
+        };
+        
+        // Write updated config
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log('[api] Telegram config written to', configPath);
+        
+        // Restart the gateway to pick up the new channel
+        // Send a restart signal - close the WebSocket and let entrypoint restart
+        try {
+          const restartResult = await gatewayRequest('gateway.restart', {});
+          console.log('[api] Gateway restart requested:', restartResult.ok);
+        } catch (e) {
+          console.log('[api] Gateway restart request failed (may restart anyway):', e.message);
+        }
+        
         res.writeHead(200);
         res.end(JSON.stringify({ 
-          success: patchResult.ok,
-          message: patchResult.ok ? 'Telegram configured. Restarting...' : 'Failed to configure'
+          success: true,
+          botUsername,
+          message: 'Telegram bot connected successfully!'
         }));
       } catch (e) {
+        console.error('[api] Failed to write telegram config:', e.message);
         res.writeHead(500);
-        res.end(JSON.stringify({ error: e.message }));
+        res.end(JSON.stringify({ error: 'Failed to save configuration: ' + e.message }));
+      }
+      
+    } else if (path === '/api/telegram/disconnect' && req.method === 'POST') {
+      // Remove Telegram bot config
+      const fs = require('fs');
+      const configPath = '/home/user/.openclaw/openclaw.json';
+      
+      try {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        
+        // Remove telegram channel
+        if (config.channels?.telegram) {
+          delete config.channels.telegram;
+        }
+        
+        // Write updated config
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log('[api] Telegram config removed from', configPath);
+        
+        // Restart gateway
+        try {
+          await gatewayRequest('gateway.restart', {});
+        } catch (e) {
+          console.log('[api] Gateway restart after disconnect:', e.message);
+        }
+        
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true, message: 'Telegram bot disconnected' }));
+      } catch (e) {
+        console.error('[api] Failed to remove telegram config:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Failed to disconnect: ' + e.message }));
       }
       
     } else if (path === '/api/chat' && req.method === 'POST') {
@@ -482,6 +603,80 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ 
           content: 'The AI is thinking... but taking longer than expected. Please try again.'
         }));
+      }
+      
+    } else if (path === '/api/logs' || path === '/api/logs/') {
+      // Fetch recent gateway logs (last 100 lines)
+      try {
+        const logsResult = await gatewayRequest('logs.fetch', {
+          limit: 100,
+          level: 'info'
+        });
+        
+        if (logsResult.ok && logsResult.payload?.logs) {
+          res.writeHead(200);
+          res.end(JSON.stringify({
+            logs: logsResult.payload.logs,
+            count: logsResult.payload.logs.length
+          }));
+        } else {
+          res.writeHead(200);
+          res.end(JSON.stringify({ logs: [], count: 0 }));
+        }
+      } catch (e) {
+        console.error('[api] logs fetch error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
+    } else if (path === '/api/keys/push' && req.method === 'POST') {
+      // Receive API keys from dashboard and store in container environment
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      await new Promise(resolve => req.on('end', resolve));
+      const body = Buffer.concat(chunks).toString();
+      const { openaiKey, anthropicKey, googleKey } = JSON.parse(body || '{}');
+      
+      const fs = require('fs');
+      const envPath = '/home/user/.openclaw/.env';
+      
+      try {
+        // Read existing .env if it exists
+        let envContent = '';
+        try {
+          envContent = fs.readFileSync(envPath, 'utf8');
+        } catch (e) {
+          // File doesn't exist, will create
+        }
+        
+        // Parse existing env vars
+        const envVars = {};
+        envContent.split('\n').forEach(line => {
+          const [key, ...valueParts] = line.split('=');
+          if (key && valueParts.length) {
+            envVars[key.trim()] = valueParts.join('=').trim();
+          }
+        });
+        
+        // Update with new keys
+        if (openaiKey) envVars['OPENAI_API_KEY'] = openaiKey;
+        if (anthropicKey) envVars['ANTHROPIC_API_KEY'] = anthropicKey;
+        if (googleKey) envVars['GOOGLE_API_KEY'] = googleKey;
+        
+        // Write back
+        const newEnvContent = Object.entries(envVars)
+          .map(([k, v]) => `${k}=${v}`)
+          .join('\n');
+        
+        fs.writeFileSync(envPath, newEnvContent + '\n');
+        console.log('[api] API keys updated in container');
+        
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }));
+      } catch (e) {
+        console.error('[api] Failed to write API keys:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
       }
       
     } else if (path === '/ready') {

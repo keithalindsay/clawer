@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
+import { botSettings } from '@/lib/db/schema/bot-settings';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
@@ -11,20 +12,63 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { teamTemplate } = body;
+  const { botName, botEmoji, useCase, communicationStyle, channels } = body;
 
-  const validTemplates = ['lifeos', 'ecommerce', 'mom'];
-  if (teamTemplate && !validTemplates.includes(teamTemplate)) {
-    return NextResponse.json({ error: 'Invalid team template' }, { status: 400 });
-  }
+  // Map communication style to personality description
+  const personalityMap: Record<string, string> = {
+    casual: 'friendly, relaxed, uses emojis, approachable',
+    professional: 'clear, polished, business-appropriate, concise',
+    technical: 'precise, detailed, technical, no fluff',
+  };
 
-  await db
-    .update(users)
-    .set({
-      teamTemplate: teamTemplate || 'lifeos',
+  // Map use case to custom instructions
+  const useCaseInstructionsMap: Record<string, string> = {
+    personal: 'Focus on personal productivity, life management, daily tasks, and reminders.',
+    business: 'Focus on business communication, email drafts, reports, and data analysis.',
+    support: 'Focus on customer support workflows, FAQ handling, and professional inquiry responses.',
+    creative: 'Focus on creative writing, blog posts, copywriting, and storytelling.',
+    code: 'Focus on coding assistance, debugging, code review, and technical explanations.',
+  };
+
+  try {
+    // Upsert bot settings
+    const existing = await db.query.botSettings.findFirst({
+      where: eq(botSettings.userId, userId),
+    });
+
+    const settingsData = {
+      botName: botName || 'Assistant',
+      botAvatar: botEmoji || '🤖',
+      personality: personalityMap[communicationStyle] || 'helpful and friendly',
+      communicationStyle: communicationStyle || 'balanced',
+      customInstructions: useCaseInstructionsMap[useCase] || '',
+      additionalSettings: { useCase, channels: channels || [] },
       updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
+    };
 
-  return NextResponse.json({ success: true });
+    if (existing) {
+      await db
+        .update(botSettings)
+        .set(settingsData)
+        .where(eq(botSettings.userId, userId));
+    } else {
+      await db.insert(botSettings).values({
+        userId,
+        ...settingsData,
+      });
+    }
+
+    // Update user record — mark onboarding complete
+    await db
+      .update(users)
+      .set({
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Onboarding save error:', error);
+    return NextResponse.json({ error: 'Failed to save preferences' }, { status: 500 });
+  }
 }

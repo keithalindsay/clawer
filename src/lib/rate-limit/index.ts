@@ -242,3 +242,99 @@ export async function closeRedis(): Promise<void> {
     redis = null;
   }
 }
+
+// ============================================================================
+// Free Tier In-Memory Rate Limiting (for shared container)
+// ============================================================================
+
+interface UsageRecord {
+  count: number;
+  resetAt: number;
+}
+
+// Daily usage tracking by user ID
+const dailyUsage = new Map<string, UsageRecord>();
+
+// IP signup tracking
+const ipSignups = new Map<string, UsageRecord>();
+
+/**
+ * Track daily usage for a user
+ */
+export function trackDailyUsage(userId: string): void {
+  const now = Date.now();
+  const record = dailyUsage.get(userId);
+  
+  if (record && record.resetAt > now) {
+    record.count++;
+  } else {
+    // Reset at midnight UTC
+    const tomorrow = new Date();
+    tomorrow.setUTCHours(24, 0, 0, 0);
+    dailyUsage.set(userId, {
+      count: 1,
+      resetAt: tomorrow.getTime()
+    });
+  }
+}
+
+/**
+ * Check if user has exceeded daily limit
+ */
+export function checkDailyLimit(userId: string, limit: number = 10): boolean {
+  const now = Date.now();
+  const record = dailyUsage.get(userId);
+  
+  if (!record || record.resetAt <= now) {
+    return true; // No usage or expired record
+  }
+  
+  return record.count < limit;
+}
+
+/**
+ * Track IP address for signup rate limiting
+ */
+export function trackIPSignups(ip: string): void {
+  const now = Date.now();
+  const record = ipSignups.get(ip);
+  
+  if (record && record.resetAt > now) {
+    record.count++;
+  } else {
+    // Reset after 24 hours
+    const resetTime = now + (24 * 60 * 60 * 1000);
+    ipSignups.set(ip, {
+      count: 1,
+      resetAt: resetTime
+    });
+  }
+}
+
+/**
+ * Check if IP has exceeded signup limit
+ */
+export function checkIPLimit(ip: string, limit: number = 3): boolean {
+  const now = Date.now();
+  const record = ipSignups.get(ip);
+  
+  if (!record || record.resetAt <= now) {
+    return true; // No signups or expired record
+  }
+  
+  return record.count < limit;
+}
+
+/**
+ * Get current daily usage count for a user
+ */
+export function getDailyUsageCount(userId: string): number {
+  const now = Date.now();
+  const record = dailyUsage.get(userId);
+  
+  if (!record || record.resetAt <= now) {
+    return 0;
+  }
+  
+  return record.count;
+}

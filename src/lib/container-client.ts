@@ -140,15 +140,39 @@ export const containerApi = {
   // Telegram
   telegramStatus: async (port: number) => {
     const token = await getGatewayToken(port);
-    return containerRequest<{ connected: boolean; username?: string }>(port, '/api/telegram/status', {}, token || undefined);
+    return containerRequest<{ configured: boolean; connected: boolean; running: boolean; botUsername?: string | null }>(port, '/api/telegram/status', {}, token || undefined);
   },
   
   telegramConnect: async (port: number, botToken: string) => {
     const token = await getGatewayToken(port);
-    return containerRequest<{ success: boolean }>(port, '/api/telegram/connect', {
+    return containerRequest<{ success: boolean; botUsername?: string }>(port, '/api/telegram/connect', {
       method: 'POST',
-      body: JSON.stringify({ botToken }),
+      body: JSON.stringify({ token: botToken }),
     }, token || undefined);
+  },
+  
+  telegramDisconnect: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ success: boolean }>(port, '/api/telegram/disconnect', { method: 'POST' }, token || undefined);
+  },
+  
+  // Slack
+  slackStatus: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ configured: boolean; connected: boolean; running: boolean; teamName?: string | null; botName?: string | null; channel?: string | null }>(port, '/api/slack/status', {}, token || undefined);
+  },
+  
+  slackConnect: async (port: number, botToken: string, appToken: string, signingSecret: string) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ success: boolean; teamName?: string; botName?: string }>(port, '/api/slack/connect', {
+      method: 'POST',
+      body: JSON.stringify({ botToken, appToken, signingSecret }),
+    }, token || undefined);
+  },
+  
+  slackDisconnect: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ success: boolean }>(port, '/api/slack/disconnect', { method: 'POST' }, token || undefined);
   },
   
   // Chat
@@ -162,11 +186,24 @@ export const containerApi = {
     model?: string;
     tier?: string;
     confidence?: number;
-  }) => {
-    const token = await getGatewayToken(port);
+  }, explicitToken?: string) => {
+    const token = explicitToken || await getGatewayToken(port);
     return containerRequest<ChatResponse>(port, '/api/chat', {
       method: 'POST',
       body: JSON.stringify({ message, context, settings }),
+    }, token || undefined);
+  },
+  
+  // API Keys - push keys to container
+  pushApiKeys: async (port: number, keys: {
+    openaiKey?: string;
+    anthropicKey?: string;
+    googleKey?: string;
+  }) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ success: boolean }>(port, '/api/keys/push', {
+      method: 'POST',
+      body: JSON.stringify(keys),
     }, token || undefined);
   },
 };

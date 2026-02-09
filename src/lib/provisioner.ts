@@ -5,17 +5,14 @@
  * Handles all aspects of container creation, patching, and DB updates.
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq, desc } from 'drizzle-orm';
 
-const execAsync = promisify(exec);
-
 // Production server configuration
-const PRODUCTION_SERVER = 'root@YOUR_DOCKER_HOST';
+const PRODUCTION_SERVER = process.env.PRODUCTION_SERVER || 'root@YOUR_DOCKER_HOST';
 const CONTAINER_IMAGE = 'clawer-openclaw:ecommerce';
 const BASE_PORT = 4010;
 const MAX_PORT = 5000;
@@ -32,14 +29,25 @@ interface ProvisionResult {
  * Execute command on production server via SSH
  */
 async function sshExec(command: string): Promise<{ stdout: string; stderr: string }> {
-  try {
-    const sshCommand = `ssh -o StrictHostKeyChecking=no ${PRODUCTION_SERVER} "${command.replace(/"/g, '\\"')}"`;
-    console.log(`[SSH] ${command.substring(0, 100)}...`);
-    return await execAsync(sshCommand);
-  } catch (error: any) {
-    console.error(`SSH command failed: ${command}`, error);
-    throw new Error(`SSH execution failed: ${error.message}`);
-  }
+  console.log(`[SSH] ${command.substring(0, 100)}...`);
+  return new Promise((resolve, reject) => {
+    const proc = spawn('ssh', ['-o', 'StrictHostKeyChecking=no', PRODUCTION_SERVER, command]);
+    let stdout = '', stderr = '';
+    proc.stdout.on('data', d => stdout += d);
+    proc.stderr.on('data', d => stderr += d);
+    proc.on('close', code => {
+      if (code === 0) {
+        resolve({stdout, stderr});
+      } else {
+        console.error(`SSH command failed: ${command}`, stderr);
+        reject(new Error(`SSH execution failed: ${stderr || 'Unknown error'}`));
+      }
+    });
+    proc.on('error', error => {
+      console.error(`SSH process error: ${command}`, error);
+      reject(new Error(`SSH process failed: ${error.message}`));
+    });
+  });
 }
 
 /**
@@ -186,6 +194,11 @@ export async function provisionContainer(
   userId: string,
   teamTemplate: string = 'lifeos'
 ): Promise<ProvisionResult> {
+  // Validate userId format (Clerk format: user_XXXXX with alphanumeric)
+  if (!/^user_[a-zA-Z0-9]+$/.test(userId)) {
+    throw new Error('Invalid userId format');
+  }
+  
   const containerName = `clawer_user_${userId}`;
   
   console.log(`[PROVISION] Starting provisioning for user ${userId}`);
@@ -243,7 +256,7 @@ export async function provisionContainer(
       `--name ${containerName}`,
       '--memory=2g',
       '--cpus=1',
-      `-p ${apiPort}:8081`,  // API server port
+      `-p 127.0.0.1:${apiPort}:8081`,  // API server port (localhost only for security)
       `-e USER_ID=${userId}`,
       `-e TEAM_TEMPLATE=${teamTemplate}`,
       `-e 'OPENAI_API_KEY=${openaiKey}'`,
@@ -328,6 +341,11 @@ export async function provisionContainer(
  * Stop a user's container
  */
 export async function stopContainer(userId: string): Promise<boolean> {
+  // Validate userId format
+  if (!/^user_[a-zA-Z0-9]+$/.test(userId)) {
+    throw new Error('Invalid userId format');
+  }
+  
   const containerName = `clawer_user_${userId}`;
   
   try {
@@ -354,6 +372,11 @@ export async function stopContainer(userId: string): Promise<boolean> {
  * Restart a user's container
  */
 export async function restartContainer(userId: string): Promise<boolean> {
+  // Validate userId format
+  if (!/^user_[a-zA-Z0-9]+$/.test(userId)) {
+    throw new Error('Invalid userId format');
+  }
+  
   const containerName = `clawer_user_${userId}`;
   
   try {
@@ -380,6 +403,11 @@ export async function restartContainer(userId: string): Promise<boolean> {
  * Get container status from server
  */
 export async function getContainerStatus(userId: string): Promise<'running' | 'stopped' | 'error' | 'not_found'> {
+  // Validate userId format
+  if (!/^user_[a-zA-Z0-9]+$/.test(userId)) {
+    throw new Error('Invalid userId format');
+  }
+  
   const containerName = `clawer_user_${userId}`;
   
   try {

@@ -12,6 +12,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { provisionContainer, stopContainer } from '@/lib/provisioner';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -70,6 +71,23 @@ export async function POST(request: NextRequest) {
             .where(eq(users.id, userId));
 
           console.log(`✅ User ${userId} subscribed successfully`);
+
+          // Send welcome email
+          try {
+            const subscribedUser = await db.query.users.findFirst({
+              where: eq(users.id, userId),
+              columns: { email: true, name: true },
+            });
+            if (subscribedUser?.email) {
+              await sendWelcomeEmail(
+                subscribedUser.email,
+                subscribedUser.name || subscribedUser.email.split('@')[0]
+              );
+            }
+          } catch (emailError) {
+            console.error(`📧 Failed to send welcome email for user ${userId}:`, emailError);
+            // Non-blocking — subscription still succeeds
+          }
 
           // Provision Docker container for the user
           try {
@@ -159,9 +177,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Stripe webhooks need raw body, disable body parsing
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// App Router route handlers receive raw body by default (no body parsing config needed)

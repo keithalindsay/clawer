@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "free_messages_used" integer NOT NULL DEFAULT 0;

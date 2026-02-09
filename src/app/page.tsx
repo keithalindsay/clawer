@@ -125,6 +125,12 @@ export default function Home() {
               Use Cases
             </Link>
             <Link 
+              href="/pricing" 
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link 
               href="/blog" 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
@@ -474,6 +480,76 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Why Trust Clawer? */}
+      <section className="py-20 px-6 border-t border-gray-200">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900">
+            Built Different
+          </h2>
+          <p className="mt-4 text-center text-lg text-gray-600 max-w-2xl mx-auto">
+            In a world full of AI wrapper scams, here's why Clawer is different.
+          </p>
+
+          <div className="mt-12 grid md:grid-cols-2 gap-8">
+            {[
+              {
+                icon: "🔐",
+                title: "Your Keys, Your Data",
+                desc: "BYOK model means we never store your API keys on our servers. They go directly to YOUR isolated container. We literally can't access your data.",
+              },
+              {
+                icon: "🔓",
+                title: "Open Source Foundation",
+                desc: "Built on OpenClaw, fully auditable. Not some mystery black box. Every line of code can be inspected.",
+              },
+              {
+                icon: "🛡️",
+                title: "Enterprise Security",
+                desc: "Isolated Docker containers per user. No shared data, no shared compute. Your instance is yours alone.",
+              },
+              {
+                icon: "🚪",
+                title: "No Vendor Lock-in",
+                desc: "Export your data anytime. Cancel with one click. No hoops, no hassles, no 'talk to sales' nonsense.",
+              },
+            ].map((item, i) => (
+              <div 
+                key={i}
+                className="bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-200 hover:shadow-md transition-all"
+              >
+                <div className="text-4xl mb-3">{item.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-gray-600">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-8">
+            <p className="text-center text-gray-900 leading-relaxed">
+              <span className="font-semibold">Unlike SimpleClaw and other AI wrapper scams,</span> Clawer gives you a real, isolated AI instance running on dedicated infrastructure. Not a shared API proxy pretending to be "your assistant."
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/blog/security"
+                className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition-colors"
+              >
+                Read Our Security Model →
+              </Link>
+              <Link
+                href="/about"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-full font-medium hover:bg-gray-50 transition-colors"
+              >
+                About Clawer
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto">
@@ -560,6 +636,12 @@ export default function Home() {
             🦞 CLAWER.AI
           </div>
           <div className="flex gap-8 text-sm">
+            <Link href="/about" className="hover:text-white transition-colors">
+              About
+            </Link>
+            <Link href="/blog" className="hover:text-white transition-colors">
+              Blog
+            </Link>
             <Link href="/privacy" className="hover:text-white transition-colors">
               Privacy
             </Link>

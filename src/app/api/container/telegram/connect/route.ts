@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { containerApi } from '@/lib/container-client';
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -35,28 +36,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // Proxy request to user's container API server (gateway port + 1)
-    const apiPort = user.containerPort + 1;
-    const containerUrl = `http://localhost:${apiPort}/api/telegram/connect`;
-    const response = await fetch(containerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
-    });
-
-    const data = await response.json();
+    // Proxy request to user's container
+    const { data, error, status } = await containerApi.telegramConnect(user.containerPort, token);
+    
+    if (error) {
+      return NextResponse.json({ error }, { status });
+    }
 
     // Update database if connection successful
-    if (data.success) {
+    if (data?.success) {
       await db
         .update(users)
         .set({ telegramConnected: 1 })
         .where(eq(users.id, userId));
     }
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Failed to connect Telegram:', error);

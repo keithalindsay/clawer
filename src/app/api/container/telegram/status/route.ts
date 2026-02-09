@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { containerApi } from '@/lib/container-client';
 
 export async function GET() {
   const { userId } = await auth();
@@ -25,27 +26,23 @@ export async function GET() {
       );
     }
 
-    // Proxy request to user's container API server (gateway port + 1)
-    const apiPort = user.containerPort + 1;
-    const containerUrl = `http://localhost:${apiPort}/api/telegram/status`;
-    const response = await fetch(containerUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Proxy request to user's container
+    const { data, error, status } = await containerApi.telegramStatus(user.containerPort);
+    
+    if (error) {
+      return NextResponse.json({ error }, { status });
+    }
 
-    const data = await response.json();
-
-    // Update database if status changed
-    if (data.connected !== undefined) {
+    // Update database to match actual state
+    if (data) {
+      const isConnected = (data as any).configured || (data as any).connected;
       await db
         .update(users)
-        .set({ telegramConnected: data.connected ? 1 : 0 })
+        .set({ telegramConnected: isConnected ? 1 : 0 })
         .where(eq(users.id, userId));
     }
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Failed to fetch Telegram status:', error);
