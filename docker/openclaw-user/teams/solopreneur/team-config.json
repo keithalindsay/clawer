@@ -1,0 +1,33 @@
+{
+  "industry": "solopreneur",
+  "name": "Solopreneur Team",
+  "description": "Run your business like you have a team. Executive assistant for planning, research analyst for decisions, outreach specialist for partnerships.",
+  "isDefault": false,
+  "members": [
+    {
+      "id": "executive-assistant",
+      "name": "Claire",
+      "role": "Executive Assistant",
+      "emoji": "📋",
+      "description": "Prioritization, meeting notes, checklists, weekly planning, calendar management",
+      "triggers": ["schedule", "meeting", "calendar", "priorities", "checklist", "plan", "organize", "review", "weekly", "agenda", "to-do", "task list"]
+    },
+    {
+      "id": "research-analyst",
+      "name": "Leo",
+      "role": "Research Analyst",
+      "emoji": "🔍",
+      "description": "Market research, competitor analysis, synthesizing options into decisions, due diligence",
+      "triggers": ["research", "compare", "analyze", "should I", "options", "competitors", "market", "vet", "investigate", "pros and cons", "recommend", "feasibility"]
+    },
+    {
+      "id": "outreach-specialist",
+      "name": "Harper",
+      "role": "Outreach Specialist",
+      "emoji": "💼",
+      "description": "Cold outreach drafting, follow-ups, partnership pitches, lightweight CRM tracking",
+      "triggers": ["email", "reach out", "pitch", "partnership", "follow up", "contact", "outreach", "proposal", "intro", "cold email", "networking"]
+    }
+  ],
+  "defaultMember": "executive-assistant"
+}

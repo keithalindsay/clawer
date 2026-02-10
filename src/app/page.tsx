@@ -9,7 +9,10 @@
  * - Trust signals throughout
  */
 
+'use client';
+
 import Link from "next/link";
+import { useState } from "react";
 
 const SOCIAL_PROOF_QUOTES = [
   {
@@ -60,6 +63,8 @@ const PRICING_TIERS = [
 ];
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -68,7 +73,9 @@ export default function Home() {
           <Link href="/" className="text-xl font-bold text-gray-900">
             🦞 CLAWER<span className="text-blue-600">.AI</span>
           </Link>
-          <div className="flex items-center gap-4">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-4">
             <Link 
               href="/pricing" 
               className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -88,7 +95,52 @@ export default function Home() {
               Start Free
             </Link>
           </div>
+
+          {/* Mobile Navigation */}
+          <div className="flex md:hidden items-center gap-3">
+            <Link
+              href="/sign-up"
+              className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              Start Free
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100">
+            <div className="px-6 py-4 space-y-3">
+              <Link 
+                href="/pricing" 
+                className="block text-gray-600 hover:text-gray-900 transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pricing
+              </Link>
+              <Link 
+                href="/sign-in" 
+                className="block text-gray-600 hover:text-gray-900 transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section - SIMPLIFIED TO ONE MESSAGE */}
@@ -104,13 +156,13 @@ export default function Home() {
           <h1 className="text-6xl md:text-7xl font-bold text-gray-900 leading-tight">
             Your AI Assistant.
             <br />
-            <span className="text-blue-600">On WhatsApp.</span>
+            <span className="text-blue-600">Wherever You Are.</span>
           </h1>
           
           {/* Single, clear subheadline */}
           <p className="mt-8 text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             A personal AI that lives in your chat. Draft emails, research anything, 
-            manage your day — all from WhatsApp, Telegram, or Slack.
+            manage your day — on WhatsApp, Telegram, Slack, or the web.
           </p>
 
           {/* Primary CTA - CONSISTENT */}

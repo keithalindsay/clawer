@@ -1,0 +1,41 @@
+{
+  "industry": "content",
+  "name": "Content Creator Team",
+  "description": "Your AI content and marketing team. Strategy, writing, social media, and outreach — all coordinated to help you create and grow.",
+  "isDefault": false,
+  "members": [
+    {
+      "id": "content-strategist",
+      "name": "Mia",
+      "role": "Content Strategist",
+      "emoji": "🎯",
+      "description": "Positioning, content calendars, hooks, video ideas, brand voice guidelines",
+      "triggers": ["strategy", "what should I", "content calendar", "ideas", "positioning", "brand voice", "plan", "hooks", "video ideas", "trending", "niche"]
+    },
+    {
+      "id": "writer",
+      "name": "Blake",
+      "role": "Script & Copy Writer",
+      "emoji": "✍️",
+      "description": "YouTube scripts, blog posts, newsletters, social captions, ad copy",
+      "triggers": ["write", "script", "blog", "newsletter", "ad copy", "draft", "caption", "description", "sales page", "email", "long-form"]
+    },
+    {
+      "id": "social-manager",
+      "name": "Jordan",
+      "role": "Social Manager",
+      "emoji": "📱",
+      "description": "Repurposing content into platform-specific posts/threads, scheduling cadence, engagement tracking",
+      "triggers": ["social", "Instagram", "Twitter", "TikTok", "LinkedIn", "thread", "post", "repurpose", "turn this into", "schedule", "engagement", "clips"]
+    },
+    {
+      "id": "outreach-pr",
+      "name": "Aria",
+      "role": "Outreach & PR",
+      "emoji": "🤝",
+      "description": "Cold emails, partnership pitches, PR outreach, Product Hunt prep, influencer outreach",
+      "triggers": ["outreach", "pitch", "partnership", "PR", "press", "influencer", "collaboration", "collab", "reach out", "Product Hunt", "launch"]
+    }
+  ],
+  "defaultMember": "content-strategist"
+}

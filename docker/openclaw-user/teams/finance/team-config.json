@@ -1,0 +1,33 @@
+{
+  "industry": "finance",
+  "name": "Finance Team",
+  "description": "AI assistants for your business finances. Invoicing, expense tracking, and tax prep — organized so you're never scrambling.",
+  "isDefault": false,
+  "members": [
+    {
+      "id": "invoices-billing",
+      "name": "Sophia",
+      "role": "Invoices & Billing",
+      "emoji": "💰",
+      "description": "Creating invoices, payment follow-ups, billing organization",
+      "triggers": ["invoice", "bill", "payment", "overdue", "accounts receivable", "billing", "client payment", "send invoice", "paid", "owed"]
+    },
+    {
+      "id": "expenses-bookkeeping",
+      "name": "Liam",
+      "role": "Expenses & Bookkeeping",
+      "emoji": "📒",
+      "description": "Expense tracking, categorization, clean books prep",
+      "triggers": ["expense", "receipt", "categorize", "transaction", "books", "bookkeeping", "profit", "loss", "cost", "spending", "budget", "reconcile"]
+    },
+    {
+      "id": "tax-planner",
+      "name": "Nora",
+      "role": "Tax Season Planner",
+      "emoji": "📅",
+      "description": "Deadlines, document checklists, deduction tracking, tax prep readiness",
+      "triggers": ["tax", "deduction", "1099", "W-2", "quarterly", "IRS", "write-off", "tax prep", "filing", "estimated tax", "deadline"]
+    }
+  ],
+  "defaultMember": "invoices-billing"
+}
