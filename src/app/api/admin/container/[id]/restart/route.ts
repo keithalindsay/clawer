@@ -6,7 +6,7 @@ const ADMIN_USER_IDS = (process.env.ADMIN_USER_IDS || 'user_39PgWfJYYrb2T36BqfnR
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId: adminId } = await auth();
   
@@ -15,7 +15,7 @@ export async function POST(
   }
 
   try {
-    const userId = params.id;
+    const { id: userId } = await params;
     
     // Validate userId is safe (Clerk format: user_XXXXX with alphanumeric)
     if (!userId || !/^[a-zA-Z0-9_-]+$/.test(userId)) {

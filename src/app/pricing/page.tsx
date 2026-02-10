@@ -250,7 +250,7 @@ export default function PricingPage() {
                 )}
               </div>
 
-              {tier.billingNote && (
+              {"billingNote" in tier && tier.billingNote && (
                 <p className="mt-1 text-sm text-gray-500">{tier.billingNote}</p>
               )}
 
