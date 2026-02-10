@@ -34,12 +34,30 @@ const SOCIAL_PROOF_QUOTES = [
 ];
 
 const TOP_USE_CASES = [
-  "Summarize your inbox in 30 seconds",
-  "Draft professional emails",
-  "Research any topic in depth",
-  "Turn meeting notes into action items",
-  "Find and compare products",
-  "Get daily schedule overviews",
+  {
+    team: "🧠 Life OS",
+    example: "\"Morning briefing — what's on my calendar, unread emails, and today's priorities\"",
+  },
+  {
+    team: "💼 Solopreneur",
+    example: "\"Research the top 5 competitors in meal kit delivery and summarize pricing\"",
+  },
+  {
+    team: "📱 Content & Marketing",
+    example: "\"Turn this blog post into 5 Twitter threads and 3 LinkedIn posts\"",
+  },
+  {
+    team: "💪 Fitness",
+    example: "\"Build me a 4-day push/pull workout for someone with a bad shoulder\"",
+  },
+  {
+    team: "💰 Finance",
+    example: "\"Create an invoice for 10 hours of consulting at $150/hr for Acme Corp\"",
+  },
+  {
+    team: "👩‍👧‍👦 Mom's Command Center",
+    example: "\"Plan 5 weeknight dinners that are peanut-free and under 30 minutes\"",
+  },
 ];
 
 const PRICING_TIERS = [
@@ -301,30 +319,30 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Feature 2: Your keys, your data */}
+            {/* Feature 2: AI Team Templates */}
             <div className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
               <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-3xl mb-6">
-                🔐
+                🤖
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Your Keys, Your Data
+                Pre-Built AI Teams
               </h3>
               <p className="text-gray-600 mb-6">
-                BYOK model means your API keys go directly to YOUR isolated container. 
-                We never store them. Not a wrapper—real OpenClaw.
+                Not one generic chatbot — a team of specialists. Pick a template 
+                and get agents built for your exact workflow.
               </p>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <span className="text-green-600">✓</span>
-                  <span>Isolated Docker containers</span>
+                  <span>7 team templates (Life OS, Solopreneur...)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-green-600">✓</span>
-                  <span>Open source foundation</span>
+                  <span>Specialized agents per role</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-green-600">✓</span>
-                  <span>Export data anytime</span>
+                  <span>Switch teams anytime</span>
                 </div>
               </div>
             </div>
@@ -376,17 +394,17 @@ export default function Home() {
             {TOP_USE_CASES.map((useCase, i) => (
               <div
                 key={i}
-                className="bg-white px-5 py-4 rounded-xl border border-gray-200 text-gray-700 flex items-center gap-3"
+                className="bg-white px-5 py-4 rounded-xl border border-gray-200"
               >
-                <span className="text-blue-600 text-lg">→</span>
-                <span>{useCase}</span>
+                <div className="text-sm font-semibold text-blue-600 mb-1">{useCase.team}</div>
+                <p className="text-gray-700 text-sm italic">{useCase.example}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              And dozens more. If you can describe it, your AI can do it.
+              7 pre-built AI teams. Pick one at signup or switch anytime.
             </p>
           </div>
         </div>
@@ -430,11 +448,11 @@ export default function Home() {
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <div className="text-3xl mb-3">🔐</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                BYOK Model
+                Active Security Monitoring
               </h3>
               <p className="text-gray-600">
-                Your API keys go directly to YOUR isolated container. 
-                We literally can't access your data—by design.
+                Every container runs security scanning with file integrity monitoring, 
+                CVE alerts, and automated audits. We catch threats so you don't have to.
               </p>
             </div>
 
@@ -582,7 +600,7 @@ export default function Home() {
               },
               {
                 q: "Is my data safe?",
-                a: "Yes. Your conversations are encrypted. We use a BYOK (bring your own key) model, so your API keys never touch our servers. You can delete everything anytime.",
+                a: "Yes. Every paid user gets their own isolated container — your data never touches another user's. We run active security monitoring on every instance, and you can export or delete everything anytime.",
               },
               {
                 q: "How do I cancel?",
