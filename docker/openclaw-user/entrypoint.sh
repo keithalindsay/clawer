@@ -77,6 +77,9 @@ export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 
 echo "OpenClaw configuration created"
 
+# Initialize ClawSec security skills
+/usr/local/bin/init_clawsec.sh
+
 # Start API server in background (exposes REST endpoints for dashboard)
 node /usr/local/bin/api-server.js &
 API_PID=$!
