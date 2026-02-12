@@ -27,6 +27,18 @@ export const conversations = pgTable('conversations', {
   /** Conversation metadata */
   metadata: jsonb('metadata').notNull().default({}),
   
+  /** Agent ID for agent-specific threads (null for general conversation) */
+  agentId: text('agent_id'),
+  
+  /** Agent name (denormalized for quick display) */
+  agentName: text('agent_name'),
+  
+  /** Agent emoji avatar */
+  agentEmoji: text('agent_emoji'),
+  
+  /** Agent role description */
+  agentRole: text('agent_role'),
+  
   /** Creation timestamp */
   createdAt: timestamp('created_at').notNull().defaultNow(),
   

@@ -3,13 +3,12 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { desc } from 'drizzle-orm';
-
-const ADMIN_USER_IDS = ['user_39PgWfJYYrb2T36BqfnRgtwlsfM'];
+import { isAdmin } from '@/lib/admin';
 
 export async function GET() {
   const { userId: adminId } = await auth();
   
-  if (!adminId || !ADMIN_USER_IDS.includes(adminId)) {
+  if (!adminId || !(await isAdmin(adminId))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

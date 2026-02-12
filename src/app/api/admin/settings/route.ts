@@ -8,20 +8,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema/users';
 import { adminSettings, SETTING_KEYS } from '@/lib/db/schema/admin-settings';
 import { eq } from 'drizzle-orm';
-
-// Admin user IDs (in production, use a proper role system)
-const ADMIN_EMAILS = ['vavier@gmail.com', 'vavize@gmail.com'];
-
-async function isAdmin(userId: string): Promise<boolean> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    columns: { email: true },
-  });
-  return user ? ADMIN_EMAILS.includes(user.email) : false;
-}
+import { isAdmin } from '@/lib/admin';
 
 /**
  * GET - Retrieve all settings (sensitive values masked)

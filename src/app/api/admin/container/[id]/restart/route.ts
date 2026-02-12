@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { restartContainer } from '@/lib/provisioner';
 
-const ADMIN_USER_IDS = (process.env.ADMIN_USER_IDS || 'user_39PgWfJYYrb2T36BqfnRgtwlsfM').split(',');
+import { isAdmin } from '@/lib/admin';
 
 export async function POST(
   req: NextRequest,
@@ -10,7 +10,7 @@ export async function POST(
 ) {
   const { userId: adminId } = await auth();
   
-  if (!adminId || !ADMIN_USER_IDS.includes(adminId)) {
+  if (!adminId || !(await isAdmin(adminId))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

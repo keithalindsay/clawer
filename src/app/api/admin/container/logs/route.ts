@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 
-const ADMIN_USER_IDS = (process.env.ADMIN_USER_IDS || 'user_39PgWfJYYrb2T36BqfnRgtwlsfM').split(',');
+import { isAdmin } from '@/lib/admin';
 const PRODUCTION_SERVER = process.env.PRODUCTION_SERVER || 'root@YOUR_DOCKER_HOST';
 
 async function sshExec(command: string): Promise<{ stdout: string; stderr: string }> {
@@ -18,7 +18,7 @@ async function sshExec(command: string): Promise<{ stdout: string; stderr: strin
 export async function GET(req: NextRequest) {
   const { userId: adminId } = await auth();
   
-  if (!adminId || !ADMIN_USER_IDS.includes(adminId)) {
+  if (!adminId || !(await isAdmin(adminId))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

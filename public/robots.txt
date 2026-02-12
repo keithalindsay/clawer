@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://clawer.ai/sitemap.xml

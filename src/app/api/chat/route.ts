@@ -2,11 +2,14 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
-import { eq, sql } from 'drizzle-orm';
+import { bots } from '@/lib/db/schema/bots';
+import { conversations } from '@/lib/db/schema/conversations';
+import { eq, sql, and, isNull } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
-import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN } from '@/lib/constants';
-import { trackDailyUsage, checkDailyLimit } from '@/lib/rate-limit';
+import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN, MAX_MESSAGE_LENGTH } from '@/lib/constants';
+import { getTeamConfig, getAgentFromTeam, buildAgentSystemPrompt } from '@/lib/teams';
+import { trackDailyUsage, checkDailyLimit, checkUserRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -16,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { message, context, settings } = await req.json();
+    const { message, context, settings, agentId } = await req.json();
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -25,7 +28,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user with container info
+    // Input validation: length limit and sanitization
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        { error: `Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters.` },
+        { status: 400 }
+      );
+    }
+
+    // Strip null bytes (potential injection vector)
+    const sanitizedMessage = message.replace(/\0/g, '');
+
+    // Rate limit: per-minute throttle for all users
+    const userRecord = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { tier: true },
+    });
+    const userTier = (userRecord?.tier || 'free') as 'free' | 'basic' | 'pro' | 'enterprise';
+    
+    const rateLimit = await checkUserRateLimit(userId, userTier);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'rate_limited',
+          message: 'Too many requests. Please slow down.',
+          retryAfter: Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000),
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000)),
+            'X-RateLimit-Limit': String(rateLimit.limit),
+            'X-RateLimit-Remaining': String(rateLimit.remaining),
+          },
+        }
+      );
+    }
+
+    // Get user with container info and team template
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { 
@@ -33,8 +73,77 @@ export async function POST(req: NextRequest) {
         containerPort: true,
         containerStatus: true,
         freeMessagesUsed: true,
+        teamTemplate: true,
+        name: true,
       },
     });
+
+    // Handle agent-specific chat if agentId provided
+    let agentSystemPrompt: string | undefined;
+    let conversationId: string | undefined;
+    
+    if (agentId) {
+      const templateName = user?.teamTemplate || 'lifeos';
+      const teamConfig = getTeamConfig(templateName);
+      
+      if (!teamConfig) {
+        return NextResponse.json(
+          { error: 'Team template not found' },
+          { status: 404 }
+        );
+      }
+
+      const agent = getAgentFromTeam(templateName, agentId);
+      
+      if (!agent) {
+        return NextResponse.json(
+          { error: 'Agent not found in your team' },
+          { status: 404 }
+        );
+      }
+
+      // Build agent-specific system prompt
+      agentSystemPrompt = buildAgentSystemPrompt(agent, teamConfig, user?.name || undefined);
+
+      // Find or create agent conversation
+      let conversation = await db.query.conversations.findFirst({
+        where: and(
+          eq(conversations.userId, userId),
+          eq(conversations.agentId, agentId),
+          isNull(conversations.deletedAt)
+        ),
+      });
+
+      if (!conversation) {
+        // Create new agent conversation
+        const userBot = await db.query.bots.findFirst({
+          where: eq(bots.userId, userId),
+        });
+
+        if (userBot) {
+          const [newConversation] = await db
+            .insert(conversations)
+            .values({
+              userId,
+              botId: userBot.id,
+              title: `Chat with ${agent.name}`,
+              agentId: agent.id,
+              agentName: agent.name,
+              agentEmoji: agent.emoji || '',
+              agentRole: agent.role,
+              metadata: {
+                agentDescription: agent.description,
+                triggers: agent.triggers,
+              },
+            })
+            .returning();
+
+          conversation = newConversation;
+        }
+      }
+
+      conversationId = conversation?.id;
+    }
 
     // Free tier vs paid subscription routing
     const hasSubscription = !!user?.stripeSubscriptionId;
@@ -113,9 +222,15 @@ export async function POST(req: NextRequest) {
     const botSettings = settings ? {
       botName: settings.botName || 'Assistant',
       personality: settings.personality || 'helpful and friendly',
-      customInstructions: settings.customInstructions || '',
+      customInstructions: agentSystemPrompt || settings.customInstructions || '',
       communicationStyle: settings.communicationStyle || 'balanced',
       responseLength: settings.responseLength || 'balanced',
+    } : agentSystemPrompt ? {
+      botName: 'Assistant',
+      personality: 'helpful and friendly',
+      customInstructions: agentSystemPrompt,
+      communicationStyle: 'balanced',
+      responseLength: 'balanced',
     } : undefined;
 
     // Build system prompt for routing classification
@@ -129,7 +244,7 @@ export async function POST(req: NextRequest) {
 
     // Classify request using smart router
     const routing = routeRequest({
-      prompt: message,
+      prompt: sanitizedMessage,
       systemPrompt,
       userOrchestratorModel: 'openai/gpt-4o-mini',
       userWorkerModel: 'openai/gpt-4o-mini',  // Both using same model for now
@@ -147,12 +262,12 @@ export async function POST(req: NextRequest) {
       userId,
       port: targetPort,
       tier: hasSubscription ? 'paid' : 'free',
-      messageLength: message.length,
+      messageLength: sanitizedMessage.length,
     });
 
     const result = await containerApi.chat(
       targetPort,
-      message,
+      sanitizedMessage,
       context,
       {
         ...botSettings,
@@ -173,6 +288,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       content: result.data?.content || 'No response from assistant',
+      conversationId,
       routing: {
         tier: routing.tier,
         model: routing.model,

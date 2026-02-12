@@ -1,0 +1,44 @@
+{
+  "name": "Growth Ops",
+  "description": "Two-agent growth automation: Hunter finds leads and opportunities, Shield monitors SEO, competitors, and brand positioning. Delivers daily Kill Report + Wall Report for human-approved action.",
+  "version": "1.0.0",
+  "category": "growth",
+  "tags": ["growth", "marketing", "competitive-intel", "seo", "lead-gen"],
+  "members": [
+    {
+      "id": "hunter",
+      "name": "Hunter",
+      "role": "offensive",
+      "description": "Lead generation, competitor intel, opportunity scanning",
+      "config": "members/hunter.md",
+      "schedule": "0 2 * * *",
+      "outputs": ["kill-report"]
+    },
+    {
+      "id": "shield",
+      "name": "Shield",
+      "role": "defensive",
+      "description": "SEO audit, review monitoring, competitive positioning",
+      "config": "members/shield.md",
+      "schedule": "15 2 * * *",
+      "outputs": ["wall-report"]
+    }
+  ],
+  "reports": {
+    "kill-report": {
+      "format": "markdown",
+      "path": "research/warmachine/kill-report-{{date}}.md"
+    },
+    "wall-report": {
+      "format": "markdown",
+      "path": "research/warmachine/wall-report-{{date}}.md"
+    },
+    "briefing": {
+      "format": "markdown",
+      "path": "research/warmachine/briefing-{{date}}.md",
+      "delivery": "whatsapp"
+    }
+  },
+  "tools_required": ["searxng", "web_fetch"],
+  "auto_engage": false
+}

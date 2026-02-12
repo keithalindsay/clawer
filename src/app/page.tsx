@@ -14,49 +14,58 @@
 import Link from "next/link";
 import { useState } from "react";
 
-const SOCIAL_PROOF_QUOTES = [
-  {
-    name: "Eric Siu",
-    title: "CEO, SingleGrain",
-    handle: "@ericosiu",
-    views: "11.7K views",
-    quote: "This is exactly what I built for my 14-agent team. They made it work in 60 seconds.",
-    context: "After spending weeks building OpenClaw infrastructure with memory, vector search, and agent coordination",
-  },
-  {
-    name: "Winrey",
-    title: "Team9.ai",
-    handle: "@team9_ai",
-    views: "23.1K views",
-    quote: "After deploying OpenClaw to 50 people, I learned: The hard part isn't the AI. It's the hosting.",
-    context: "On becoming a full-time IT support desk after rolling out DIY OpenClaw",
-  },
+const SOCIAL_PROOF_QUOTES: never[] = [];
+
+const PRESS_MENTIONS = [
+  { name: "Fast Company", url: "https://www.fastcompany.com/91484506/what-is-clawdbot-moltbot-openclaw" },
+  { name: "MacStories", url: "https://www.macstories.net/stories/clawdbot-showed-me-what-the-future-of-personal-ai-assistants-looks-like/" },
+  { name: "IBM", url: "https://www.ibm.com/think/news/clawdbot-ai-agent-testing-limits-vertical-integration" },
+  { name: "CNBC", url: "#" },
+  { name: "Wikipedia", url: "#" },
 ];
 
 const TOP_USE_CASES = [
   {
-    team: "🧠 Life OS",
-    example: "\"Morning briefing — what's on my calendar, unread emails, and today's priorities\"",
+    team: "📧 Email Triage",
+    template: "Personal HQ",
+    before: "3.5 hours/week reading and responding to emails",
+    after: "Agent scans your inbox at 6am, drafts replies in your voice, flags what needs you. 30 min to review.",
+    saved: "3 hrs/week",
   },
   {
-    team: "💼 Solopreneur",
-    example: "\"Research the top 5 competitors in meal kit delivery and summarize pricing\"",
+    team: "📱 Content Repurposing",
+    template: "Content & Marketing",
+    before: "2+ hours rewriting one piece of content for every platform",
+    after: "Drop a blog post or video — get a LinkedIn post, X thread, email section, and Instagram caption in minutes.",
+    saved: "2 hrs/week",
   },
   {
-    team: "📱 Content & Marketing",
-    example: "\"Turn this blog post into 5 Twitter threads and 3 LinkedIn posts\"",
+    team: "🔍 Research & Briefings",
+    template: "Solopreneur",
+    before: "90 minutes manually researching before every meeting or pitch",
+    after: "Agent pulls their LinkedIn, recent posts, and news. Delivers a 2-page brief with talking points.",
+    saved: "1.5 hrs/week",
   },
   {
-    team: "💪 Fitness",
-    example: "\"Build me a 4-day push/pull workout for someone with a bad shoulder\"",
+    team: "📅 Meeting Prep",
+    template: "Personal HQ",
+    before: "60 minutes scrambling before calls to find context",
+    after: "At 5am, agent checks your calendar and pulls previous emails, notes, and action items for each meeting.",
+    saved: "1 hr/week",
   },
   {
-    team: "💰 Finance",
-    example: "\"Create an invoice for 10 hours of consulting at $150/hr for Acme Corp\"",
+    team: "👨‍👩‍👧‍👦 Family Coordination",
+    template: "Parent Command Center",
+    before: "Scattered texts, forgotten permission slips, last-minute dinner panic",
+    after: "Agent tracks school events, plans peanut-free weeknight dinners, and reminds you before deadlines.",
+    saved: "1.5 hrs/week",
   },
   {
-    team: "👩‍👧‍👦 Mom's Command Center",
-    example: "\"Plan 5 weeknight dinners that are peanut-free and under 30 minutes\"",
+    team: "💰 Finance & Invoicing",
+    template: "Finance",
+    before: "45 minutes per invoice, chasing receipts, manual expense tracking",
+    after: "\"Create an invoice for 10 hours at $150/hr for Acme Corp\" — done in seconds.",
+    saved: "1 hr/week",
   },
 ];
 
@@ -179,7 +188,7 @@ export default function Home() {
           
           {/* Single, clear subheadline */}
           <p className="mt-8 text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            A personal AI that lives in your chat. Draft emails, research anything, 
+            A personal AI powered by OpenClaw that lives in your chat. Draft emails, research anything, 
             manage your day — on WhatsApp, Telegram, Slack, or the web.
           </p>
 
@@ -196,22 +205,45 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Platform badges - simplified */}
-          <div className="mt-12 flex flex-wrap justify-center gap-3">
-            {[
-              { name: "WhatsApp", icon: "💬" },
-              { name: "Telegram", icon: "✈️" },
-              { name: "Slack", icon: "💼" },
-              { name: "Web", icon: "🌐" },
-            ].map((app) => (
-              <span
-                key={app.name}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-700"
-              >
-                <span className="text-lg">{app.icon}</span>
-                <span>{app.name}</span>
+          {/* Platform badges - comprehensive grid */}
+          <div className="mt-12">
+            <p className="text-sm text-gray-500 mb-4 text-center">Works with your existing tools:</p>
+            <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+              {[
+                "WhatsApp",
+                "Telegram",
+                "Slack",
+                "Gmail",
+                "Google Calendar",
+                "GitHub",
+                "Discord",
+                "Notion",
+                "X/Twitter",
+                "Spotify",
+              ].map((platform) => (
+                <span
+                  key={platform}
+                  className="px-4 py-2 bg-gray-100 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-200 transition-colors"
+                >
+                  {platform}
+                </span>
+              ))}
+              <span className="px-4 py-2 bg-blue-100 rounded-lg text-sm font-semibold text-blue-700">
+                +100 more
               </span>
-            ))}
+            </div>
+          </div>
+
+          {/* Press mentions */}
+          <div className="mt-12">
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">OpenClaw has been featured in</p>
+            <div className="flex flex-wrap justify-center gap-6 items-center">
+              {PRESS_MENTIONS.map((press) => (
+                <span key={press.name} className="text-gray-400 font-semibold text-lg hover:text-gray-600 transition-colors">
+                  {press.name}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -221,39 +253,27 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Solving the Problems from Viral Posts
+              What People Are Saying About OpenClaw
             </h2>
             <p className="text-gray-600">
-              Two posts went viral this week about OpenClaw. We built Clawer to solve them.
+              The AI assistant framework trusted by 300,000+ users. We made it effortless.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {SOCIAL_PROOF_QUOTES.map((quote) => (
-              <div 
-                key={quote.name}
-                className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
-              >
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
-                    {quote.name[0]}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">{quote.name}</div>
-                    <div className="text-sm text-gray-500">{quote.title}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {quote.handle} • {quote.views}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-700 italic mb-3">
-                  "{quote.quote}"
-                </p>
-                <p className="text-sm text-gray-500">
-                  {quote.context}
-                </p>
-              </div>
-            ))}
+          {/* Press quotes */}
+          <div className="mt-12 grid md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl p-5 border border-gray-200 text-center">
+              <p className="text-gray-700 text-sm italic">"Genuinely the most incredible sci-fi takeoff-adjacent thing I have seen recently."</p>
+              <p className="text-xs text-gray-400 mt-3">— OpenClaw user</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-gray-200 text-center">
+              <p className="text-gray-700 text-sm italic">"It feels like hiring an employee rather than opening another chat window."</p>
+              <p className="text-xs text-gray-400 mt-3">— MacStories</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-gray-200 text-center">
+              <p className="text-gray-700 text-sm italic">"One user cleared nearly 6,000 emails from their inbox on the first day."</p>
+              <p className="text-xs text-gray-400 mt-3">— Fast Company</p>
+            </div>
           </div>
 
           {/* Stats bar */}
@@ -263,8 +283,8 @@ export default function Home() {
               <p className="text-sm text-gray-600 mt-1">OpenClaw users</p>
             </div>
             <div>
-              <div className="text-3xl font-bold text-blue-600">50K+</div>
-              <p className="text-sm text-gray-600 mt-1">Messages processed</p>
+              <div className="text-3xl font-bold text-blue-600">100+</div>
+              <p className="text-sm text-gray-600 mt-1">Integrations supported</p>
             </div>
             <div>
               <div className="text-3xl font-bold text-blue-600">60 sec</div>
@@ -278,8 +298,133 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3 Core Feature Blocks - SIMPLIFIED */}
+      {/* Comparison Table */}
       <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              How Clawer Compares
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Same AI power. Zero technical hassle.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700"></th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">ChatGPT/Gemini</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Self-Hosting</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-blue-700 bg-blue-50">Clawer</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">Reads your real email</td>
+                  <td className="px-6 py-4 text-center text-xl">
+                    <span className="text-red-500">✗</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-green-500 text-xl">✓</div>
+                    <div className="text-xs text-gray-500 mt-1">Setup required</div>
+                  </td>
+                  <td className="px-6 py-4 text-center bg-blue-50">
+                    <div className="text-green-600 text-xl">✓</div>
+                    <div className="text-xs text-blue-600 mt-1 font-medium">Works instantly</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">Lives in WhatsApp/Telegram</td>
+                  <td className="px-6 py-4 text-center text-xl">
+                    <span className="text-red-500">✗</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-green-500 text-xl">✓</div>
+                    <div className="text-xs text-gray-500 mt-1">Setup required</div>
+                  </td>
+                  <td className="px-6 py-4 text-center bg-blue-50">
+                    <div className="text-green-600 text-xl">✓</div>
+                    <div className="text-xs text-blue-600 mt-1 font-medium">Works instantly</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">No technical setup</td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-green-500 text-xl">✓</div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-red-500 text-xl">✗</div>
+                    <div className="text-xs text-gray-500 mt-1">Hours of config</div>
+                  </td>
+                  <td className="px-6 py-4 text-center bg-blue-50">
+                    <div className="text-green-600 text-xl">✓</div>
+                    <div className="text-xs text-blue-600 mt-1 font-medium">60 seconds</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">Team of AI specialists</td>
+                  <td className="px-6 py-4 text-center text-xl">
+                    <span className="text-red-500">✗</span>
+                  </td>
+                  <td className="px-6 py-4 text-center text-xl">
+                    <span className="text-red-500">✗</span>
+                  </td>
+                  <td className="px-6 py-4 text-center bg-blue-50">
+                    <div className="text-green-600 text-xl">✓</div>
+                    <div className="text-xs text-blue-600 mt-1 font-medium">7 pre-built teams</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">Your data fully isolated</td>
+                  <td className="px-6 py-4 text-center text-xl">
+                    <span className="text-red-500">✗</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-green-500 text-xl">✓</div>
+                  </td>
+                  <td className="px-6 py-4 text-center bg-blue-50">
+                    <div className="text-green-600 text-xl">✓</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">Managed security & updates</td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-xs text-gray-400">N/A</div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-red-500 text-xl">✗</div>
+                    <div className="text-xs text-gray-500 mt-1">You handle it</div>
+                  </td>
+                  <td className="px-6 py-4 text-center bg-blue-50">
+                    <div className="text-green-600 text-xl">✓</div>
+                    <div className="text-xs text-blue-600 mt-1 font-medium">We handle it</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">Cost</td>
+                  <td className="px-6 py-4 text-center text-sm text-gray-600">
+                    $20-50/mo<br />
+                    <span className="text-xs text-gray-400">(limited)</span>
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-gray-600">
+                    $5-50/mo<br />
+                    <span className="text-xs text-gray-400">+ hardware + your time</span>
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm font-semibold text-blue-700 bg-blue-50">
+                    $49/mo<br />
+                    <span className="text-xs font-normal text-blue-600">all-in</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* 3 Core Feature Blocks - SIMPLIFIED */}
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
@@ -319,7 +464,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Feature 2: AI Team Templates */}
+            {/* Feature 2: AI Teams */}
             <div className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
               <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-3xl mb-6">
                 🤖
@@ -328,13 +473,13 @@ export default function Home() {
                 Pre-Built AI Teams
               </h3>
               <p className="text-gray-600 mb-6">
-                Not one generic chatbot — a team of specialists. Pick a template 
+                Not one generic chatbot — a team of specialists. Pick an AI team 
                 and get agents built for your exact workflow.
               </p>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <span className="text-green-600">✓</span>
-                  <span>7 team templates (Life OS, Solopreneur...)</span>
+                  <span>7 AI teams (Personal HQ, Solopreneur...)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-green-600">✓</span>
@@ -383,28 +528,36 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              What Can It Do?
+              Workflows That Run Themselves
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              Just tell it what you need in plain English
+              No prompting. No manual triggers. It just happens.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-6">
             {TOP_USE_CASES.map((useCase, i) => (
               <div
                 key={i}
-                className="bg-white px-5 py-4 rounded-xl border border-gray-200"
+                className="bg-white px-6 py-5 rounded-xl border border-gray-200"
               >
-                <div className="text-sm font-semibold text-blue-600 mb-1">{useCase.team}</div>
-                <p className="text-gray-700 text-sm italic">{useCase.example}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-gray-900">{useCase.team}</span>
+                  <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">Saves {useCase.saved}</span>
+                </div>
+                <div className="text-sm text-red-400 line-through mb-1">{useCase.before}</div>
+                <div className="text-sm text-gray-700">{useCase.after}</div>
+                <div className="mt-3 text-xs text-gray-400">AI Team: {useCase.template}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-600">
-              7 pre-built AI teams. Pick one at signup or switch anytime.
+          <div className="mt-10 text-center">
+            <p className="text-lg font-semibold text-gray-900">
+              Average user saves 8+ hours per week
+            </p>
+            <p className="text-gray-500 mt-1">
+              That's 400+ hours a year you didn't have to hire someone to get back.
             </p>
           </div>
         </div>
@@ -480,7 +633,7 @@ export default function Home() {
             No apps to download. No software to install. Just connect and go.
           </p>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               {
                 step: "1",
@@ -489,11 +642,16 @@ export default function Home() {
               },
               {
                 step: "2",
-                title: "Connect WhatsApp (or Telegram, Slack...)",
-                desc: "One click. Scan QR code. Takes 10 seconds.",
+                title: "Pick your AI team",
+                desc: "Life OS, Solopreneur, Finance — choose the agents built for your workflow.",
               },
               {
                 step: "3",
+                title: "Connect your chat",
+                desc: "WhatsApp, Telegram, or Slack. Scan a QR code. 10 seconds.",
+              },
+              {
+                step: "4",
                 title: "Start chatting",
                 desc: "Message your AI like texting a friend. That's literally it.",
               },
@@ -523,6 +681,84 @@ export default function Home() {
               No credit card required
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Value Anchoring — Why not hire someone? */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Why not pay someone to set it up?
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              You can. Consultants charge thousands for OpenClaw setup, plus thousands more per month for ongoing management. Or...
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
+              <div className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">DIY / Hire someone</div>
+              <div className="space-y-3 text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">✗</span>
+                  <span>Thousands in setup fees</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">✗</span>
+                  <span>Thousands per month for managed care</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">✗</span>
+                  <span>5–8 hours to get running</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">✗</span>
+                  <span>You maintain the server</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">✗</span>
+                  <span>Security updates are on you</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border-2 border-blue-600 rounded-2xl p-8">
+              <div className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Clawer</div>
+              <div className="space-y-3 text-gray-700">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span><strong>$0 setup</strong> — just sign up</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span><strong>$49/mo</strong> — everything included</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span><strong>60 seconds</strong> to get running</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>We maintain everything</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Active security monitoring</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 max-w-3xl mx-auto bg-amber-50 border border-amber-200 rounded-xl p-6">
+            <p className="text-gray-700 leading-relaxed">
+              <strong className="text-amber-900">Self-hosting sounds free</strong> — until you count the 10+ hours of setup, ongoing server maintenance, security patches, and the $5-50/month in API costs you still pay on top. Most people quit before they finish configuring their first integration.
+            </p>
+          </div>
+
+          <p className="mt-8 text-center text-gray-500 text-sm">
+            Same OpenClaw technology. Same integrations. A fraction of the cost.
+          </p>
         </div>
       </section>
 
@@ -592,7 +828,7 @@ export default function Home() {
               },
               {
                 q: "What is OpenClaw and why should I care?",
-                a: "OpenClaw is an open-source AI framework with 300,000+ users. It actually integrates with your email, calendar, etc. Problem: it requires running your own server. We made it work without that complexity.",
+                a: "OpenClaw is an open-source AI framework with 300,000+ users. It actually integrates with your email, calendar, etc. Problem: it requires running your own server. Clawer is the easiest way to get a hosted OpenClaw assistant without any technical setup.",
               },
               {
                 q: "Why not just use ChatGPT?",

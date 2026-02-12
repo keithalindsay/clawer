@@ -2,13 +2,12 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { restartContainer } from '@/lib/provisioner';
 
-// Admin user check
-const ADMIN_USER_IDS = [process.env.ADMIN_USER_ID].filter(Boolean);
+import { isAdmin } from '@/lib/admin';
 
 export async function POST(req: NextRequest) {
   const { userId: adminId } = await auth();
   
-  if (!adminId || !ADMIN_USER_IDS.includes(adminId)) {
+  if (!adminId || !(await isAdmin(adminId))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

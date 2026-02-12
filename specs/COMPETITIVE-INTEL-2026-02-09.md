@@ -91,24 +91,36 @@
 
 ## Competitive Landscape
 
-| Feature | Clawer.ai | Team9.ai | Eric Siu (Custom) | SimpleClaw (SCAM) |
-|---------|-----------|----------|-------------------|-------------------|
-| Hosted OpenClaw | ✅ | ✅ | ❌ (self-built) | ❌ (fraud) |
-| Target | Individuals/SMB | Teams/Orgs (50+) | Agency (internal) | N/A |
-| WhatsApp | ✅ | ❌ | ❌ | N/A |
-| Telegram | ✅ | ❌ | ✅ | N/A |
-| Slack | ✅ | Likely ✅ | ❌ | N/A |
-| BYOK (own API keys) | ✅ | Unknown | N/A | N/A |
-| Smart routing | ✅ | Unknown | ❌ | N/A |
-| Memory system | Basic | Unknown | Advanced (FAISS) | N/A |
-| Multi-agent coord | Team templates | Native | Custom built | N/A |
-| Voice input | Via WhatsApp | Unknown | WisprFlow | N/A |
-| Feedback loops | ❌ Not yet | Unknown | ✅ Advanced | N/A |
-| Inline decisions | ❌ Not yet | Unknown | ✅ Telegram buttons | N/A |
-| Free trial | ✅ 50 msgs | Unknown | N/A | N/A |
-| Open source | OpenClaw-based | Going open source | N/A | N/A |
-| Price | $49/mo | Unknown | N/A | N/A |
-| Security blog/trust | ✅ | ❌ | N/A | N/A |
+| Feature | Clawer.ai | Team9.ai | QuickClaw | Eric Siu (Custom) | SimpleClaw (SCAM) |
+|---------|-----------|----------|-----------|-------------------|-------------------|
+| Hosted OpenClaw | ✅ | ✅ | ✅ | ❌ (self-built) | ❌ (fraud) |
+| Target | Individuals/SMB | Teams/Orgs (50+) | Casual iOS users | Agency (internal) | N/A |
+| WhatsApp | ✅ | ❌ | ❌ | ❌ | N/A |
+| Telegram | ✅ | ❌ | ❌ | ✅ | N/A |
+| Slack | ✅ | Likely ✅ | ❌ | ❌ | N/A |
+| BYOK (own API keys) | ✅ | Unknown | ❌ | N/A | N/A |
+| Smart routing | ✅ | Unknown | ❌ | ❌ | N/A |
+| Memory system | Basic | Unknown | Basic | Advanced (FAISS) | N/A |
+| Multi-agent coord | Team templates | Native | ❌ Single assistant | Custom built | N/A |
+| Voice input | Via WhatsApp | Unknown | ❌ | WisprFlow | N/A |
+| Feedback loops | ❌ Not yet | Unknown | ❌ | ✅ Advanced | N/A |
+| Inline decisions | ❌ Not yet | Unknown | ❌ | ✅ Telegram buttons | N/A |
+| Free trial | ✅ 50 msgs | Unknown | ❌ Credit packs | N/A | N/A |
+| Open source | OpenClaw-based | Going open source | OpenClaw-based | N/A | N/A |
+| Price | $49/mo flat | Unknown | $5.99-$199.99 credits | N/A | N/A |
+| Platform | Web + messaging | Web | iOS only | N/A | N/A |
+| Security blog/trust | ✅ | ❌ | ❌ | N/A | N/A |
+| Cron/automation | ✅ | ✅ | ❌ | ✅ | N/A |
+| Dashboard | ✅ | ✅ | ❌ Chat-only | ✅ | N/A |
+
+### QuickClaw (Feb 11, 2026)
+**What:** Native iOS app wrapping OpenClaw. "30 seconds to chatting" onboarding.  
+**Traction:** 1,400 downloads day one, $3K MRR in 24 hours.  
+**Strengths:** App Store distribution, zero setup friction, mobile-first.  
+**Weaknesses:** iOS-only, single assistant (no teams), credit-based pricing (unpredictable costs), no automation/cron, Apple takes 30% cut.  
+**Market insight:** Validates that setup friction is the #1 barrier to OpenClaw adoption, not features or price. The market is desperate for hosted OpenClaw.  
+**Clawer advantage:** We compete on capability (35 agents vs 1), platform reach (web + messaging vs iOS-only), and pricing predictability ($49/mo flat vs credit burn).  
+**Full analysis:** `COMPETITIVE-INTEL-QUICKCLAW-2026-02-11.md`
 
 ---
 

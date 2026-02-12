@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { FeedbackWidgetWrapper } from "@/components/FeedbackWidgetWrapper";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,17 +15,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clawer.ai — Your AI Team, Ready to Work",
+  title: "Clawer.ai — Hosted OpenClaw, Personal AI Assistant",
   description:
-    "Personal AI assistant with WhatsApp, Telegram, and web chat. Smart model routing, team templates, and enterprise security. Starting at $49/mo.",
+    "Your personal AI assistant powered by OpenClaw. No setup, no servers. Works in WhatsApp, Telegram & Slack. Start free in 60 seconds.",
   metadataBase: new URL("https://clawer.ai"),
   alternates: {
-    canonical: "/",
+    canonical: "https://clawer.ai",
   },
   openGraph: {
-    title: "Clawer.ai — Your AI Team, Ready to Work",
+    title: "Clawer.ai — Hosted OpenClaw, Personal AI Assistant",
     description:
-      "Personal AI assistant with WhatsApp, Telegram, and web chat. Smart model routing, team templates, and enterprise security. Starting at $49/mo.",
+      "Your personal AI assistant powered by OpenClaw. No setup, no servers. Works in WhatsApp, Telegram & Slack. Start free in 60 seconds.",
     url: "https://clawer.ai",
     siteName: "Clawer.ai",
     images: [
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Clawer.ai — Your AI Team, Ready to Work",
+        alt: "Clawer.ai — Hosted OpenClaw, Personal AI Assistant",
       },
     ],
     locale: "en_US",
@@ -55,22 +56,15 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "Clawer.ai",
+  description: "Hosted OpenClaw personal AI assistant",
+  url: "https://clawer.ai",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  description:
-    "Personal AI assistant with WhatsApp, Telegram, and web chat. Smart model routing, team templates, and enterprise security.",
-  url: "https://clawer.ai",
   offers: {
     "@type": "Offer",
     price: "49",
     priceCurrency: "USD",
     priceValidUntil: "2026-12-31",
-    availability: "https://schema.org/InStock",
-  },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.8",
-    ratingCount: "120",
   },
 };
 
@@ -92,6 +86,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           {children}
+          <FeedbackWidgetWrapper />
         </body>
       </html>
     </ClerkProvider>
