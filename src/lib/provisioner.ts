@@ -5,14 +5,12 @@
  * Handles all aspects of container creation, patching, and DB updates.
  */
 
-import { spawn } from 'child_process';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq, desc } from 'drizzle-orm';
+import { sshExec } from '@/lib/ssh';
 
-// Production server configuration
-const PRODUCTION_SERVER = process.env.PRODUCTION_SERVER || 'root@YOUR_DOCKER_HOST';
 const CONTAINER_IMAGE = 'clawer-openclaw:ecommerce';
 const BASE_PORT = 4010;
 const MAX_PORT = 5000;
@@ -23,31 +21,6 @@ interface ProvisionResult {
   port?: number;
   gatewayToken?: string;
   error?: string;
-}
-
-/**
- * Execute command on production server via SSH
- */
-async function sshExec(command: string): Promise<{ stdout: string; stderr: string }> {
-  console.log(`[SSH] ${command.substring(0, 100)}...`);
-  return new Promise((resolve, reject) => {
-    const proc = spawn('ssh', ['-o', 'StrictHostKeyChecking=no', PRODUCTION_SERVER, command]);
-    let stdout = '', stderr = '';
-    proc.stdout.on('data', d => stdout += d);
-    proc.stderr.on('data', d => stderr += d);
-    proc.on('close', code => {
-      if (code === 0) {
-        resolve({stdout, stderr});
-      } else {
-        console.error(`SSH command failed: ${command}`, stderr);
-        reject(new Error(`SSH execution failed: ${stderr || 'Unknown error'}`));
-      }
-    });
-    proc.on('error', error => {
-      console.error(`SSH process error: ${command}`, error);
-      reject(new Error(`SSH process failed: ${error.message}`));
-    });
-  });
 }
 
 /**
@@ -161,7 +134,7 @@ async function patchOpenClawConfig(containerId: string): Promise<void> {
   const config = {
     gateway: {
       mode: 'local',
-      token: '${GATEWAY_TOKEN}'  // Will be replaced by entrypoint
+      token: '${GATEWAY_TOKEN}'
     },
     providers: {
       openai: {
@@ -174,9 +147,11 @@ async function patchOpenClawConfig(containerId: string): Promise<void> {
     }
   };
   
-  // Write config to temp file on server
+  // Use printf + heredoc to safely write JSON without shell interpretation issues
   const configJson = JSON.stringify(config, null, 2);
-  await sshExec(`echo '${configJson}' > /tmp/openclaw_${containerId}.json`);
+  // Base64 encode to avoid any shell escaping issues with JSON content
+  const b64 = Buffer.from(configJson).toString('base64');
+  await sshExec(`echo '${b64}' | base64 -d > /tmp/openclaw_${containerId}.json`);
   
   // Copy to container
   await sshExec(`docker cp /tmp/openclaw_${containerId}.json ${containerId}:/app/openclaw.json`);
@@ -251,12 +226,27 @@ export async function provisionContainer(
     console.log(`[PROVISION] Retrieved API keys from server`);
     
     // Create container with proper configuration
+    // SECURITY: Hardened with capability drops, no-new-privileges, resource limits
     const dockerCmd = [
       'docker run -d',
       `--name ${containerName}`,
+      // Resource limits
       '--memory=2g',
+      '--memory-swap=2g',
       '--cpus=1',
-      `-p 127.0.0.1:${apiPort}:8081`,  // API server port (localhost only for security)
+      '--pids-limit=256',
+      '--ulimit nofile=1024:2048',
+      // Security hardening
+      '--security-opt=no-new-privileges',
+      '--cap-drop=ALL',
+      '--cap-add=CHOWN',
+      '--cap-add=SETUID',
+      '--cap-add=SETGID',
+      '--cap-add=DAC_OVERRIDE',
+      '--tmpfs /tmp:rw,noexec,nosuid,size=256m',
+      // Network + port
+      `-p 127.0.0.1:${apiPort}:8081`,
+      // Environment
       `-e USER_ID=${userId}`,
       `-e TEAM_TEMPLATE=${teamTemplate}`,
       `-e 'OPENAI_API_KEY=${openaiKey}'`,

@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "NEXT_PRIVATE_WORKER_THREADS=0 next build",
     "start": "next start",
-    "discord": "tsx src/discord-bot/index.ts",
     "maintenance": "tsx scripts/maintenance-check.ts",
     "maintenance:daemon": "tsx scripts/maintenance-check.ts --daemon",
     "lint": "eslint",
@@ -22,9 +21,7 @@
     "@clerk/nextjs": "^6.37.3",
     "@slack/bolt": "^4.6.0",
     "@slack/web-api": "^7.13.0",
-    "bufferutil": "^4.0.8",
     "clsx": "^2.1.1",
-    "discord.js": "^14.17.3",
     "dotenv": "^17.2.4",
     "drizzle-orm": "^0.45.1",
     "framer-motion": "^12.34.0",
@@ -38,8 +35,6 @@
     "stripe": "^20.3.1",
     "svix": "^1.84.1",
     "tailwind-merge": "^3.4.0",
-    "utf-8-validate": "^6.0.4",
-    "zlib-sync": "^0.1.9",
     "zod": "^4.3.6"
   },
   "devDependencies": {

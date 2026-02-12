@@ -1,19 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
-
 import { isAdmin } from '@/lib/admin';
-const PRODUCTION_SERVER = process.env.PRODUCTION_SERVER || 'root@YOUR_DOCKER_HOST';
-
-async function sshExec(command: string): Promise<{ stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn('ssh', ['-o', 'StrictHostKeyChecking=no', PRODUCTION_SERVER, command]);
-    let stdout = '', stderr = '';
-    proc.stdout.on('data', d => stdout += d);
-    proc.stderr.on('data', d => stderr += d);
-    proc.on('close', code => code === 0 ? resolve({stdout, stderr}) : reject(new Error(stderr || 'SSH command failed')));
-  });
-}
+import { sshExec } from '@/lib/ssh';
 
 export async function GET(req: NextRequest) {
   const { userId: adminId } = await auth();

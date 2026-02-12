@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { botName, botEmoji, communicationStyle, channels } = body;
+  const { botName, botEmoji, communicationStyle, channels, teamTemplate } = body;
 
   // Map communication style to personality description
   const personalityMap: Record<string, string> = {
@@ -49,12 +49,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update user record — mark onboarding complete
+    // Update user record — save team template and mark onboarding complete
+    const userUpdate: Record<string, any> = { updatedAt: new Date() };
+    if (teamTemplate && typeof teamTemplate === 'string') {
+      userUpdate.teamTemplate = teamTemplate;
+    }
     await db
       .update(users)
-      .set({
-        updatedAt: new Date(),
-      })
+      .set(userUpdate)
       .where(eq(users.id, userId));
 
     return NextResponse.json({ success: true });

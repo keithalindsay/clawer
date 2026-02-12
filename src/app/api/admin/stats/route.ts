@@ -3,18 +3,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { sql } from 'drizzle-orm';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
-
 import { isAdmin } from '@/lib/admin';
-const PRODUCTION_SERVER = 'root@YOUR_DOCKER_HOST';
-
-async function sshExec(command: string): Promise<{ stdout: string; stderr: string }> {
-  const sshCommand = `ssh -o StrictHostKeyChecking=no ${PRODUCTION_SERVER} "${command.replace(/"/g, '\\"')}"`;
-  return await execAsync(sshCommand);
-}
+import { sshExec } from '@/lib/ssh';
 
 export async function GET() {
   const { userId: adminId } = await auth();

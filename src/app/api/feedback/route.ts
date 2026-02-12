@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limiting: use userId if logged in, otherwise IP
-    const identifier = userId || req.headers.get('x-forwarded-for') || req.ip || 'anonymous';
+    const identifier = userId || req.headers.get('x-forwarded-for') || 'anonymous';
     if (!checkRateLimit(identifier)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Maximum 10 submissions per hour.' },

@@ -13,6 +13,7 @@ import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { provisionContainer, stopContainer } from '@/lib/provisioner';
 import { sendWelcomeEmail } from '@/lib/email';
+import { alertPaymentFailure } from '@/lib/alerts';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -149,17 +150,32 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        // Handle payment failures, etc.
         if (subscription.status === 'past_due') {
           console.log(`⚠️ Customer ${customerId} payment past due`);
+          await alertPaymentFailure(customerId, 'Subscription past due — payment retry pending');
+          
+          // Notify user via email
+          try {
+            const pastDueUser = await db.query.users.findFirst({
+              where: eq(users.stripeCustomerId, customerId),
+              columns: { email: true, name: true },
+            });
+            if (pastDueUser?.email) {
+              // TODO: Add sendPaymentFailedEmail template
+              console.log(`📧 Payment past due for ${pastDueUser.email} — email notification pending template`);
+            }
+          } catch (notifyError) {
+            console.error('Failed to notify user about past due:', notifyError);
+          }
         }
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        console.log(`❌ Payment failed for customer ${invoice.customer}`);
-        // Could send email notification here
+        const failedCustomerId = invoice.customer as string;
+        console.log(`❌ Payment failed for customer ${failedCustomerId}`);
+        await alertPaymentFailure(failedCustomerId, 'Invoice payment failed');
         break;
       }
 
