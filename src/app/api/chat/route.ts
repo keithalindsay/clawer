@@ -243,11 +243,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Classify request using smart router
+    // TODO: Load user's model config from DB (model-configs table) for custom selections
     const routing = routeRequest({
       prompt: sanitizedMessage,
       systemPrompt,
-      userOrchestratorModel: 'openai/gpt-4o-mini',
-      userWorkerModel: 'openai/gpt-4o-mini',  // Both using same model for now
+      userOrchestratorModel: 'google/gemini-3-flash',   // Smart tier: best reasoning per dollar
+      userWorkerModel: 'google/gemini-2.0-flash-lite',  // Bulk tasks: near-zero cost
     });
 
     console.log('[chat] Smart routing decision:', {
