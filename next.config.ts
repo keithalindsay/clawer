@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Dns-Prefetch-Control', value: 'on' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://*.clerk.accounts.dev wss:; frame-src https://js.stripe.com https://*.clerk.accounts.dev; font-src 'self' data:;" },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://*.clerk.accounts.dev https://*.clerk.com wss:; frame-src https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.com; font-src 'self' data:;" },
         ],
       },
       {
