@@ -131,8 +131,8 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
       fallback: ['gemini-2.0-flash', 'deepseek-chat'],
     },
     COMPLEX: {
-      primary: 'gpt-4o',
-      fallback: ['gemini-3-flash', 'claude-sonnet-4'],
+      primary: 'minimax-m2.5',
+      fallback: ['gpt-4o', 'gemini-3-flash', 'claude-sonnet-4'],
     },
     REASONING: {
       primary: 'deepseek-reasoner',
@@ -169,6 +169,9 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   // DeepSeek
   'deepseek-chat': { input: 0.28, output: 0.42 },
   'deepseek-reasoner': { input: 0.28, output: 0.42 },
+  
+  // MiniMax
+  'minimax-m2.5': { input: 0.30, output: 2.40 },
   
   // xAI
   'grok-4.1-fast': { input: 0.20, output: 0.50 },
