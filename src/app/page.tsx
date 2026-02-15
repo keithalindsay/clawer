@@ -47,7 +47,7 @@ export default function Home() {
               Features
             </Link>
             <Link 
-              href="#templates" 
+              href="#teams" 
               className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
             >
               Templates
@@ -93,8 +93,8 @@ export default function Home() {
       {/* How It Works */}
       <HowItWorks />
 
-      {/* Team Templates */}
-      <div id="templates">
+      {/* AI Teams */}
+      <div id="teams">
         <TeamTemplates />
       </div>
 
@@ -141,7 +141,7 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="#templates" className="hover:text-orange-500 transition-colors">
+                  <Link href="#teams" className="hover:text-orange-500 transition-colors">
                     Templates
                   </Link>
                 </li>

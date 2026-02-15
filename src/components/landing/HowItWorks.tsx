@@ -6,7 +6,7 @@ const STEPS = [
   {
     number: '01',
     title: 'Create',
-    description: 'Pick an AI team template or build your own. Configure personality, skills, and integrations.',
+    description: 'Pick a pre-built AI team or build your own. Configure personality, skills, and integrations.',
     icon: '🎨',
     color: 'bg-orange-100 text-orange-600',
   },
