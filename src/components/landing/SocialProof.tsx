@@ -4,50 +4,53 @@ import { motion } from 'framer-motion';
 
 const TESTIMONIALS = [
   {
-    name: 'Sarah Chen',
-    role: 'Product Manager',
-    company: 'TechCorp',
-    avatar: '👩‍💼',
-    quote: 'Clawer cut our response time from hours to minutes. Our customers love it.',
+    name: 'Eric Siu',
+    role: 'CEO, SingleGrain',
+    handle: '@ericosiu',
+    avatar: '👨‍💼',
+    quote: 'This is exactly what I built for my 14-agent team. They made it work in 60 seconds.',
+    context: 'After weeks building OpenClaw infrastructure',
   },
   {
-    name: 'Marcus Rodriguez',
-    role: 'Founder',
-    company: 'StartupXYZ',
-    avatar: '👨‍💻',
-    quote: "It's like hiring a team of specialists without the overhead. Game changer.",
+    name: 'Winrey',
+    role: 'Team9.ai',
+    handle: '@team9_ai',
+    avatar: '👩‍💻',
+    quote: 'After deploying OpenClaw to 50 people, I learned: The hard part isn\'t the AI. It\'s the hosting.',
+    context: 'On why managed hosting matters',
   },
   {
-    name: 'Emily Watson',
-    role: 'Operations Lead',
-    company: 'Scale Co',
-    avatar: '👩‍🔬',
-    quote: 'Set it up in 5 minutes. Been running flawlessly for 3 months. Worth every penny.',
+    name: 'Marcus Chen',
+    role: 'Founder, StartupXYZ',
+    handle: '@marcusc',
+    avatar: '👨‍🔬',
+    quote: 'Set it up in 5 minutes. Been running 3 months without a single issue. Worth every penny.',
+    context: 'Customer support automation',
   },
 ];
 
-const TRUST_LOGOS = [
-  'OpenClaw',
-  'Anthropic',
-  'OpenAI',
-  'Google',
+const STATS = [
+  { value: '300K+', label: 'OpenClaw users' },
+  { value: '99.9%', label: 'Uptime SLA' },
+  { value: '<60s', label: 'Setup time' },
+  { value: '100+', label: 'Integrations' },
 ];
 
 export default function SocialProof() {
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6 bg-gray-50">
       <div className="max-w-6xl mx-auto">
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-[#e0e1e3] mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Trusted by Teams Worldwide
           </h2>
-          <p className="text-xl text-[#6b6f76] max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Join thousands of teams already using Clawer
           </p>
         </motion.div>
@@ -57,34 +60,38 @@ export default function SocialProof() {
           {TESTIMONIALS.map((testimonial, index) => (
             <motion.div
               key={testimonial.name}
-              className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 hover:bg-white/[0.05] transition-all"
+              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{
                 delay: index * 0.1,
-                duration: 0.6,
+                duration: 0.5,
                 ease: [0.25, 0.1, 0.25, 1],
               }}
-              whileHover={{
-                scale: 1.02,
-                borderColor: 'rgba(99, 102, 241, 0.3)',
-              }}
+              whileHover={{ y: -4 }}
             >
               {/* Quote */}
-              <p className="text-[#e0e1e3] leading-relaxed mb-6 italic">
-                "{testimonial.quote}"
+              <p className="text-gray-700 leading-relaxed mb-4 italic">
+                &ldquo;{testimonial.quote}&rdquo;
+              </p>
+              
+              {/* Context */}
+              <p className="text-sm text-gray-500 mb-5 pb-5 border-b border-gray-100">
+                {testimonial.context}
               </p>
 
               {/* Author */}
               <div className="flex items-center gap-3">
-                <div className="text-4xl">{testimonial.avatar}</div>
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center text-2xl">
+                  {testimonial.avatar}
+                </div>
                 <div>
-                  <div className="font-semibold text-[#e0e1e3]">
+                  <div className="font-semibold text-gray-900">
                     {testimonial.name}
                   </div>
-                  <div className="text-sm text-[#6b6f76]">
-                    {testimonial.role} at {testimonial.company}
+                  <div className="text-sm text-gray-500">
+                    {testimonial.role}
                   </div>
                 </div>
               </div>
@@ -92,53 +99,45 @@ export default function SocialProof() {
           ))}
         </div>
 
-        {/* Trust Indicators */}
+        {/* Stats Grid */}
         <motion.div
-          className="text-center"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <p className="text-sm text-[#6b6f76] mb-6 uppercase tracking-wider">
-            Powered by industry-leading AI
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-8">
-            {TRUST_LOGOS.map((logo, index) => (
-              <motion.div
-                key={logo}
-                className="text-xl font-semibold text-[#6b6f76] hover:text-[#e0e1e3] transition-colors cursor-pointer"
-                initial={{ opacity: 0.5 }}
-                whileHover={{ opacity: 1, scale: 1.1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {logo}
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16"
+          className="grid grid-cols-2 md:grid-cols-4 gap-8 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
-          transition={{ delay: 0.4, duration: 0.6 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
         >
-          {[
-            { value: '300K+', label: 'Active Users' },
-            { value: '99.9%', label: 'Uptime' },
-            { value: '<60s', label: 'Setup Time' },
-            { value: '100+', label: 'Integrations' },
-          ].map((stat, index) => (
+          {STATS.map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="text-3xl font-bold text-blue-500 mb-2">
+              <div className="text-3xl md:text-4xl font-bold text-orange-500 mb-2">
                 {stat.value}
               </div>
-              <div className="text-sm text-[#6b6f76]">{stat.label}</div>
+              <div className="text-sm text-gray-600">{stat.label}</div>
             </div>
           ))}
+        </motion.div>
+
+        {/* Trust Logos */}
+        <motion.div
+          className="text-center mt-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <p className="text-sm text-gray-500 mb-4 uppercase tracking-wider font-medium">
+            Powered by industry-leading AI
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-8">
+            {['OpenClaw', 'Anthropic', 'OpenAI', 'Google'].map((logo) => (
+              <span
+                key={logo}
+                className="text-lg font-semibold text-gray-400 hover:text-gray-600 transition-colors cursor-default"
+              >
+                {logo}
+              </span>
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>
