@@ -50,7 +50,7 @@ export default function Home() {
               href="#teams" 
               className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
             >
-              Templates
+              AI Teams
             </Link>
             <Link 
               href="#pricing" 
@@ -142,7 +142,7 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="#teams" className="hover:text-orange-500 transition-colors">
-                    Templates
+                    AI Teams
                   </Link>
                 </li>
                 <li>
