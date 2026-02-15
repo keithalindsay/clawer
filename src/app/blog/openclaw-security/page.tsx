@@ -1,4 +1,26 @@
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous | Clawer Blog",
+  description:
+    "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
+  openGraph: {
+    title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
+    description:
+      "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
+    type: "article",
+    publishedTime: "2026-02-09T00:00:00.000Z",
+    authors: ["Clawer Team"],
+    tags: ["Security", "OpenClaw", "Hosting"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
+    description:
+      "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
+  },
+};
 
 export default function OpenClawSecurityPost() {
   return (

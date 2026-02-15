@@ -22,6 +22,9 @@ import { ContainerStatusWidget } from '@/components/ContainerStatusWidget';
 import { QuickActions } from '@/components/QuickActions';
 import { FreeTrialBanner } from '@/components/FreeTrialBanner';
 import { WelcomeToast } from '@/components/WelcomeToast';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { EmployeeCard } from '@/components/dashboard/EmployeeCard';
+import { EmptyState } from '@/components/dashboard/EmptyState';
 import { Suspense } from 'react';
 
 export default async function DashboardPage() {
@@ -96,19 +99,42 @@ export default async function DashboardPage() {
     }));
   }
 
+  // Mock employee data for demonstration (replace with actual data from DB)
+  const mockEmployees = recentConversations.map((convo, index) => ({
+    id: convo.id,
+    name: convo.title,
+    status: index === 0 ? 'active' : index === 1 ? 'provisioning' : 'stopped',
+    tier: 'Pro',
+    lastActive: new Date(convo.lastMessageAt),
+    messageCount: convo.messageCount || 0,
+    channels: ['telegram', 'whatsapp'] as Array<'telegram' | 'whatsapp' | 'slack'>,
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: '#07080a' }}>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="border-b" style={{ 
+        background: 'rgba(255, 255, 255, 0.02)', 
+        borderColor: 'rgba(255, 255, 255, 0.06)' 
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
+          <Link href="/dashboard" className="text-xl font-bold" style={{ color: '#e0e1e3' }}>
+            🦞 CLAWER<span className="text-blue-500">.AI</span>
           </Link>
           <div className="flex items-center gap-3 sm:gap-4">
             <DiagnoseButton variant="icon" />
             <Link
               href="/dashboard/api-keys"
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: '#9ca0a8' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#e0e1e3';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#9ca0a8';
+                e.currentTarget.style.background = 'transparent';
+              }}
               title="API Keys"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -117,14 +143,23 @@ export default async function DashboardPage() {
             </Link>
             <Link
               href="/dashboard/settings"
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: '#9ca0a8' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#e0e1e3';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#9ca0a8';
+                e.currentTarget.style.background = 'transparent';
+              }}
               title="Settings"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
               </svg>
             </Link>
-            <span className="hidden sm:inline text-sm text-gray-600">
+            <span className="hidden sm:inline text-sm" style={{ color: '#9ca0a8' }}>
               {clerkUser?.emailAddresses[0]?.emailAddress}
             </span>
             <LogoutButton />
@@ -148,8 +183,29 @@ export default async function DashboardPage() {
 
         {(isSubscribed || hasFreeTrial) && (
           <>
-            {/* Empty State Welcome Card */}
-            {recentConversations.length === 0 && (
+            {/* Dashboard Header with Stats and Search */}
+            <DashboardHeader
+              userName={user?.name || clerkUser?.firstName || undefined}
+              stats={{
+                totalAgents: mockEmployees.length,
+                activeAgents: mockEmployees.filter(e => e.status === 'active').length,
+                messagesToday: user?.dailyMessageCount || 0,
+              }}
+            />
+
+            {/* Employee Cards or Empty State */}
+            {mockEmployees.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <div className="grid gap-4 mb-8">
+                {mockEmployees.map((employee, index) => (
+                  <EmployeeCard key={employee.id} employee={employee} index={index} />
+                ))}
+              </div>
+            )}
+
+            {/* Legacy: Empty State Welcome Card (keep for fallback) */}
+            {recentConversations.length === 0 && mockEmployees.length === 0 && (
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white mb-6">
                 <div className="max-w-3xl mx-auto">
                   <h2 className="text-3xl font-bold mb-2">👋 Welcome! Your AI assistant is ready.</h2>
@@ -217,125 +273,18 @@ export default async function DashboardPage() {
               </div>
             )}
 
-            {/* AI Status - even with no conversations */}
-            {recentConversations.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-2xl">
-                      🤖
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Your AI is online and ready</h3>
-                    <p className="text-sm text-gray-600">💡 Tip: Try asking me to draft an email or research a competitor</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Content now handled by DashboardHeader and EmployeeCard components */}
 
             {/* Container Status Widget - only for paid users */}
-            {isSubscribed && <ContainerStatusWidget />}
-
-            {/* Main Grid: Stats + Actions */}
-            <div className="grid lg:grid-cols-3 gap-6 mb-6 sm:mb-8">
-              {/* Usage Stats Card */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Usage Today</h3>
-                  <span className="text-2xl">📊</span>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-blue-600">
-                        {user?.dailyMessageCount || 0}
-                      </span>
-                      <span className="text-sm text-gray-500">messages today</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {isSubscribed ? 'Unlimited on your plan' : `${Math.max(0, FREE_MESSAGE_LIMIT - freeMessagesUsed)} free messages remaining`}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-gray-100">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">This month:</span>
-                      <span className="font-medium text-gray-900">
-                        {user?.monthlyMessageCount || 0}
-                      </span>
-                    </div>
-                    {isFreeTrial && (
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-gray-600">Free trial:</span>
-                        <span className="font-medium text-blue-600">
-                          {freeMessagesUsed} / {FREE_MESSAGE_LIMIT}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="lg:col-span-2">
-                <QuickActions />
-              </div>
-            </div>
-
-            {/* Recent Conversations */}
-            {recentConversations.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 sm:mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Recent Conversations</h3>
-                  <Link
-                    href="/dashboard/conversations"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
-                  >
-                    View all →
-                  </Link>
-                </div>
-                <div className="space-y-3">
-                  {recentConversations.map((convo) => (
-                    <Link
-                      key={convo.id}
-                      href={`/chat/assistant?conversation=${convo.id}`}
-                      className="block p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">💬</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-gray-900 truncate">
-                              {convo.title}
-                            </h4>
-                            <span className="text-xs text-gray-500 whitespace-nowrap">
-                              {new Date(convo.lastMessageAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 line-clamp-1">
-                            {convo.lastUserMessage || 'No messages yet'}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-gray-500">
-                              {convo.messageCount} messages
-                            </span>
-                            <span className="text-xs text-gray-400">•</span>
-                            <span className="text-xs text-gray-500">
-                              {convo.botName}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            {isSubscribed && (
+              <div className="mb-6">
+                <ContainerStatusWidget />
               </div>
             )}
 
             {/* Platform Connections */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: '#e0e1e3' }}>
                 Connect Your Platforms
               </h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -344,19 +293,20 @@ export default async function DashboardPage() {
                   href="/dashboard/whatsapp"
                   className={`p-4 rounded-xl border-2 transition-all ${
                     user?.whatsappConnected
-                      ? 'border-green-300 bg-green-50 hover:bg-green-100'
-                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                      ? 'border-green-500/30 hover:border-green-500/50'
+                      : 'border-white/[0.06] hover:border-white/[0.12]'
                   }`}
+                  style={user?.whatsappConnected ? { background: 'rgba(34, 197, 94, 0.05)' } : { background: 'rgba(255, 255, 255, 0.02)' }}
                 >
                   <div className="text-2xl mb-2">📱</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">WhatsApp</h4>
-                  <p className="text-xs text-gray-600 mb-2">Chat from your phone</p>
+                  <h4 className="font-semibold mb-1" style={{ color: '#e0e1e3' }}>WhatsApp</h4>
+                  <p className="text-xs mb-2" style={{ color: '#9ca0a8' }}>Chat from your phone</p>
                   {user?.whatsappConnected ? (
-                    <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                    <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full" style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.15)' }}>
                       ✓ Connected
                     </span>
                   ) : (
-                    <span className="inline-flex items-center text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
+                    <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full" style={{ color: '#60a5fa', background: 'rgba(96, 165, 250, 0.15)' }}>
                       Click to setup
                     </span>
                   )}
@@ -367,19 +317,20 @@ export default async function DashboardPage() {
                   href="/dashboard/telegram"
                   className={`p-4 rounded-xl border-2 transition-all ${
                     user?.telegramConnected
-                      ? 'border-green-300 bg-green-50 hover:bg-green-100'
-                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                      ? 'border-green-500/30 hover:border-green-500/50'
+                      : 'border-white/[0.06] hover:border-white/[0.12]'
                   }`}
+                  style={user?.telegramConnected ? { background: 'rgba(34, 197, 94, 0.05)' } : { background: 'rgba(255, 255, 255, 0.02)' }}
                 >
                   <div className="text-2xl mb-2">✈️</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Telegram</h4>
-                  <p className="text-xs text-gray-600 mb-2">Chat from anywhere</p>
+                  <h4 className="font-semibold mb-1" style={{ color: '#e0e1e3' }}>Telegram</h4>
+                  <p className="text-xs mb-2" style={{ color: '#9ca0a8' }}>Chat from anywhere</p>
                   {user?.telegramConnected ? (
-                    <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                    <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full" style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.15)' }}>
                       ✓ Connected
                     </span>
                   ) : (
-                    <span className="inline-flex items-center text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
+                    <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full" style={{ color: '#60a5fa', background: 'rgba(96, 165, 250, 0.15)' }}>
                       Click to setup
                     </span>
                   )}
@@ -388,12 +339,13 @@ export default async function DashboardPage() {
                 {/* Slack */}
                 <Link
                   href="/dashboard/slack"
-                  className="p-4 rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                  className="p-4 rounded-xl border-2 border-white/[0.06] hover:border-purple-500/30 transition-all"
+                  style={{ background: 'rgba(255, 255, 255, 0.02)' }}
                 >
                   <div className="text-2xl mb-2">💼</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Slack</h4>
-                  <p className="text-xs text-gray-600 mb-2">For work teams</p>
-                  <span className="inline-flex items-center text-xs font-medium text-purple-700 bg-purple-100 px-2 py-1 rounded-full">
+                  <h4 className="font-semibold mb-1" style={{ color: '#e0e1e3' }}>Slack</h4>
+                  <p className="text-xs mb-2" style={{ color: '#9ca0a8' }}>For work teams</p>
+                  <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full" style={{ color: '#a78bfa', background: 'rgba(167, 139, 250, 0.15)' }}>
                     Coming soon
                   </span>
                 </Link>
@@ -408,7 +360,10 @@ export default async function DashboardPage() {
             <form action="/api/stripe/portal" method="POST" className="inline">
               <button
                 type="submit"
-                className="text-sm text-gray-600 hover:text-gray-900 underline"
+                className="text-sm underline transition-colors"
+                style={{ color: '#9ca0a8' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#e0e1e3'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#9ca0a8'}
               >
                 Manage subscription
               </button>
