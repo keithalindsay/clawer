@@ -55,20 +55,18 @@ async function allocatePort(): Promise<number> {
 /**
  * Read API keys from server's .env.local file
  */
-async function getServerApiKeys(): Promise<{ openaiKey: string; geminiKey: string }> {
+async function getServerApiKeys(): Promise<{ minimaxKey: string; openaiKey: string; geminiKey: string }> {
   try {
     const { stdout } = await sshExec('cat /opt/clawer/.env.local');
     
+    const minimaxMatch = stdout.match(/MINIMAX_API_KEY=([^\n]+)/);
     const openaiMatch = stdout.match(/OPENAI_API_KEY=([^\n]+)/);
     const geminiMatch = stdout.match(/GEMINI_API_KEY=([^\n]+)/);
     
-    if (!openaiMatch || !geminiMatch) {
-      throw new Error('API keys not found in /opt/clawer/.env.local');
-    }
-    
     return {
-      openaiKey: openaiMatch[1].trim(),
-      geminiKey: geminiMatch[1].trim(),
+      minimaxKey: minimaxMatch?.[1]?.trim() || '',
+      openaiKey: openaiMatch?.[1]?.trim() || '',
+      geminiKey: geminiMatch?.[1]?.trim() || '',
     };
   } catch (error) {
     console.error('Failed to read server API keys:', error);
@@ -222,7 +220,7 @@ export async function provisionContainer(
     console.log(`[PROVISION] Generated gateway token`);
     
     // Get API keys from server
-    const { openaiKey, geminiKey } = await getServerApiKeys();
+    const { minimaxKey, openaiKey, geminiKey } = await getServerApiKeys();
     console.log(`[PROVISION] Retrieved API keys from server`);
     
     // Create container with proper configuration
@@ -249,6 +247,7 @@ export async function provisionContainer(
       // Environment
       `-e USER_ID=${userId}`,
       `-e TEAM_TEMPLATE=${teamTemplate}`,
+      `-e 'MINIMAX_API_KEY=${minimaxKey}'`,
       `-e 'OPENAI_API_KEY=${openaiKey}'`,
       `-e 'GEMINI_API_KEY=${geminiKey}'`,
       `-e 'GATEWAY_TOKEN=${gatewayToken}'`,
