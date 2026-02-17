@@ -170,19 +170,15 @@ export function DashboardHome({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {teamMembers.map((member, i) => {
-              const locked = !isSubscribed && i >= FREE_TEAM_MEMBER_LIMIT;
               return (
                 <div
                   key={member.id}
-                  className={`flex items-start gap-3 p-4 rounded-lg border ${
-                    locked ? 'border-gray-100 bg-gray-50 opacity-60' : 'border-gray-200'
-                  }`}
+                  className="flex items-start gap-3 p-4 rounded-lg border border-gray-200"
                 >
                   <span className="text-2xl">{member.emoji || '🤖'}</span>
                   <div>
                     <div className="font-medium text-gray-900 text-sm">
                       {member.name}
-                      {locked && <span className="ml-1 text-xs text-gray-400">🔒 Pro</span>}
                     </div>
                     <div className="text-xs text-gray-500">{member.role}</div>
                     {member.description && (
