@@ -1,92 +1,85 @@
 #!/bin/bash
 set -e
-
-# Create OpenClaw config directory if it doesn't exist
-mkdir -p /home/user/.openclaw
-
-# Check required environment variables
-if [ -z "$OPENAI_API_KEY" ]; then
-    echo "ERROR: OPENAI_API_KEY environment variable not set"
-    exit 1
-fi
+mkdir -p /home/user/.openclaw /home/user/clawd
 
 # Generate gateway token if not provided
-if [ -z "$GATEWAY_TOKEN" ]; then
-    GATEWAY_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 32)
-    echo "Generated gateway token: $GATEWAY_TOKEN"
-fi
-
+[ -z "$GATEWAY_TOKEN" ] && GATEWAY_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d "/+=" | head -c 32)
 export GATEWAY_TOKEN
 
-# Copy template and substitute placeholders
-sed -e "s/OPENAI_API_KEY_PLACEHOLDER/${OPENAI_API_KEY}/g" \
-    -e "s|GEMINI_API_KEY_PLACEHOLDER|${GEMINI_API_KEY:-not-set}|g" \
-    -e "s/GATEWAY_TOKEN_PLACEHOLDER/${GATEWAY_TOKEN}/g" \
-    /home/user/.openclaw/openclaw.json.template \
-    > /home/user/.openclaw/openclaw.json
+MINIMAX_KEY="${MINIMAX_API_KEY:-}"
+OPENAI_KEY="${OPENAI_API_KEY:-}"
+GEMINI_KEY="${GEMINI_API_KEY:-}"
 
-# If no Gemini key, remove the gemini provider block
-if [ -z "$GEMINI_API_KEY" ]; then
-    echo "No GEMINI_API_KEY set, removing Gemini provider from config"
-    node -e "
-      const fs = require('fs');
-      const c = JSON.parse(fs.readFileSync('/home/user/.openclaw/openclaw.json','utf8'));
-      delete c.models.providers.gemini;
-      fs.writeFileSync('/home/user/.openclaw/openclaw.json', JSON.stringify(c, null, 2));
-    "
+# Build providers JSON
+PROVIDERS=""
+PRIMARY=""
+FALLBACKS=""
+
+# MiniMax provider (via Anthropic-compatible API)
+if [ -n "$MINIMAX_KEY" ]; then
+  PROVIDERS="\"minimax\":{\"baseUrl\":\"https://api.minimax.io/anthropic\",\"api\":\"anthropic-messages\",\"apiKey\":\"${MINIMAX_KEY}\",\"models\":[{\"id\":\"MiniMax-M2.5\",\"name\":\"MiniMax M2.5\",\"reasoning\":false,\"input\":[\"text\"],\"cost\":{\"input\":0.3,\"output\":2.4},\"contextWindow\":1048576,\"maxTokens\":16384}]}"
+  PRIMARY="minimax/MiniMax-M2.5"
 fi
 
-# SECURITY: Remove provider API keys from env (prevents docker inspect leak)
-# Keep GATEWAY_TOKEN — the api-server needs it to authenticate with the gateway
-unset OPENAI_API_KEY
-unset GEMINI_API_KEY
+# OpenAI provider
+if [ -n "$OPENAI_KEY" ]; then
+  [ -n "$PROVIDERS" ] && PROVIDERS="${PROVIDERS},"
+  PROVIDERS="${PROVIDERS}\"openai\":{\"baseUrl\":\"https://api.openai.com/v1\",\"apiKey\":\"${OPENAI_KEY}\",\"models\":[{\"id\":\"gpt-4o-mini\",\"name\":\"GPT-4o Mini\",\"reasoning\":false,\"input\":[\"text\",\"image\"],\"cost\":{\"input\":0.15,\"output\":0.6},\"contextWindow\":128000,\"maxTokens\":16384}]}"
+  [ -z "$PRIMARY" ] && PRIMARY="openai/gpt-4o-mini"
+  [ -n "$MINIMAX_KEY" ] && FALLBACKS="\"openai/gpt-4o-mini\""
+fi
 
-# Copy AI team template files into workspace if TEAM_TEMPLATE is set
+# Gemini provider
+if [ -n "$GEMINI_KEY" ]; then
+  [ -n "$PROVIDERS" ] && PROVIDERS="${PROVIDERS},"
+  PROVIDERS="${PROVIDERS}\"gemini\":{\"baseUrl\":\"https://generativelanguage.googleapis.com/v1beta\",\"apiKey\":\"${GEMINI_KEY}\",\"models\":[{\"id\":\"gemini-2.0-flash\",\"name\":\"Gemini 2.0 Flash\",\"reasoning\":false,\"input\":[\"text\",\"image\"],\"cost\":{\"input\":0.1,\"output\":0.4},\"contextWindow\":1000000,\"maxTokens\":8192}]}"
+  [ -z "$PRIMARY" ] && PRIMARY="gemini/gemini-2.0-flash"
+fi
+
+if [ -z "$PRIMARY" ]; then
+  echo "ERROR: Need at least one of: MINIMAX_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY"
+  exit 1
+fi
+
+# Override primary model if explicitly set
+[ -n "$PRIMARY_MODEL" ] && PRIMARY="$PRIMARY_MODEL"
+
+# Generate config file
+cat > /home/user/.openclaw/openclaw.json << EOF
+{
+  "models": {"providers": {${PROVIDERS}}},
+  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd"}},
+  "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}, "controlUi": {"allowInsecureAuth": true, "dangerouslyDisableDeviceAuth": true}},
+  "plugins": {"entries": {"whatsapp": {"enabled": true}, "telegram": {"enabled": true}}},
+  "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}},
+  "channels": {"whatsapp": {"dmPolicy": "open", "allowFrom": ["*"]}}
+}
+EOF
+
+echo "OpenClaw config created. Primary model: ${PRIMARY}"
+
+# Clear sensitive env vars
+unset OPENAI_API_KEY GEMINI_API_KEY MINIMAX_API_KEY
+
+# Install team template
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
 TEAM_DIR="/opt/teams/${TEAM_TEMPLATE}"
-WORKSPACE="/home/user/clawd"
-mkdir -p "$WORKSPACE"
+[ -d "$TEAM_DIR" ] && cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md 2>/dev/null && echo "Team template installed: ${TEAM_TEMPLATE}"
 
-if [ -d "$TEAM_DIR" ]; then
-    echo "Installing team template: ${TEAM_TEMPLATE}"
-    cp "$TEAM_DIR/AGENTS.md" "$WORKSPACE/AGENTS.md"
-    if [ -d "$TEAM_DIR/members" ]; then
-        mkdir -p "$WORKSPACE/members"
-        cp -r "$TEAM_DIR/members/"* "$WORKSPACE/members/" 2>/dev/null || true
-    fi
-    if [ -d "$TEAM_DIR/templates" ]; then
-        mkdir -p "$WORKSPACE/templates"
-        cp -r "$TEAM_DIR/templates/"* "$WORKSPACE/templates/" 2>/dev/null || true
-    fi
-    echo "Team template installed: $(ls -la $WORKSPACE/AGENTS.md)"
-else
-    echo "WARNING: Team template directory not found: $TEAM_DIR"
-fi
-
-# Patch web_search to use local SearXNG proxy instead of Brave API
+# Patch Brave search URL to use local SearXNG proxy
 SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}"
-PATCHED=0
-for f in $(grep -rl 'api.search.brave.com' /usr/local/lib/node_modules/openclaw/dist/ 2>/dev/null); do
+for f in $(grep -rl "api.search.brave.com" /usr/local/lib/node_modules/openclaw/dist/ 2>/dev/null); do
     sed -i "s|https://api.search.brave.com/res/v1/web/search|${SEARXNG_PROXY_URL}|g" "$f"
-    PATCHED=$((PATCHED + 1))
 done
-echo "Patched $PATCHED files to use SearXNG proxy: ${SEARXNG_PROXY_URL}"
-
-# Set a dummy Brave API key so the tool is enabled
 export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 
-echo "OpenClaw configuration created"
+# Initialize ClawSec skills if available
+[ -x /usr/local/bin/init_clawsec.sh ] && /usr/local/bin/init_clawsec.sh
 
-# Initialize ClawSec security skills
-/usr/local/bin/init_clawsec.sh
-
-# Start API server in background (exposes REST endpoints for dashboard)
+# Start API server in background
 node /usr/local/bin/api-server.js &
 API_PID=$!
-echo "API server started (PID: $API_PID)"
-
-# Cleanup on exit
 trap "kill $API_PID 2>/dev/null" EXIT
 
-# Start OpenClaw gateway in foreground
+# Start gateway (foreground)
 exec openclaw gateway

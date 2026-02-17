@@ -6,10 +6,78 @@
  */
 
 const http = require('http');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const API_PORT = process.env.API_PORT || 8081;
 const GATEWAY_URL = process.env.GATEWAY_URL || 'ws://127.0.0.1:8080';
 const GATEWAY_TOKEN = process.env.GATEWAY_TOKEN || '';
+
+// Generate or load a persistent device identity for gateway auth
+const DEVICE_KEY_PATH = '/home/user/.openclaw/api-server-device.json';
+let deviceIdentity = null;
+
+function getOrCreateDeviceIdentity() {
+  if (deviceIdentity) return deviceIdentity;
+  try {
+    if (fs.existsSync(DEVICE_KEY_PATH)) {
+      deviceIdentity = JSON.parse(fs.readFileSync(DEVICE_KEY_PATH, 'utf8'));
+      return deviceIdentity;
+    }
+  } catch {}
+  
+  // Generate Ed25519 keypair
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+  const pubKeyDer = publicKey.export({ type: 'spki', format: 'der' });
+  // Extract raw 32-byte public key from DER (last 32 bytes)
+  const rawPubKey = pubKeyDer.slice(-32);
+  const pubKeyB64Url = rawPubKey.toString('base64url');
+  const deviceId = crypto.createHash('sha256').update(rawPubKey).digest('hex');
+  
+  deviceIdentity = {
+    id: deviceId,
+    publicKey: pubKeyB64Url,
+    privateKeyPem: privateKey.export({ type: 'pkcs8', format: 'pem' }),
+  };
+  
+  fs.writeFileSync(DEVICE_KEY_PATH, JSON.stringify(deviceIdentity, null, 2));
+  console.log('[api] Generated device identity:', deviceId);
+  return deviceIdentity;
+}
+
+function buildDeviceAuthPayload(params) {
+  const scopes = params.scopes.join(',');
+  const token = params.token || '';
+  return ['v1', params.deviceId, params.clientId, params.clientMode, params.role, scopes, String(params.signedAtMs), token].join('|');
+}
+
+function signPayload(payload) {
+  const di = getOrCreateDeviceIdentity();
+  const privKey = crypto.createPrivateKey(di.privateKeyPem);
+  const sig = crypto.sign(null, Buffer.from(payload), privKey);
+  return sig.toString('base64url');
+}
+
+function buildDeviceConnect() {
+  const di = getOrCreateDeviceIdentity();
+  const signedAtMs = Date.now();
+  const payload = buildDeviceAuthPayload({
+    deviceId: di.id,
+    clientId: 'cli',
+    clientMode: 'cli',
+    role: 'operator',
+    scopes: ['operator.admin'],
+    signedAtMs,
+    token: GATEWAY_TOKEN,
+  });
+  return {
+    id: di.id,
+    publicKey: di.publicKey,
+    signature: signPayload(payload),
+    signedAt: signedAtMs,
+  };
+}
 
 let requestId = 0;
 const pendingRequests = new Map();
@@ -43,6 +111,7 @@ function connectGateway() {
   
   ws.addEventListener('open', () => {
     console.log('[api] Gateway connected, sending handshake...');
+    const device = buildDeviceConnect();
     ws.send(JSON.stringify({
       type: 'req',
       id: 'connect',
@@ -51,12 +120,15 @@ function connectGateway() {
         minProtocol: 3,
         maxProtocol: 3,
         client: { 
-          id: 'gateway-client',  // Valid IDs: cli, gateway-client, test, etc.
-          version: '1.0.0', 
+          id: 'cli',
+          displayName: 'Clawer API Server',
+          version: '2026.2.16', 
           platform: 'linux', 
-          mode: 'backend'  // Valid modes: cli, backend, ui, node, test
+          mode: 'cli'
         },
+        device,
         caps: [],
+        scopes: ['operator.admin'],
         auth: { token: GATEWAY_TOKEN },
         locale: 'en-US',
         userAgent: 'clawer-api/1.0.0'
@@ -67,6 +139,22 @@ function connectGateway() {
   ws.addEventListener('message', (event) => {
     try {
       const msg = JSON.parse(event.data);
+      // Handle connect.challenge — respond with device signature
+      if (msg.type === 'event' && msg.event === 'connect.challenge') {
+        const challenge = msg.payload?.challenge;
+        if (challenge) {
+          console.log('[api] Received connect.challenge, signing nonce...');
+          const di = getOrCreateDeviceIdentity();
+          const sig = signPayload(challenge);
+          ws.send(JSON.stringify({
+            type: 'req',
+            id: 'connect.challenge',
+            method: 'connect.challenge',
+            params: { signature: sig }
+          }));
+        }
+        return;
+      }
       // Log all messages for debugging
       if (msg.type !== 'res' || msg.id !== 'connect') {
         console.log('[api] ws message:', msg.type, msg.event || msg.id, msg.payload?.status || '');
@@ -79,6 +167,12 @@ function connectGateway() {
         } else {
           console.error('[api] Gateway handshake failed:', JSON.stringify(msg.error || msg));
           scheduleReconnect();
+        }
+      } else if (msg.type === 'res' && msg.id === 'connect.challenge') {
+        if (msg.ok) {
+          console.log('[api] Challenge response accepted');
+        } else {
+          console.error('[api] Challenge response failed:', JSON.stringify(msg.error || msg));
         }
       } else if (msg.type === 'res') {
         const pending = pendingRequests.get(msg.id);
@@ -561,10 +655,7 @@ const server = http.createServer(async (req, res) => {
           timeoutMs: 60000  // Wait up to 60 seconds for response
         };
         
-// model override removed - not supported by gateway
-// model override removed - not supported by gateway
-// model override removed - not supported by gateway
-        }
+        // Note: model override not supported by gateway chat.send in v2026.2.16+
         
         const chatResult = await gatewayRequest('chat.send', chatParams);
         
