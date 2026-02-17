@@ -11,33 +11,18 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: []
-    
+
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build application
-        run: NEXT_PRIVATE_WORKER_THREADS=0 npx next build
-        env:
-          NODE_ENV: production
-      
-      - name: Setup SSH key
+
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
-      
-      - name: Deploy via rsync
+
+      - name: Deploy source via rsync
         run: |
           rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
             --delete \
@@ -45,19 +30,19 @@ jobs:
             --exclude '.env' \
             --exclude 'node_modules' \
             --exclude '.git' \
-            --exclude '.next/cache' \
+            --exclude '.next' \
             . root@${{ secrets.DEPLOY_HOST }}:/opt/clawer/
-      
-      - name: Install dependencies on server
+
+      - name: Build & restart on server
         run: |
-          ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} \
-            "cd /opt/clawer && npm install --production"
-      
-      - name: Restart PM2
-        run: |
-          ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} \
-            "pm2 restart clawer"
-      
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} << 'SCRIPT'
+            cd /opt/clawer
+            export NODE_ENV=production
+            npm install --production=false
+            npx next build
+            pm2 restart clawer
+          SCRIPT
+
       - name: Health check
         run: |
           sleep 5
@@ -72,20 +57,7 @@ jobs:
             echo "Got status $STATUS, retrying in 5s..."
             sleep 5
           done
-          echo "❌ Health check failed after 3 attempts"
+          echo "❌ Health check failed"
           ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} \
             "pm2 logs clawer --lines 20 --nostream"
           exit 1
-      
-      - name: Comment deployment status
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const status = '${{ job.status }}' === 'success' ? '✅ Deployed successfully' : '❌ Deployment failed';
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: `${status}\n\nWorkflow: ${context.workflow}\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
-            })
