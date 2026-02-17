@@ -208,7 +208,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
 
   mom: {
     industry: 'family',
-    name: "Mom's Command Center",
+    name: "Parent Central",
     description: 'Your household management team. Handles meal planning, schedules, homework help, reminders, and keeping everything running smoothly.',
     members: [
       {

@@ -19,7 +19,7 @@ const TEMPLATES = [
     features: ['Order status', 'Product search', '24/7 support'],
   },
   {
-    name: "Mom's Command Center",
+    name: "Parent Central",
     description: 'Family assistant. Schedule coordination, meal planning, activity reminders.',
     icon: '👩‍👧‍👦',
     gradient: 'from-pink-500 to-rose-500',
