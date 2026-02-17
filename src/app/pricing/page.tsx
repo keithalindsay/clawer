@@ -9,7 +9,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
 function CellValue({ value }: { value: string | boolean }) {
   if (value === true) return <span className="text-green-600 text-lg font-bold">✓</span>;
@@ -18,8 +17,6 @@ function CellValue({ value }: { value: string | boolean }) {
 }
 
 export default function PricingPage() {
-  const [annual, setAnnual] = useState(false);
-
   const TIERS = [
     {
       name: "Free",
@@ -28,9 +25,9 @@ export default function PricingPage() {
       period: "/forever",
       description: "Kick the tires — no credit card required.",
       features: [
-        "1 container",
-        "GPT-4o-mini model",
-        "100 messages per day",
+        "200 total messages",
+        "1 AI team member",
+        "Basic model",
         "Web chat only",
         "Community support",
       ],
@@ -43,84 +40,43 @@ export default function PricingPage() {
     {
       name: "Pro",
       badge: "Most Popular",
-      price: annual ? "$15" : "$19",
+      price: "$49",
       period: "/month",
-      billingNote: annual ? "Billed annually ($180/yr)" : undefined,
-      description: "For builders who want the full toolkit.",
+      description: "Your full AI team, unleashed.",
       features: [
-        "MiniMax M2.5 model",
-        "Unlimited messages",
-        "AI Teams — multiple agents working together",
+        "500 messages per day",
+        "Full AI team — all members unlocked",
+        "Priority model (MiniMax M2.5)",
         "Custom skills from curated marketplace",
         "WhatsApp + Telegram + Slack",
         "Smart model routing",
         "Priority email support",
       ],
       cta: "Get Pro →",
-      ctaHref: annual
-        ? "/api/stripe/checkout?plan=pro-annual"
-        : "/api/stripe/checkout?plan=pro-monthly",
+      ctaHref: "/api/stripe/checkout?plan=monthly",
       highlighted: true,
       ctaStyle: "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25",
-    },
-    {
-      name: "Enterprise",
-      badge: "Full Power",
-      price: annual ? "$39" : "$49",
-      period: "/month",
-      billingNote: annual ? "Billed annually ($468/yr)" : undefined,
-      description: "Dedicated resources. Zero compromises.",
-      features: [
-        "Everything in Pro",
-        "Dedicated container resources",
-        "Custom model support (bring your own)",
-        "Priority support (real humans, fast)",
-        "Full API access",
-        "Team management & SSO",
-        "99.9% uptime SLA",
-        "Custom onboarding",
-      ],
-      cta: "Get Enterprise →",
-      ctaHref: annual
-        ? "/api/stripe/checkout?plan=enterprise-annual"
-        : "/api/stripe/checkout?plan=enterprise-monthly",
-      highlighted: false,
-      ctaStyle:
-        "border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600",
     },
   ] as const;
 
   const COMPARISON = [
-    { name: "Daily messages", free: "100", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Containers", free: "1", pro: "1", enterprise: "Dedicated" },
-    { name: "AI model", free: "GPT-4o-mini", pro: "MiniMax M2.5", enterprise: "Custom models" },
-    { name: "AI Teams", free: false, pro: true, enterprise: true },
-    { name: "Custom skills", free: false, pro: true, enterprise: true },
-    { name: "Channels", free: "Web only", pro: "WhatsApp, Telegram, Slack", enterprise: "All + custom" },
-    { name: "Smart model routing", free: false, pro: true, enterprise: true },
-    { name: "API access", free: false, pro: false, enterprise: true },
-    { name: "Dedicated resources", free: false, pro: false, enterprise: true },
-    { name: "Team management & SSO", free: false, pro: false, enterprise: true },
-    { name: "SLA guarantee", free: false, pro: false, enterprise: true },
-    { name: "Priority support", free: false, pro: true, enterprise: true },
+    { name: "Messages", free: "200 total", pro: "500/day" },
+    { name: "AI team members", free: "1", pro: "Full team" },
+    { name: "AI model", free: "Basic", pro: "MiniMax M2.5" },
+    { name: "Custom skills", free: false, pro: true },
+    { name: "Channels", free: "Web only", pro: "WhatsApp, Telegram, Slack" },
+    { name: "Smart model routing", free: false, pro: true },
+    { name: "Priority support", free: false, pro: true },
   ] as const;
 
   const FAQS = [
     {
-      q: "What happens when I hit 100 messages on Free?",
-      a: "The counter resets every day at midnight UTC. Or upgrade to Pro for unlimited messages and access to AI Teams, custom skills, and all messaging channels.",
-    },
-    {
-      q: "What's the difference between GPT-4o-mini and MiniMax M2.5?",
-      a: "GPT-4o-mini is great for basic tasks. MiniMax M2.5 is significantly more capable — better reasoning, longer context, and faster responses. Pro also includes smart model routing that picks the best model for each task automatically.",
+      q: "How does the free plan work?",
+      a: "You get 200 total messages to try everything out — no credit card required. Once you've used them, upgrade to Pro for 500 messages per day and your full AI team.",
     },
     {
       q: "What are AI Teams?",
-      a: "AI Teams let you run multiple specialized agents that collaborate. Think: a researcher, a writer, and a fact-checker working together on a single task. Available on Pro and Enterprise.",
-    },
-    {
-      q: "Can I bring my own API keys / models?",
-      a: "Enterprise plan supports custom model configurations. Bring your own OpenAI, Anthropic, or any compatible API. Pro uses our pre-configured models with smart routing.",
+      a: "AI Teams are multiple specialized agents that work together. Pick a template — Life OS, Solopreneur, Content Creator, and more — each with agents built for that workflow.",
     },
     {
       q: "Can I switch plans anytime?",
@@ -128,15 +84,15 @@ export default function PricingPage() {
     },
     {
       q: "Is my data safe?",
-      a: "Every instance runs in an isolated container. We never train AI on your data. Enterprise gets dedicated resources with full data isolation. See our security blog post for details.",
+      a: "Every instance runs in an isolated container. We never train AI on your data. See our security blog post for details.",
     },
     {
       q: "Do I need a credit card to start?",
-      a: "Nope. Free plan is completely free, forever. No credit card required.",
+      a: "Nope. Free plan requires no credit card. Just sign up and start chatting.",
     },
     {
-      q: "What's included in priority support?",
-      a: "Pro gets priority email support with 24-hour response time. Enterprise gets dedicated support with sub-4-hour response, plus a Slack channel with our team.",
+      q: "What channels can I connect?",
+      a: "Pro unlocks WhatsApp, Telegram, and Slack — chat with your AI team from wherever you already work. Free is web-only.",
     },
   ];
 
@@ -181,34 +137,12 @@ export default function PricingPage() {
             Start free. Upgrade when you need more power. No surprises.
           </p>
 
-          {/* Billing Toggle */}
-          <div className="mt-8 inline-flex items-center gap-3 bg-gray-100 p-1.5 rounded-full">
-            <button
-              onClick={() => setAnnual(false)}
-              className={`px-6 py-2.5 rounded-full font-medium transition-all ${
-                !annual ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setAnnual(true)}
-              className={`px-6 py-2.5 rounded-full font-medium transition-all relative ${
-                annual ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Annual
-              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                Save 20%
-              </span>
-            </button>
-          </div>
         </div>
       </section>
 
       {/* Pricing Cards */}
       <section className="pb-20 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 items-start">
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
           {TIERS.map((tier) => (
             <div
               key={tier.name}
@@ -282,7 +216,6 @@ export default function PricingPage() {
                   <th className="text-left py-4 pr-4 text-gray-900 font-semibold">Feature</th>
                   <th className="text-center py-4 px-4 text-gray-900 font-semibold">Free</th>
                   <th className="text-center py-4 px-4 text-blue-600 font-semibold">Pro</th>
-                  <th className="text-center py-4 px-4 text-gray-900 font-semibold">Enterprise</th>
                 </tr>
               </thead>
               <tbody>
@@ -294,7 +227,6 @@ export default function PricingPage() {
                     <td className="py-4 pr-4 text-gray-700 font-medium text-sm">{row.name}</td>
                     <td className="text-center py-4 px-4"><CellValue value={row.free} /></td>
                     <td className="text-center py-4 px-4"><CellValue value={row.pro} /></td>
-                    <td className="text-center py-4 px-4"><CellValue value={row.enterprise} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -328,7 +260,7 @@ export default function PricingPage() {
             Ready to build with AI Teams?
           </h2>
           <p className="mt-4 text-blue-100 text-lg">
-            100 free messages per day. No credit card. Upgrade whenever.
+            200 free messages to start. No credit card. Upgrade whenever.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
