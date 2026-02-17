@@ -1,270 +1,234 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-
-export const metadata: Metadata = {
-  title: "Privacy Policy — Clawer.ai",
-  description:
-    "Privacy Policy for Clawer.ai. Learn how we collect, use, and protect your data when you use our AI assistant service.",
-  alternates: { canonical: "/privacy" },
-};
-
-export default function PrivacyPage() {
+export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors">About</Link>
-            <Link
-              href="/sign-up"
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-medium hover:bg-blue-700 transition-colors"
-            >
-              Start Free Trial
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <div className="mx-auto max-w-3xl px-6 py-16">
+        <a
+          href="/"
+          className="mb-8 inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          ← Back to Home
+        </a>
 
-      <article className="pt-32 pb-20 px-6">
-        <div className="max-w-3xl mx-auto prose prose-gray prose-lg">
-          <h1>Privacy Policy</h1>
-          <p className="text-gray-500">Last updated: February 9, 2026</p>
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-2">
+          Privacy Policy
+        </h1>
+        <p className="text-sm text-gray-500 mb-12">
+          Last updated: February 17, 2026
+        </p>
 
+        <div className="prose prose-gray max-w-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-10 [&_h2]:mb-4 [&_p]:text-gray-600 [&_p]:leading-relaxed [&_li]:text-gray-600">
           <p>
-            Clawer.ai (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;)
-            respects your privacy. This Privacy Policy explains how we collect,
-            use, share, and protect your personal information when you use our
-            AI assistant service (&ldquo;Service&rdquo;).
+            Aigen Inc, doing business as Clawer AI (&quot;Company,&quot; &quot;we,&quot;
+            &quot;us,&quot; or &quot;our&quot;), operates the platform at{" "}
+            <a href="https://clawer.ai" className="text-blue-600 hover:underline">
+              clawer.ai
+            </a>{" "}
+            (the &quot;Service&quot;). This Privacy Policy explains how we collect, use,
+            disclose, and safeguard your information when you use the Service. Please read
+            this policy carefully. If you do not agree with the terms, please do not use the
+            Service.
           </p>
 
           <h2>1. Information We Collect</h2>
 
-          <h3>Account Information</h3>
-          <p>When you create an account, we collect:</p>
-          <ul>
+          <h3 className="text-lg font-medium mt-6 mb-3 text-gray-800">
+            Personal Information
+          </h3>
+          <p>When you create an account or use the Service, we may collect:</p>
+          <ul className="list-disc pl-6 space-y-2 my-4">
             <li>Name and email address (via Clerk authentication)</li>
-            <li>Payment information (processed and stored by Stripe — we do not store full card numbers)</li>
-            <li>Phone number (if you connect via WhatsApp or Telegram)</li>
+            <li>Billing and payment information (processed by Stripe — we do not store full card details)</li>
+            <li>Account preferences and settings</li>
+            <li>Profile information you choose to provide</li>
           </ul>
 
-          <h3>Usage Data</h3>
-          <ul>
-            <li>Messages you send to and receive from the AI assistant</li>
-            <li>Connected integrations (email, calendar, etc.)</li>
-            <li>Feature usage and interaction patterns</li>
-            <li>Device type, browser, IP address, and general location</li>
+          <h3 className="text-lg font-medium mt-6 mb-3 text-gray-800">
+            Usage Data
+          </h3>
+          <p>We automatically collect:</p>
+          <ul className="list-disc pl-6 space-y-2 my-4">
+            <li>Conversation content and messages sent through AI assistants</li>
+            <li>Usage metrics (message counts, feature usage, session duration)</li>
+            <li>Device information (browser type, operating system, IP address)</li>
+            <li>Log data (access times, pages viewed, referring URLs)</li>
           </ul>
-
-          <h3>Data from Integrations</h3>
-          <p>
-            If you connect third-party services (Gmail, Google Calendar, etc.),
-            we access only the data necessary to fulfil your requests. We do not
-            store integration data longer than needed to provide the Service.
-          </p>
 
           <h2>2. How We Use Your Information</h2>
-          <ul>
-            <li>To provide, maintain, and improve the Service</li>
-            <li>To process your AI assistant requests and deliver responses</li>
-            <li>To process payments and manage your subscription</li>
-            <li>To communicate with you about your account, updates, and support</li>
-            <li>To detect and prevent fraud, abuse, or security incidents</li>
-            <li>To comply with legal obligations</li>
-          </ul>
-          <p>
-            <strong>We do not use your data to train AI models.</strong> Your
-            conversations are used solely to provide the Service to you.
-          </p>
-
-          <h2>3. Third-Party Services</h2>
-          <p>
-            We use the following third-party services to operate Clawer.ai.
-            Each has its own privacy policy governing data handling:
-          </p>
-          <ul>
-            <li>
-              <strong>Clerk</strong> — Authentication and user management.{" "}
-              <a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <strong>Stripe</strong> — Payment processing and billing.{" "}
-              <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <strong>OpenAI</strong> — AI model provider (GPT models).{" "}
-              <a href="https://openai.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <strong>Anthropic</strong> — AI model provider (Claude models).{" "}
-              <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <strong>Google</strong> — AI model provider (Gemini models) and
-              integration services (Gmail, Calendar).{" "}
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </a>
-            </li>
-          </ul>
-          <p>
-            We have data processing agreements with these providers. Your
-            conversation data sent to AI providers is not used to train their
-            models (we use API access with data-use opt-outs where available).
-          </p>
-
-          <h2>4. Data Retention</h2>
-          <ul>
-            <li>
-              <strong>Account data:</strong> Retained while your account is
-              active and for 30 days after deletion.
-            </li>
-            <li>
-              <strong>Conversation history:</strong> Retained while your account
-              is active. Deleted within 30 days of account termination or upon
-              your request.
-            </li>
-            <li>
-              <strong>Payment records:</strong> Retained as required by tax and
-              financial regulations (typically 7 years).
-            </li>
-            <li>
-              <strong>Usage analytics:</strong> Aggregated and anonymized data
-              may be retained indefinitely for service improvement.
-            </li>
+          <p>We use collected information to:</p>
+          <ul className="list-disc pl-6 space-y-2 my-4">
+            <li>Provide, operate, and maintain the Service</li>
+            <li>Process transactions and manage your subscription</li>
+            <li>Send administrative communications (billing, security, service updates)</li>
+            <li>Improve the Service, develop new features, and analyze usage patterns</li>
+            <li>Enforce our Terms of Service and prevent abuse</li>
+            <li>Comply with legal obligations</li>
           </ul>
 
-          <h2>5. Data Security</h2>
-          <p>We protect your data with:</p>
-          <ul>
-            <li>Encryption in transit (TLS 1.3) and at rest (AES-256)</li>
-            <li>Access controls and authentication for internal systems</li>
-            <li>Regular security audits and monitoring</li>
-            <li>Minimal data access principles — employees access data only when necessary</li>
-          </ul>
-
-          <h2>6. Your Rights (GDPR &amp; Global Privacy)</h2>
+          <h2>3. Conversation Data</h2>
           <p>
-            Regardless of your location, we extend the following rights to all
-            users:
+            Messages and conversations you conduct through the Service are stored on our
+            servers to provide core functionality, including conversation history and context
+            for AI assistants. Conversation data may be sent to third-party AI model
+            providers (such as OpenAI, MiniMax, and others) for processing. These providers
+            process data in accordance with their own privacy policies and data processing
+            agreements.
           </p>
-          <ul>
+          <p>
+            We do not use your conversation data to train our own AI models. We do not sell
+            your conversation data to third parties.
+          </p>
+
+          <h2>4. Third-Party Services</h2>
+          <p>We use the following third-party services:</p>
+          <ul className="list-disc pl-6 space-y-2 my-4">
             <li>
-              <strong>Access:</strong> Request a copy of the personal data we
-              hold about you.
+              <strong>Clerk</strong> — Authentication and user management
             </li>
             <li>
-              <strong>Correction:</strong> Request correction of inaccurate or
-              incomplete data.
+              <strong>Stripe</strong> — Payment processing (subject to{" "}
+              <a
+                href="https://stripe.com/privacy"
+                className="text-blue-600 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Stripe&apos;s Privacy Policy
+              </a>
+              )
             </li>
             <li>
-              <strong>Deletion:</strong> Request deletion of your personal data
-              (&ldquo;right to be forgotten&rdquo;).
-            </li>
-            <li>
-              <strong>Portability:</strong> Request your data in a
-              machine-readable format.
-            </li>
-            <li>
-              <strong>Restriction:</strong> Request that we limit processing of
-              your data.
-            </li>
-            <li>
-              <strong>Objection:</strong> Object to processing based on
-              legitimate interests.
-            </li>
-            <li>
-              <strong>Withdraw consent:</strong> Withdraw consent at any time
-              where processing is based on consent.
+              <strong>AI Model Providers</strong> (OpenAI, MiniMax, and others) — Language
+              model inference
             </li>
           </ul>
           <p>
-            To exercise any of these rights, email us at{" "}
-            <a href="mailto:hello@clawer.ai" className="text-blue-600 hover:underline">
-              hello@clawer.ai
+            Each third-party provider operates under its own privacy policy. We encourage you
+            to review them.
+          </p>
+
+          <h2>5. Data Retention and Deletion</h2>
+          <p>
+            We retain your personal information and conversation data for as long as your
+            account is active or as needed to provide the Service. You may request deletion
+            of your data at any time by contacting us at{" "}
+            <a
+              href="mailto:privacy@clawer.ai"
+              className="text-blue-600 hover:underline"
+            >
+              privacy@clawer.ai
+            </a>
+            . Upon receiving a valid deletion request, we will remove your data within 30
+            days, except where retention is required by law.
+          </p>
+          <p>
+            When you delete your account, we will delete or anonymize your personal data and
+            conversation history, unless we are legally required to retain it.
+          </p>
+
+          <h2>6. Data Security</h2>
+          <p>
+            We implement commercially reasonable technical and organizational measures to
+            protect your data, including encryption in transit (TLS) and at rest. However, no
+            method of transmission or storage is 100% secure, and we cannot guarantee
+            absolute security.
+          </p>
+
+          <h2>7. Your Rights</h2>
+          <p>
+            Depending on your jurisdiction, you may have the following rights regarding your
+            personal data:
+          </p>
+          <ul className="list-disc pl-6 space-y-2 my-4">
+            <li>
+              <strong>Access:</strong> Request a copy of the personal data we hold about you
+            </li>
+            <li>
+              <strong>Rectification:</strong> Request correction of inaccurate data
+            </li>
+            <li>
+              <strong>Erasure:</strong> Request deletion of your personal data
+            </li>
+            <li>
+              <strong>Portability:</strong> Request your data in a structured, machine-readable format
+            </li>
+            <li>
+              <strong>Restriction:</strong> Request that we limit processing of your data
+            </li>
+            <li>
+              <strong>Objection:</strong> Object to processing based on legitimate interests
+            </li>
+            <li>
+              <strong>Withdraw Consent:</strong> Where processing is based on consent, withdraw it at any time
+            </li>
+          </ul>
+          <p>
+            To exercise any of these rights, contact us at{" "}
+            <a
+              href="mailto:privacy@clawer.ai"
+              className="text-blue-600 hover:underline"
+            >
+              privacy@clawer.ai
             </a>
             . We will respond within 30 days.
           </p>
 
-          <h2>7. Cookies</h2>
+          <h2>8. International Data Transfers</h2>
           <p>
-            We use essential cookies for authentication and session management.
-            We do not use tracking or advertising cookies. Third-party services
-            (Clerk, Stripe) may set their own cookies as described in their
-            privacy policies.
+            Your data may be transferred to and processed in countries other than your
+            country of residence, including the United States. Where we transfer data
+            internationally, we ensure appropriate safeguards are in place in accordance with
+            applicable data protection laws, including standard contractual clauses where
+            required.
           </p>
 
-          <h2>8. Children&apos;s Privacy</h2>
+          <h2>9. Cookies and Tracking</h2>
           <p>
-            The Service is not intended for children under 18. We do not
-            knowingly collect personal information from children. If you believe
-            a child has provided us with personal data, please contact us and we
-            will delete it.
+            We use essential cookies to maintain your session and provide core functionality.
+            We may also use analytics cookies to understand how the Service is used. You can
+            control cookie preferences through your browser settings. The Service does not
+            respond to Do Not Track signals.
           </p>
 
-          <h2>9. International Data Transfers</h2>
+          <h2>10. Children&apos;s Privacy</h2>
           <p>
-            Your data may be processed in the United States and other countries
-            where our service providers operate. We ensure appropriate
-            safeguards are in place for international transfers, including
-            Standard Contractual Clauses where applicable.
+            The Service is not intended for individuals under the age of 18. We do not
+            knowingly collect personal information from minors. If we learn that we have
+            collected data from a person under 18, we will take steps to delete it promptly.
           </p>
 
-          <h2>10. Changes to This Policy</h2>
+          <h2>11. Changes to This Policy</h2>
           <p>
-            We may update this Privacy Policy from time to time. We will notify
-            you of material changes via email or through the Service. The
-            &ldquo;Last updated&rdquo; date at the top indicates the most recent
-            revision.
+            We may update this Privacy Policy from time to time. We will notify you of
+            material changes by posting the updated policy on this page and updating the
+            &quot;Last updated&quot; date. Your continued use of the Service after changes
+            constitutes acceptance of the revised policy.
           </p>
 
-          <h2>11. Contact Us</h2>
+          <h2>12. Contact Us</h2>
           <p>
-            If you have questions or concerns about this Privacy Policy or your
-            data, contact us:
+            If you have questions or concerns about this Privacy Policy or our data
+            practices, please contact us at:
           </p>
-          <ul>
-            <li>
+          <div className="my-4 rounded-lg bg-gray-50 p-6 text-gray-600">
+            <p className="font-medium text-gray-900">Aigen Inc (dba Clawer AI)</p>
+            <p>
               Email:{" "}
-              <a href="mailto:hello@clawer.ai" className="text-blue-600 hover:underline">
-                hello@clawer.ai
-              </a>
-            </li>
-            <li>
-              For privacy-specific requests:{" "}
-              <a href="mailto:privacy@clawer.ai" className="text-blue-600 hover:underline">
+              <a
+                href="mailto:privacy@clawer.ai"
+                className="text-blue-600 hover:underline"
+              >
                 privacy@clawer.ai
               </a>
-            </li>
-          </ul>
-        </div>
-      </article>
-
-      {/* Footer */}
-      <footer className="py-12 px-6 bg-gray-900 text-gray-400">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-white font-bold text-lg">🦞 CLAWER.AI</div>
-          <div className="flex gap-8 text-sm">
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <a href="mailto:support@clawer.ai" className="hover:text-white transition-colors">Support</a>
+            </p>
+            <p>
+              Website:{" "}
+              <a href="https://clawer.ai" className="text-blue-600 hover:underline">
+                clawer.ai
+              </a>
+            </p>
           </div>
-          <p className="text-sm">© 2026 Clawer.ai</p>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

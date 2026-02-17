@@ -112,6 +112,7 @@ export function DashboardWorkspace({
       {/* Header */}
       <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 sm:px-6" style={{ background: '#0f172a' }}>
         <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="text-sm hover:text-white transition-colors" style={{ color: '#94a3b8' }}>← Dashboard</Link>
           <span className="text-base font-bold text-white">🦞 CLAWER<span style={{ color: '#60a5fa' }}>.AI</span></span>
           <span className="hidden sm:inline text-sm" style={{ color: '#94a3b8' }}>Team: {teamName}</span>
         </div>

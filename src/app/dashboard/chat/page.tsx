@@ -4,9 +4,9 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
-import { DashboardHome } from '@/components/dashboard/DashboardHome';
+import { DashboardWorkspace } from '@/components/dashboard/DashboardWorkspace';
 
-export default async function DashboardPage() {
+export default async function ChatPage() {
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
@@ -34,22 +34,24 @@ export default async function DashboardPage() {
 
   const isSubscribed = user?.stripeSubscriptionId !== null;
   const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
+  const FREE_MESSAGE_LIMIT = 200;
 
   const teamTemplate = (user as any)?.teamTemplate || 'lifeos';
   const teamConfig = getTeamConfig(teamTemplate);
   const teamMembers = teamConfig?.members || [];
 
   return (
-    <DashboardHome
+    <DashboardWorkspace
       userName={user?.name || clerkUser?.firstName || undefined}
       userEmail={userEmail}
       teamName={teamConfig?.name || 'Life OS'}
       teamDescription={teamConfig?.description}
       teamMembers={teamMembers}
-      isSubscribed={isSubscribed}
-      freeMessagesUsed={freeMessagesUsed}
       whatsappConnected={!!(user as any)?.whatsappConnected}
       telegramConnected={!!(user as any)?.telegramConnected}
+      isSubscribed={isSubscribed}
+      freeMessagesUsed={freeMessagesUsed}
+      freeMessageLimit={FREE_MESSAGE_LIMIT}
     />
   );
 }

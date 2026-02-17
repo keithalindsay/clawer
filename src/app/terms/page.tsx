@@ -1,239 +1,204 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-
-export const metadata: Metadata = {
-  title: "Terms of Service — Clawer.ai",
-  description:
-    "Terms of Service for Clawer.ai. Read our service agreement covering usage, billing, data handling, and more.",
-  alternates: { canonical: "/terms" },
-};
-
-export default function TermsPage() {
+export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors">About</Link>
-            <Link
-              href="/sign-up"
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-medium hover:bg-blue-700 transition-colors"
-            >
-              Start Free Trial
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <div className="mx-auto max-w-3xl px-6 py-16">
+        <a
+          href="/"
+          className="mb-8 inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          ← Back to Home
+        </a>
 
-      <article className="pt-32 pb-20 px-6">
-        <div className="max-w-3xl mx-auto prose prose-gray prose-lg">
-          <h1>Terms of Service</h1>
-          <p className="text-gray-500">Last updated: February 9, 2026</p>
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-2">
+          Terms of Service
+        </h1>
+        <p className="text-sm text-gray-500 mb-12">
+          Last updated: February 17, 2026
+        </p>
 
+        <div className="prose prose-gray max-w-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-10 [&_h2]:mb-4 [&_p]:text-gray-600 [&_p]:leading-relaxed [&_li]:text-gray-600">
           <p>
-            These Terms of Service (&ldquo;Terms&rdquo;) govern your use of Clawer.ai
-            (&ldquo;Service&rdquo;), operated by Clawer.ai (&ldquo;we,&rdquo; &ldquo;us,&rdquo;
-            or &ldquo;our&rdquo;). By accessing or using the Service, you agree to be
-            bound by these Terms.
+            Welcome to Clawer AI. These Terms of Service (&quot;Terms&quot;) govern your access
+            to and use of the services provided by Aigen Inc, doing business as Clawer AI
+            (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), available at{" "}
+            <a href="https://clawer.ai" className="text-blue-600 hover:underline">
+              clawer.ai
+            </a>{" "}
+            (the &quot;Service&quot;). By accessing or using the Service, you agree to be bound
+            by these Terms. If you do not agree, do not use the Service.
           </p>
 
-          <h2>1. Service Description</h2>
+          <h2>1. Eligibility</h2>
           <p>
-            Clawer.ai provides AI-powered assistant services accessible through
-            messaging platforms (WhatsApp, Telegram, Slack, Discord, iMessage)
-            and a web-based chat interface. The Service uses third-party AI
-            models to process your requests and deliver responses.
+            You must be at least 18 years of age to use the Service. By creating an account,
+            you represent and warrant that you meet this requirement and have the legal
+            capacity to enter into a binding agreement.
           </p>
 
-          <h2>2. Account Registration</h2>
+          <h2>2. Description of Service</h2>
           <p>
-            To use the Service, you must create an account. You agree to provide
-            accurate, current, and complete information during registration and
-            to keep your account credentials secure. You are responsible for all
-            activity that occurs under your account.
-          </p>
-          <p>
-            You must be at least 18 years old to create an account and use the
-            Service.
+            Clawer AI provides a managed AI team hosting platform that enables users to
+            deploy and interact with chat-based AI assistants. The Service utilizes
+            third-party large language models (including but not limited to those provided by
+            OpenAI, MiniMax, and other providers) to generate responses. We do not guarantee
+            the accuracy, completeness, or reliability of AI-generated outputs.
           </p>
 
-          <h2>3. Acceptable Use</h2>
+          <h2>3. Accounts and Authentication</h2>
+          <p>
+            Account creation and authentication are managed through Clerk, a third-party
+            authentication provider. You are responsible for maintaining the confidentiality
+            of your account credentials and for all activities that occur under your account.
+            You agree to notify us immediately of any unauthorized use.
+          </p>
+
+          <h2>4. Plans and Pricing</h2>
+          <p>We offer the following plans:</p>
+          <ul className="list-disc pl-6 space-y-2 my-4">
+            <li>
+              <strong>Free Tier:</strong> Up to 25 messages per day, 1 team member. No
+              service level guarantees.
+            </li>
+            <li>
+              <strong>Paid Tier ($49/month):</strong> Up to 500 messages per day, full team
+              access, and priority support.
+            </li>
+          </ul>
+          <p>
+            We reserve the right to modify pricing, features, and usage limits at any time
+            with reasonable notice. Changes to paid plans will take effect at the start of
+            your next billing cycle.
+          </p>
+
+          <h2>5. Payment and Billing</h2>
+          <p>
+            Payments are processed through Stripe. By subscribing to a paid plan, you
+            authorize us to charge your payment method on a recurring monthly basis. All fees
+            are non-refundable except as required by applicable law. You are responsible for
+            any taxes associated with your use of the Service.
+          </p>
+
+          <h2>6. Acceptable Use</h2>
           <p>You agree not to use the Service to:</p>
-          <ul>
-            <li>Generate content that is illegal, harmful, threatening, abusive, harassing, defamatory, or otherwise objectionable</li>
-            <li>Impersonate any person or entity, or misrepresent your affiliation with a person or entity</li>
-            <li>Attempt to gain unauthorized access to the Service, other accounts, or related systems</li>
-            <li>Interfere with or disrupt the Service or servers</li>
-            <li>Use the Service for spam, phishing, or distributing malware</li>
-            <li>Violate any applicable local, state, national, or international law</li>
-            <li>Generate content that infringes on intellectual property rights of others</li>
-            <li>Use automated systems to abuse or overload the Service beyond normal usage patterns</li>
+          <ul className="list-disc pl-6 space-y-2 my-4">
+            <li>Violate any applicable law, regulation, or third-party rights</li>
+            <li>Generate, distribute, or store illegal, harmful, or abusive content</li>
+            <li>Attempt to reverse-engineer, exploit, or circumvent usage limits</li>
+            <li>Interfere with or disrupt the integrity or performance of the Service</li>
+            <li>Impersonate any person or entity or misrepresent your affiliation</li>
+            <li>Use the Service to develop competing AI hosting products</li>
           </ul>
           <p>
-            We reserve the right to suspend or terminate your account if you
-            violate these terms.
+            We reserve the right to suspend or terminate accounts that violate these Terms or
+            engage in abusive behavior, at our sole discretion and without prior notice.
           </p>
 
-          <h2>4. Billing and Payments</h2>
+          <h2>7. Intellectual Property</h2>
           <p>
-            The Service is offered on a subscription basis. Billing is processed
-            through <strong>Stripe</strong>, a third-party payment processor. By
-            subscribing, you agree to Stripe&apos;s terms and conditions.
+            The Service, including its design, features, and underlying technology, is owned
+            by Aigen Inc and protected by intellectual property laws. You retain ownership of
+            any content you submit to the Service. By using the Service, you grant us a
+            limited, non-exclusive license to process your content solely for the purpose of
+            providing the Service.
           </p>
-          <ul>
-            <li>
-              <strong>Subscription fees</strong> are billed monthly in advance at
-              the rate displayed at the time of purchase.
-            </li>
-            <li>
-              <strong>Free trial:</strong> New accounts receive a 7-day free
-              trial. You will not be charged until the trial period ends.
-            </li>
-            <li>
-              <strong>Automatic renewal:</strong> Subscriptions renew
-              automatically each billing cycle unless cancelled before the
-              renewal date.
-            </li>
-            <li>
-              <strong>Refunds:</strong> We offer a 7-day money-back guarantee
-              from the date of your first payment. After this period, payments
-              are non-refundable.
-            </li>
-            <li>
-              <strong>Price changes:</strong> We may change our pricing with 30
-              days&apos; notice. Existing subscribers will be notified via email
-              before any price increase takes effect.
-            </li>
-          </ul>
 
-          <h2>5. Data Handling</h2>
+          <h2>8. AI-Generated Content</h2>
           <p>
-            Your use of the Service involves the processing of data by
-            third-party AI providers. Please review our{" "}
-            <Link href="/privacy" className="text-blue-600 hover:underline">
+            Responses generated by AI assistants on the platform are produced by third-party
+            models and may contain errors, inaccuracies, or biased information. You
+            acknowledge that AI outputs should not be relied upon as professional, legal,
+            medical, or financial advice. You are solely responsible for how you use
+            AI-generated content.
+          </p>
+
+          <h2>9. Data and Privacy</h2>
+          <p>
+            Your use of the Service is also governed by our{" "}
+            <a href="/privacy" className="text-blue-600 hover:underline">
               Privacy Policy
-            </Link>{" "}
-            for details on how we collect, use, and protect your data.
-          </p>
-          <ul>
-            <li>We do not use your data to train AI models.</li>
-            <li>Conversation data is retained to provide the Service and is deleted upon account termination or upon your request.</li>
-            <li>We encrypt data in transit and at rest.</li>
-          </ul>
-
-          <h2>6. Intellectual Property</h2>
-          <p>
-            The Service, including its design, features, and content (excluding
-            user-generated content), is owned by Clawer.ai and protected by
-            intellectual property laws. You retain ownership of content you
-            create using the Service.
+            </a>
+            . Conversations and data submitted to the Service are stored to provide
+            functionality. You may request deletion of your data at any time by contacting
+            us.
           </p>
 
-          <h2>7. AI-Generated Content</h2>
+          <h2>10. Service Availability</h2>
           <p>
-            The Service uses AI to generate responses. AI outputs may be
-            inaccurate, incomplete, or outdated. You are responsible for
-            reviewing and verifying any AI-generated content before relying on
-            it. We do not guarantee the accuracy of AI responses.
+            We strive to maintain high availability but do not guarantee uninterrupted
+            access. The Free Tier is provided &quot;as is&quot; with no service level
+            commitments. Paid plans include reasonable uptime expectations, but we are not
+            liable for downtime caused by maintenance, third-party provider outages, or
+            circumstances beyond our control.
           </p>
 
-          <h2>8. Service Availability</h2>
+          <h2>11. Limitation of Liability</h2>
           <p>
-            We strive for 99.9% uptime but do not guarantee uninterrupted
-            access to the Service. We may perform maintenance, updates, or
-            experience outages that temporarily affect availability. We will
-            make reasonable efforts to notify you of planned downtime.
-          </p>
-
-          <h2>9. Termination</h2>
-          <ul>
-            <li>
-              <strong>By you:</strong> You may cancel your subscription at any
-              time from your dashboard. Cancellation takes effect at the end of
-              the current billing period.
-            </li>
-            <li>
-              <strong>By us:</strong> We may suspend or terminate your account
-              if you violate these Terms, fail to pay, or if required by law. We
-              will provide notice when possible.
-            </li>
-            <li>
-              <strong>Effect of termination:</strong> Upon termination, your
-              access to the Service will cease. We will delete your data within
-              30 days unless required by law to retain it.
-            </li>
-          </ul>
-
-          <h2>10. Limitation of Liability</h2>
-          <p>
-            To the maximum extent permitted by applicable law, Clawer.ai shall
-            not be liable for any indirect, incidental, special, consequential,
-            or punitive damages, including loss of profits, data, or business
-            opportunities, arising from your use of the Service.
+            TO THE MAXIMUM EXTENT PERMITTED BY LAW, AIGEN INC AND ITS AFFILIATES, OFFICERS,
+            DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT,
+            INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS,
+            DATA, USE, OR GOODWILL, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE
+            SERVICE, WHETHER BASED ON WARRANTY, CONTRACT, TORT, OR ANY OTHER LEGAL THEORY.
           </p>
           <p>
-            Our total liability for any claim related to the Service shall not
-            exceed the amount you paid us in the 12 months preceding the claim.
-          </p>
-
-          <h2>11. Disclaimer of Warranties</h2>
-          <p>
-            The Service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;
-            without warranties of any kind, either express or implied, including
-            but not limited to implied warranties of merchantability, fitness
-            for a particular purpose, and non-infringement.
+            OUR TOTAL AGGREGATE LIABILITY SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU
+            PAID US IN THE TWELVE MONTHS PRECEDING THE CLAIM, OR (B) ONE HUNDRED U.S.
+            DOLLARS ($100).
           </p>
 
           <h2>12. Indemnification</h2>
           <p>
-            You agree to indemnify and hold harmless Clawer.ai, its officers,
-            employees, and agents from any claims, damages, or expenses arising
-            from your use of the Service or violation of these Terms.
+            You agree to indemnify, defend, and hold harmless Aigen Inc and its affiliates
+            from any claims, damages, losses, or expenses (including reasonable
+            attorneys&apos; fees) arising from your use of the Service, your violation of
+            these Terms, or your violation of any third-party rights.
           </p>
 
-          <h2>13. Governing Law</h2>
+          <h2>13. Dispute Resolution and Arbitration</h2>
           <p>
-            These Terms are governed by the laws of the State of Texas, United
-            States, without regard to conflict of law principles. Any disputes
-            shall be resolved in the courts located in Travis County, Texas.
+            Any dispute arising out of or relating to these Terms or the Service shall be
+            resolved through binding arbitration administered by the American Arbitration
+            Association (AAA) under its Commercial Arbitration Rules. Arbitration shall take
+            place in the State of Texas, and the arbitrator&apos;s decision shall be final
+            and binding. You agree to waive any right to participate in a class action
+            lawsuit or class-wide arbitration.
           </p>
 
-          <h2>14. Changes to These Terms</h2>
+          <h2>14. Termination</h2>
           <p>
-            We may update these Terms from time to time. We will notify you of
-            material changes via email or through the Service. Continued use of
-            the Service after changes take effect constitutes acceptance of the
-            revised Terms.
+            You may terminate your account at any time by contacting us or through your
+            account settings. We may suspend or terminate your access at any time for any
+            reason, including violation of these Terms. Upon termination, your right to use
+            the Service ceases immediately. Provisions that by their nature should survive
+            termination shall survive.
           </p>
 
-          <h2>15. Contact</h2>
+          <h2>15. Modifications to Terms</h2>
           <p>
-            If you have questions about these Terms, contact us at{" "}
-            <a href="mailto:hello@clawer.ai" className="text-blue-600 hover:underline">
-              hello@clawer.ai
-            </a>.
+            We may update these Terms from time to time. We will notify you of material
+            changes by posting the updated Terms on this page and updating the &quot;Last
+            updated&quot; date. Your continued use of the Service after changes constitutes
+            acceptance of the revised Terms.
+          </p>
+
+          <h2>16. Governing Law</h2>
+          <p>
+            These Terms are governed by and construed in accordance with the laws of the
+            State of Texas, United States, without regard to conflict of law principles.
+          </p>
+
+          <h2>17. Contact Us</h2>
+          <p>
+            If you have questions about these Terms, please contact us at{" "}
+            <a
+              href="mailto:legal@clawer.ai"
+              className="text-blue-600 hover:underline"
+            >
+              legal@clawer.ai
+            </a>
+            .
           </p>
         </div>
-      </article>
-
-      {/* Footer */}
-      <footer className="py-12 px-6 bg-gray-900 text-gray-400">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-white font-bold text-lg">🦞 CLAWER.AI</div>
-          <div className="flex gap-8 text-sm">
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <a href="mailto:support@clawer.ai" className="hover:text-white transition-colors">Support</a>
-          </div>
-          <p className="text-sm">© 2026 Clawer.ai</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
