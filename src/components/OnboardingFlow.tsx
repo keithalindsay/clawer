@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { TEAM_CONFIGS } from "@/lib/teams";
+import { trackEvent } from "@/lib/analytics";
 
 interface OnboardingFlowProps {
   onComplete: (preferences: OnboardingPreferences) => void;
@@ -56,9 +57,12 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   const goTo = (target: number) => {
     setDirection(target > step ? 1 : -1);
     setStep(target);
+    const stepEvents = ['', 'funnel_onboard_step1', 'funnel_onboard_step2', 'funnel_onboard_step3'] as const;
+    if (stepEvents[target]) trackEvent(stepEvents[target]);
   };
 
   const handleStartChatting = () => {
+    trackEvent('funnel_onboard_complete', { team: teamTemplate });
     setShowConfetti(true);
     setTimeout(() => {
       onComplete({

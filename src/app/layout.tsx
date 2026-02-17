@@ -78,6 +78,14 @@ export default function RootLayout({
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
+          {/* Umami Analytics — self-hosted, privacy-friendly */}
+          {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+            <script
+              defer
+              src={`${process.env.NEXT_PUBLIC_UMAMI_URL || 'https://clawer.ai/umami'}/script.js`}
+              data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            />
+          )}
         </head>
         <body className={`${inter.variable} antialiased`}>
           {children}

@@ -16,3 +16,4 @@ export * from './admin-settings';
 export * from './bot-settings';
 export * from './api-keys';
 export * from './feedback';
+export * from './tasks';

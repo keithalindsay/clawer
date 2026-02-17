@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import type { TeamMember, TeamConfig } from '@/lib/teams';
+import { trackEvent } from '@/lib/analytics';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -58,6 +59,10 @@ export function DashboardShell({
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || loading) return;
+
+    const msgCount = Object.values(chatHistories).flat().filter(m => m.role === 'user').length;
+    if (msgCount === 0) trackEvent('funnel_first_message');
+    trackEvent('chat_message_sent', { agent: selectedId });
 
     setInput('');
     const userMsg: Message = { role: 'user', content: text, timestamp: new Date() };
@@ -199,6 +204,14 @@ export function DashboardShell({
 
         {/* Sidebar footer - connections & settings */}
         <div className="border-t p-3 space-y-1" style={{ borderColor: '#e2e8f0' }}>
+          <Link
+            href="/dashboard/tasks"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-50"
+            style={{ color: '#475569' }}
+          >
+            <span>📋</span>
+            <span>Tasks</span>
+          </Link>
           <Link
             href="/dashboard/whatsapp"
             className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-50"

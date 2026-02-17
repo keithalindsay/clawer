@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LogoutButton } from '@/components/LogoutButton';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT, FREE_TEAM_MEMBER_LIMIT, PAID_TEAM_MEMBER_LIMIT } from '@/lib/constants';
+import { trackEvent } from '@/lib/analytics';
 
 interface TeamMember {
   id: string;
@@ -52,6 +53,7 @@ export function DashboardHome({
             </Link>
             <nav className="flex items-center gap-4 text-sm">
               <Link href="/dashboard" className="text-blue-600 font-medium">Dashboard</Link>
+              <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900">Tasks</Link>
               <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
               {/* <Link href="/dashboard/api-keys" className="text-gray-500 hover:text-gray-900">API Keys</Link> */}
@@ -114,6 +116,7 @@ export function DashboardHome({
               <Link
                 href="/dashboard/settings"
                 className="mt-4 block text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+                onClick={() => trackEvent('funnel_upgrade_click', { source: 'dashboard_plan_card' })}
               >
                 Upgrade to Pro →
               </Link>
@@ -130,6 +133,13 @@ export function DashboardHome({
               >
                 <span className="text-xl">💬</span>
                 <span className="text-sm font-medium text-gray-900">Chat with Team</span>
+              </Link>
+              <Link
+                href="/dashboard/tasks"
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              >
+                <span className="text-xl">📋</span>
+                <span className="text-sm font-medium text-gray-900">Task Board</span>
               </Link>
               <Link
                 href="/dashboard/settings"

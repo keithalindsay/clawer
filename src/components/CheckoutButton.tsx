@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import { trackEvent } from '@/lib/analytics';
 
 interface CheckoutButtonProps {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ export function CheckoutButton({ children, className }: CheckoutButtonProps) {
       const data = await response.json();
 
       if (data.url) {
-        // Redirect to Stripe Checkout
+        trackEvent('funnel_checkout_start');
         window.location.href = data.url;
       } else {
         console.error('No checkout URL returned');
