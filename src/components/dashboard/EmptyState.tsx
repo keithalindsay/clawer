@@ -85,7 +85,7 @@ export function EmptyState({ onCreateEmployee }: EmptyStateProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="text-2xl sm:text-3xl font-semibold text-[#e0e1e3] mb-3 text-center"
+        className="text-2xl sm:text-3xl font-semibold text-[#111827] mb-3 text-center"
       >
         Deploy your first AI employee
       </motion.h3>
@@ -95,7 +95,7 @@ export function EmptyState({ onCreateEmployee }: EmptyStateProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="text-[#9ca0a8] mb-8 text-center max-w-md text-base sm:text-lg"
+        className="text-[#6b7280] mb-8 text-center max-w-md text-base sm:text-lg"
       >
         Create an AI agent that works around the clock on Telegram, WhatsApp, 
         and more. Handle messages, automate tasks, and scale your operations.
@@ -111,7 +111,7 @@ export function EmptyState({ onCreateEmployee }: EmptyStateProps) {
         <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
           <span className="text-2xl">⚡</span>
           <div>
-            <h4 className="font-medium text-[#e0e1e3] text-sm">Instant Responses</h4>
+            <h4 className="font-medium text-[#111827] text-sm">Instant Responses</h4>
             <p className="text-xs text-[#565960] mt-1">Reply to messages 24/7</p>
           </div>
         </div>
@@ -119,7 +119,7 @@ export function EmptyState({ onCreateEmployee }: EmptyStateProps) {
         <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
           <span className="text-2xl">🌍</span>
           <div>
-            <h4 className="font-medium text-[#e0e1e3] text-sm">Multi-Platform</h4>
+            <h4 className="font-medium text-[#111827] text-sm">Multi-Platform</h4>
             <p className="text-xs text-[#565960] mt-1">Works everywhere</p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function EmptyState({ onCreateEmployee }: EmptyStateProps) {
         <div className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
           <span className="text-2xl">🎯</span>
           <div>
-            <h4 className="font-medium text-[#e0e1e3] text-sm">Smart Actions</h4>
+            <h4 className="font-medium text-[#111827] text-sm">Smart Actions</h4>
             <p className="text-xs text-[#565960] mt-1">Automate workflows</p>
           </div>
         </div>

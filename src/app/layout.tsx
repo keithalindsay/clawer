@@ -71,9 +71,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className="dark">
+      <html lang="en" className="">
         <head>
-          <meta name="theme-color" content="#08090b" />
+          <meta name="theme-color" content="#ffffff" />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

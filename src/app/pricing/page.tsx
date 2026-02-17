@@ -1,9 +1,9 @@
+"use client";
 /**
  * CLAWER.AI Pricing Page
  *
- * Three tiers: Free (trial), Pro ($49/mo or $39/mo annual), Enterprise (contact us)
+ * Three tiers: Free, Pro ($19/mo), Enterprise ($49/mo)
  * Comparison table + FAQ section
- * Annual pricing with 20% discount
  */
 
 "use client";
@@ -11,35 +11,27 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/* ------------------------------------------------------------------ */
-/*  Helper: render a comparison cell value                             */
-/* ------------------------------------------------------------------ */
-
 function CellValue({ value }: { value: string | boolean }) {
   if (value === true) return <span className="text-green-600 text-lg font-bold">✓</span>;
   if (value === false) return <span className="text-gray-300 text-lg">—</span>;
   return <span className="text-gray-700 text-sm">{value}</span>;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
-
 export default function PricingPage() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const [annual, setAnnual] = useState(false);
 
   const TIERS = [
     {
       name: "Free",
-      badge: "Trial",
+      badge: "Get Started",
       price: "$0",
       period: "/forever",
-      description: "Try it out — no credit card required.",
+      description: "Kick the tires — no credit card required.",
       features: [
-        "200 messages per month",
+        "1 container",
+        "GPT-4o-mini model",
+        "100 messages per day",
         "Web chat only",
-        "1 AI model (GPT-4o)",
-        "Basic email assistant",
         "Community support",
       ],
       cta: "Start Free",
@@ -51,98 +43,100 @@ export default function PricingPage() {
     {
       name: "Pro",
       badge: "Most Popular",
-      price: billingPeriod === "monthly" ? "$49" : "$39",
-      period: billingPeriod === "monthly" ? "/month" : "/month",
-      billingNote: billingPeriod === "annual" ? "Billed annually ($468/yr)" : undefined,
-      description: "Everything you need. Cancel anytime.",
+      price: annual ? "$15" : "$19",
+      period: "/month",
+      billingNote: annual ? "Billed annually ($180/yr)" : undefined,
+      description: "For builders who want the full toolkit.",
       features: [
+        "MiniMax M2.5 model",
         "Unlimited messages",
+        "AI Teams — multiple agents working together",
+        "Custom skills from curated marketplace",
         "WhatsApp + Telegram + Slack",
         "Smart model routing",
-        "All 12 AI assistants",
-        "Gmail & Calendar sync",
-        "Priority support (real humans)",
-        "99.9% uptime guarantee",
+        "Priority email support",
       ],
-      cta: "Get Started →",
-      ctaHref: billingPeriod === "monthly" ? "/api/stripe/checkout?plan=monthly" : "/api/stripe/checkout?plan=annual",
+      cta: "Get Pro →",
+      ctaHref: annual
+        ? "/api/stripe/checkout?plan=pro-annual"
+        : "/api/stripe/checkout?plan=pro-monthly",
       highlighted: true,
       ctaStyle: "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25",
     },
     {
       name: "Enterprise",
-      badge: "Custom",
-      price: "Custom",
-      period: "",
-      description: "For teams that need more control.",
+      badge: "Full Power",
+      price: annual ? "$39" : "$49",
+      period: "/month",
+      billingNote: annual ? "Billed annually ($468/yr)" : undefined,
+      description: "Dedicated resources. Zero compromises.",
       features: [
         "Everything in Pro",
-        "Custom AI models",
+        "Dedicated container resources",
+        "Custom model support (bring your own)",
+        "Priority support (real humans, fast)",
         "Full API access",
-        "Dedicated instance",
-        "SLA & uptime guarantee",
         "Team management & SSO",
-        "Onboarding & training",
+        "99.9% uptime SLA",
+        "Custom onboarding",
       ],
-      cta: "Contact Us",
-      ctaHref: "mailto:hello@clawer.ai",
+      cta: "Get Enterprise →",
+      ctaHref: annual
+        ? "/api/stripe/checkout?plan=enterprise-annual"
+        : "/api/stripe/checkout?plan=enterprise-monthly",
       highlighted: false,
       ctaStyle:
         "border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600",
     },
   ] as const;
 
-  const COMPARISON_FEATURES = [
-    { name: "Monthly messages", free: "200", pro: "Unlimited", enterprise: "Unlimited" },
+  const COMPARISON = [
+    { name: "Daily messages", free: "100", pro: "Unlimited", enterprise: "Unlimited" },
+    { name: "Containers", free: "1", pro: "1", enterprise: "Dedicated" },
+    { name: "AI model", free: "GPT-4o-mini", pro: "MiniMax M2.5", enterprise: "Custom models" },
+    { name: "AI Teams", free: false, pro: true, enterprise: true },
+    { name: "Custom skills", free: false, pro: true, enterprise: true },
     { name: "Channels", free: "Web only", pro: "WhatsApp, Telegram, Slack", enterprise: "All + custom" },
-    { name: "AI models", free: "1 (GPT-4o)", pro: "Smart routing (4+ models)", enterprise: "Custom models" },
-    { name: "Assistants", free: "1 (email)", pro: "All 12", enterprise: "All + custom" },
-    { name: "Gmail & Calendar", free: false, pro: true, enterprise: true },
     { name: "Smart model routing", free: false, pro: true, enterprise: true },
     { name: "API access", free: false, pro: false, enterprise: true },
-    { name: "Dedicated instance", free: false, pro: false, enterprise: true },
+    { name: "Dedicated resources", free: false, pro: false, enterprise: true },
     { name: "Team management & SSO", free: false, pro: false, enterprise: true },
     { name: "SLA guarantee", free: false, pro: false, enterprise: true },
     { name: "Priority support", free: false, pro: true, enterprise: true },
-    { name: "Custom onboarding", free: false, pro: false, enterprise: true },
   ] as const;
 
   const FAQS = [
     {
-      q: "What happens when my free 200 messages run out?",
-      a: "You can keep using Clawer on the free plan — the counter resets every month. Or upgrade to Pro for unlimited messages and access to WhatsApp, Telegram, and Slack.",
+      q: "What happens when I hit 100 messages on Free?",
+      a: "The counter resets every day at midnight UTC. Or upgrade to Pro for unlimited messages and access to AI Teams, custom skills, and all messaging channels.",
     },
     {
-      q: "Can I switch plans later?",
-      a: "Absolutely. Upgrade, downgrade, or cancel anytime from your dashboard. No lock-in contracts, no hidden fees.",
+      q: "What's the difference between GPT-4o-mini and MiniMax M2.5?",
+      a: "GPT-4o-mini is great for basic tasks. MiniMax M2.5 is significantly more capable — better reasoning, longer context, and faster responses. Pro also includes smart model routing that picks the best model for each task automatically.",
     },
     {
-      q: "What's the difference between monthly and annual billing?",
-      a: "Annual billing saves you 20% — $39/month instead of $49/month, billed as $468 annually. You get the exact same features, just at a lower price.",
+      q: "What are AI Teams?",
+      a: "AI Teams let you run multiple specialized agents that collaborate. Think: a researcher, a writer, and a fact-checker working together on a single task. Available on Pro and Enterprise.",
     },
     {
-      q: "What's 'smart model routing'?",
-      a: "Pro uses the best AI model for each task automatically — faster models for quick answers, more powerful models for complex work. You get better results without thinking about it.",
+      q: "Can I bring my own API keys / models?",
+      a: "Enterprise plan supports custom model configurations. Bring your own OpenAI, Anthropic, or any compatible API. Pro uses our pre-configured models with smart routing.",
     },
     {
-      q: "Do I need a credit card to start?",
-      a: "Nope. The free plan is completely free — no credit card required. You only pay when you upgrade to Pro.",
-    },
-    {
-      q: "What channels does Pro include?",
-      a: "WhatsApp, Telegram, Slack, Discord, iMessage, and Web Chat — all included at no extra cost. Most competitors charge extra for WhatsApp.",
-    },
-    {
-      q: "What does the Enterprise plan include?",
-      a: "Custom AI models, full API access, a dedicated instance, SLA guarantees, team management with SSO, and a dedicated onboarding specialist. Email us at hello@clawer.ai and we'll build a plan for your team.",
-    },
-    {
-      q: "Is there a money-back guarantee?",
-      a: "Yes — 7-day money-back guarantee on Pro, no questions asked. If it's not for you, we'll refund you completely.",
+      q: "Can I switch plans anytime?",
+      a: "Yes. Upgrade, downgrade, or cancel from your dashboard. No lock-in contracts. Pro-rated refunds on downgrades.",
     },
     {
       q: "Is my data safe?",
-      a: "Yes. Conversations are encrypted end-to-end. We never train AI on your data. Enterprise customers get a dedicated instance with full data isolation.",
+      a: "Every instance runs in an isolated container. We never train AI on your data. Enterprise gets dedicated resources with full data isolation. See our security blog post for details.",
+    },
+    {
+      q: "Do I need a credit card to start?",
+      a: "Nope. Free plan is completely free, forever. No credit card required.",
+    },
+    {
+      q: "What's included in priority support?",
+      a: "Pro gets priority email support with 24-hour response time. Enterprise gets dedicated support with sub-4-hour response, plus a Slack channel with our team.",
     },
   ];
 
@@ -154,7 +148,7 @@ export default function PricingPage() {
           <Link href="/" className="text-xl font-bold text-gray-900">
             🦞 CLAWER<span className="text-blue-600">.AI</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             <Link href="/use-cases" className="text-gray-600 hover:text-gray-900 transition-colors">
               Use Cases
             </Link>
@@ -171,7 +165,7 @@ export default function PricingPage() {
               href="/sign-up"
               className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-medium hover:bg-blue-700 transition-colors"
             >
-              Start Free Trial
+              Start Free
             </Link>
           </div>
         </div>
@@ -184,27 +178,23 @@ export default function PricingPage() {
             Simple, transparent pricing
           </h1>
           <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-            Start free. Upgrade when you&apos;re ready. No surprises.
+            Start free. Upgrade when you need more power. No surprises.
           </p>
 
           {/* Billing Toggle */}
           <div className="mt-8 inline-flex items-center gap-3 bg-gray-100 p-1.5 rounded-full">
             <button
-              onClick={() => setBillingPeriod("monthly")}
+              onClick={() => setAnnual(false)}
               className={`px-6 py-2.5 rounded-full font-medium transition-all ${
-                billingPeriod === "monthly"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                !annual ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Monthly
             </button>
             <button
-              onClick={() => setBillingPeriod("annual")}
+              onClick={() => setAnnual(true)}
               className={`px-6 py-2.5 rounded-full font-medium transition-all relative ${
-                billingPeriod === "annual"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                annual ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Annual
@@ -228,13 +218,10 @@ export default function PricingPage() {
                   : "border-gray-200 shadow-sm"
               }`}
             >
-              {/* Badge */}
               {tier.badge && (
                 <span
                   className={`absolute -top-3 left-6 px-3 py-1 rounded-full text-xs font-semibold ${
-                    tier.highlighted
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600"
+                    tier.highlighted ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
                   }`}
                 >
                   {tier.badge}
@@ -245,9 +232,7 @@ export default function PricingPage() {
 
               <div className="mt-4 flex items-baseline">
                 <span className="text-4xl font-bold text-gray-900">{tier.price}</span>
-                {tier.period && (
-                  <span className="ml-1 text-lg text-gray-500">{tier.period}</span>
-                )}
+                <span className="ml-1 text-lg text-gray-500">{tier.period}</span>
               </div>
 
               {"billingNote" in tier && tier.billingNote && (
@@ -256,7 +241,6 @@ export default function PricingPage() {
 
               <p className="mt-2 text-gray-600 text-sm">{tier.description}</p>
 
-              {/* Features */}
               <ul className="mt-8 space-y-3">
                 {tier.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-3">
@@ -266,28 +250,18 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              {/* CTA */}
-              {tier.ctaHref.startsWith("mailto:") ? (
-                <a
-                  href={tier.ctaHref}
-                  className={`mt-8 block w-full py-3.5 rounded-full text-center font-medium transition-colors ${tier.ctaStyle}`}
-                >
-                  {tier.cta}
-                </a>
-              ) : (
-                <Link
-                  href={tier.ctaHref}
-                  className={`mt-8 block w-full py-3.5 rounded-full text-center font-medium transition-colors ${tier.ctaStyle}`}
-                >
-                  {tier.cta}
-                </Link>
-              )}
+              <Link
+                href={tier.ctaHref}
+                className={`mt-8 block w-full py-3.5 rounded-full text-center font-medium transition-colors ${tier.ctaStyle}`}
+              >
+                {tier.cta}
+              </Link>
             </div>
           ))}
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-500">
-          7-day money-back guarantee on Pro · No credit card for Free · Cancel anytime
+          7-day money-back guarantee on paid plans · No credit card for Free · Cancel anytime
         </p>
       </section>
 
@@ -312,21 +286,15 @@ export default function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {COMPARISON_FEATURES.map((row, i) => (
+                {COMPARISON.map((row, i) => (
                   <tr
                     key={row.name}
                     className={`border-b border-gray-200 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                   >
                     <td className="py-4 pr-4 text-gray-700 font-medium text-sm">{row.name}</td>
-                    <td className="text-center py-4 px-4">
-                      <CellValue value={row.free} />
-                    </td>
-                    <td className="text-center py-4 px-4">
-                      <CellValue value={row.pro} />
-                    </td>
-                    <td className="text-center py-4 px-4">
-                      <CellValue value={row.enterprise} />
-                    </td>
+                    <td className="text-center py-4 px-4"><CellValue value={row.free} /></td>
+                    <td className="text-center py-4 px-4"><CellValue value={row.pro} /></td>
+                    <td className="text-center py-4 px-4"><CellValue value={row.enterprise} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -341,9 +309,6 @@ export default function PricingPage() {
           <h2 className="text-3xl font-bold text-center text-gray-900">
             Frequently asked questions
           </h2>
-          <p className="mt-3 text-center text-gray-600">
-            Everything you need to know about our pricing.
-          </p>
 
           <div className="mt-12 space-y-6">
             {FAQS.map((faq, i) => (
@@ -360,10 +325,10 @@ export default function PricingPage() {
       <section className="py-20 px-6 bg-blue-600">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white">
-            Ready to get started?
+            Ready to build with AI Teams?
           </h2>
           <p className="mt-4 text-blue-100 text-lg">
-            200 free messages. No credit card. Upgrade whenever you want.
+            100 free messages per day. No credit card. Upgrade whenever.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -376,7 +341,7 @@ export default function PricingPage() {
               href="mailto:hello@clawer.ai"
               className="inline-block border-2 border-white text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-white/10 transition-colors"
             >
-              Talk to Sales
+              Talk to Us
             </a>
           </div>
         </div>
@@ -387,18 +352,10 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-white font-bold text-lg">🦞 CLAWER.AI</div>
           <div className="flex gap-8 text-sm">
-            <Link href="/pricing" className="hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Terms
-            </Link>
-            <a href="mailto:support@clawer.ai" className="hover:text-white transition-colors">
-              Support
-            </a>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           </div>
           <p className="text-sm">© 2026 Clawer.ai</p>
         </div>

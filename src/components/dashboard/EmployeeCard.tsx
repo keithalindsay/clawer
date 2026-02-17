@@ -120,7 +120,7 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
           <div className="absolute -bottom-0.5 -right-0.5">
             {employee.status === 'active' && (
               <motion.div
-                className={`w-4 h-4 ${config.color} rounded-full border-2 border-[#07080a]`}
+                className={`w-4 h-4 ${config.color} rounded-full border-2 border-[#fafbfc]`}
                 animate={{
                   boxShadow: [
                     '0 0 0 0 rgba(34, 197, 94, 0.4)',
@@ -136,7 +136,7 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
             )}
             {employee.status === 'provisioning' && (
               <motion.div
-                className={`w-4 h-4 ${config.color} rounded-full border-2 border-[#07080a]`}
+                className={`w-4 h-4 ${config.color} rounded-full border-2 border-[#fafbfc]`}
                 animate={{ rotate: 360 }}
                 transition={{
                   duration: 1.5,
@@ -146,17 +146,17 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
               />
             )}
             {(employee.status === 'error' || employee.status === 'stopped') && (
-              <div className={`w-4 h-4 ${config.color} rounded-full border-2 border-[#07080a]`} />
+              <div className={`w-4 h-4 ${config.color} rounded-full border-2 border-[#fafbfc]`} />
             )}
           </div>
         </div>
         
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[#e0e1e3] truncate group-hover:text-blue-400 transition-colors">
+          <h3 className="font-medium text-[#111827] truncate group-hover:text-blue-400 transition-colors">
             {employee.name}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-[#9ca0a8]">
+          <div className="flex items-center gap-2 text-sm text-[#6b7280]">
             <span className={`capitalize ${
               employee.status === 'active' ? 'text-green-400' :
               employee.status === 'error' ? 'text-red-400' :
@@ -170,7 +170,7 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
           </div>
           {employee.tier && (
             <div className="mt-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white/[0.05] text-[#9ca0a8] border border-white/[0.06]">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white/[0.05] text-[#6b7280] border border-white/[0.06]">
                 {employee.tier}
               </span>
             </div>
@@ -194,7 +194,7 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
         
         {/* Stats */}
         <div className="hidden md:block text-right">
-          <p className="font-mono text-sm text-[#e0e1e3]">
+          <p className="font-mono text-sm text-[#111827]">
             {employee.messageCount.toLocaleString()}
           </p>
           <p className="text-xs text-[#565960]">messages</p>
@@ -204,7 +204,7 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           whileHover={{ opacity: 1, x: 0 }}
-          className="text-[#565960] group-hover:text-[#e0e1e3] transition-colors"
+          className="text-[#565960] group-hover:text-[#111827] transition-colors"
         >
           <svg 
             className="w-5 h-5" 

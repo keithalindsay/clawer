@@ -561,9 +561,9 @@ const server = http.createServer(async (req, res) => {
           timeoutMs: 60000  // Wait up to 60 seconds for response
         };
         
-        // Add model override if provided by smart router
-        if (routingModel) {
-          chatParams.model = routingModel;
+// model override removed - not supported by gateway
+// model override removed - not supported by gateway
+// model override removed - not supported by gateway
         }
         
         const chatResult = await gatewayRequest('chat.send', chatParams);

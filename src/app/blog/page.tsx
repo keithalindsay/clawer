@@ -2,6 +2,22 @@ import Link from "next/link";
 
 const BLOG_POSTS = [
   {
+    slug: "openclaw-security-guide",
+    title: "OpenClaw Security: Why 42,000+ Instances Are Exposed (And How to Fix It)",
+    date: "February 16, 2026",
+    readTime: "8 min read",
+    excerpt: "CVE-2026-25253, 341 malicious ClawHub skills, and 42,000+ exposed instances. The OpenClaw security crisis explained — and how Clawer solves it.",
+    tags: ["Security", "OpenClaw", "CVE"],
+  },
+  {
+    slug: "managed-openclaw-hosting",
+    title: "Managed OpenClaw Hosting: Stop Wrestling with Docker and Start Building",
+    date: "February 16, 2026",
+    readTime: "6 min read",
+    excerpt: "Docker setup, config hell, security patches, model provider juggling — or one click. The case for managed OpenClaw hosting.",
+    tags: ["Hosting", "OpenClaw", "Docker"],
+  },
+  {
     slug: "openclaw-security",
     title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
     date: "February 9, 2026",
