@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
+import { botSettings } from '@/lib/db/schema/bot-settings';
 import { eq } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
 import { DashboardWorkspace } from '@/components/dashboard/DashboardWorkspace';
@@ -39,7 +40,20 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
 
   const teamTemplate = (user as any)?.teamTemplate || 'lifeos';
   const teamConfig = getTeamConfig(teamTemplate);
-  const teamMembers = teamConfig?.members || [];
+  const teamMembers = [...(teamConfig?.members || [])];
+
+  // Override primary agent with user's custom bot name/emoji
+  const userBotSettings = await db.query.botSettings.findFirst({
+    where: eq(botSettings.userId, userId),
+  });
+  if (userBotSettings && teamMembers.length > 0) {
+    if (userBotSettings.botName && userBotSettings.botName !== 'Assistant') {
+      teamMembers[0] = { ...teamMembers[0], name: userBotSettings.botName };
+    }
+    if (userBotSettings.botAvatar) {
+      teamMembers[0] = { ...teamMembers[0], emoji: userBotSettings.botAvatar };
+    }
+  }
 
   return (
     <DashboardWorkspace

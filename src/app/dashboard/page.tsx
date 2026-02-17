@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
+import { botSettings } from '@/lib/db/schema/bot-settings';
 import { eq } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
@@ -41,7 +42,22 @@ export default async function DashboardPage() {
 
   const teamTemplate = (user as any)?.teamTemplate || 'lifeos';
   const teamConfig = getTeamConfig(teamTemplate);
-  const teamMembers = teamConfig?.members || [];
+  const teamMembers = [...(teamConfig?.members || [])];
+
+  // Override primary agent (first member) with user's custom bot name/emoji from onboarding
+  const userBotSettings = await db.query.botSettings.findFirst({
+    where: eq(botSettings.userId, userId),
+  });
+  if (userBotSettings && teamMembers.length > 0) {
+    const customName = userBotSettings.botName;
+    const customEmoji = userBotSettings.botAvatar;
+    if (customName && customName !== 'Assistant') {
+      teamMembers[0] = { ...teamMembers[0], name: customName };
+    }
+    if (customEmoji) {
+      teamMembers[0] = { ...teamMembers[0], emoji: customEmoji };
+    }
+  }
 
   return (
     <DashboardHome
