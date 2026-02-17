@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { LogoutButton } from '@/components/LogoutButton';
 
 interface TeamMember {
   id: string;
@@ -126,11 +127,7 @@ export function DashboardWorkspace({
               <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />
             </svg>
           </Link>
-          <form action="/api/auth/signout" method="POST">
-            <button type="submit" className="text-xs px-2 py-1 rounded transition-colors hover:bg-white/10" style={{ color: '#94a3b8' }}>
-              Sign out
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </header>
 
