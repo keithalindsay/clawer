@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user record — save team template and mark onboarding complete
-    const userUpdate: Record<string, any> = { updatedAt: new Date() };
+    const userUpdate: Record<string, any> = { updatedAt: new Date(), onboardingCompleted: 1 };
     if (teamTemplate && typeof teamTemplate === 'string') {
       userUpdate.teamTemplate = teamTemplate;
     }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { TEAM_CONFIGS } from "@/lib/teams";
 
 /* ── Constants ─────────────────────────────────────────────────── */
 
@@ -107,6 +108,142 @@ function Toggle({
         />
       </button>
     </div>
+  );
+}
+
+/* ── Team Template Section ──────────────────────────────────────── */
+
+function TeamTemplateSection() {
+  const [currentTeam, setCurrentTeam] = useState<string>("lifeos");
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [changing, setChanging] = useState(false);
+  const [loadingTeam, setLoadingTeam] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/user");
+        const data = await res.json();
+        if (data.teamTemplate) {
+          setCurrentTeam(data.teamTemplate);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoadingTeam(false);
+      }
+    })();
+  }, []);
+
+  const handleChange = async () => {
+    if (!selectedTeam || selectedTeam === currentTeam) return;
+    setChanging(true);
+    try {
+      const res = await fetch("/api/team", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamTemplate: selectedTeam }),
+      });
+      if (res.ok) {
+        setCurrentTeam(selectedTeam);
+        setShowConfirm(false);
+        setSelectedTeam(null);
+        // Reload to reflect changes
+        window.location.href = "/dashboard";
+      }
+    } catch {
+      // ignore
+    } finally {
+      setChanging(false);
+    }
+  };
+
+  const templates = Object.entries(TEAM_CONFIGS);
+
+  return (
+    <section className="bg-white rounded-2xl border border-gray-200 p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-1">AI Team Template</h2>
+      <p className="text-sm text-gray-500 mb-4">
+        Current team: <span className="font-medium text-gray-900">{TEAM_CONFIGS[currentTeam]?.name || currentTeam}</span>
+      </p>
+      {loadingTeam ? (
+        <div className="animate-pulse h-32 bg-gray-100 rounded-xl" />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {templates.map(([key, config]) => {
+            const isCurrent = key === currentTeam;
+            const isSelected = key === selectedTeam;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  if (!isCurrent) {
+                    setSelectedTeam(key);
+                    setShowConfirm(true);
+                  }
+                }}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  isCurrent
+                    ? "border-blue-500 bg-blue-50"
+                    : isSelected
+                    ? "border-orange-400 bg-orange-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{config.members[0]?.emoji || "🤖"}</span>
+                  <span className="font-medium text-gray-900 text-sm">{config.name}</span>
+                  {isCurrent && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Current</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 line-clamp-2">{config.description}</p>
+                <p className="text-xs text-gray-400 mt-1">{config.members.length} members</p>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Confirmation modal */}
+      {showConfirm && selectedTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Switch to {TEAM_CONFIGS[selectedTeam]?.name}?
+            </h3>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-amber-800">
+                ⚠️ <strong>Warning:</strong> Changing your team template will replace your current team members.
+                Your conversation history will be preserved, but you&apos;ll be chatting with a new team.
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              New team: <strong>{TEAM_CONFIGS[selectedTeam]?.name}</strong> ({TEAM_CONFIGS[selectedTeam]?.members.length} members)
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowConfirm(false); setSelectedTeam(null); }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleChange}
+                disabled={changing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {changing ? "Switching…" : "Switch Team"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -490,6 +627,9 @@ export default function SettingsPage() {
             })}
           </div>
         </section>
+
+        {/* ── AI Team Template ──────────────────────────────────── */}
+        <TeamTemplateSection />
 
         {/* ── Danger Zone ──────────────────────────────────────── */}
         <section className="bg-white rounded-2xl border border-red-200 p-6">

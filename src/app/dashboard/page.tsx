@@ -29,6 +29,10 @@ export default async function DashboardPage() {
       tier: 'free',
     }).onConflictDoNothing();
     user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  }
+
+  // Redirect to onboarding if not completed
+  if (!user?.onboardingCompleted) {
     redirect('/onboarding');
   }
 

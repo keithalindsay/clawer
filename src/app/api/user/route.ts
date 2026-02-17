@@ -85,6 +85,7 @@ export async function GET() {
       integrationCount: 0,
       botCount: 0,
       createdAt: user?.createdAt ? new Date(user.createdAt).toISOString() : new Date(clerkUser.createdAt).toISOString(),
+      teamTemplate: user?.teamTemplate || 'lifeos',
     };
     
     return apiSuccess(profile);
