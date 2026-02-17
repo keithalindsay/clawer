@@ -6,7 +6,8 @@ import { eq } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
 import { DashboardWorkspace } from '@/components/dashboard/DashboardWorkspace';
 
-export default async function ChatPage() {
+export default async function ChatPage({ searchParams }: { searchParams: Promise<{ agent?: string; prompt?: string }> }) {
+  const { agent: initialAgentId, prompt: initialPrompt } = await searchParams;
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
@@ -52,6 +53,8 @@ export default async function ChatPage() {
       isSubscribed={isSubscribed}
       freeMessagesUsed={freeMessagesUsed}
       freeMessageLimit={FREE_MESSAGE_LIMIT}
+      initialAgentId={initialAgentId}
+      initialPrompt={initialPrompt}
     />
   );
 }

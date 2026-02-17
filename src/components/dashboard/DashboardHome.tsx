@@ -18,7 +18,7 @@ interface DashboardHomeProps {
   userEmail?: string;
   teamName: string;
   teamDescription?: string;
-  teamMembers: TeamMember[];
+  teamMembers: (TeamMember & { quickPrompts?: string[] })[];
   isSubscribed: boolean;
   freeMessagesUsed: number;
   whatsappConnected?: boolean;
@@ -169,25 +169,33 @@ export function DashboardHome({
             {teamDescription && <p className="text-sm text-gray-500 mt-1">{teamDescription}</p>}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teamMembers.map((member, i) => {
-              return (
-                <div
-                  key={member.id}
-                  className="flex items-start gap-3 p-4 rounded-lg border border-gray-200"
-                >
+            {teamMembers.map((member) => (
+              <div
+                key={member.id}
+                className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+              >
+                <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">{member.emoji || '🤖'}</span>
                   <div>
-                    <div className="font-medium text-gray-900 text-sm">
-                      {member.name}
-                    </div>
+                    <div className="font-medium text-gray-900 text-sm">{member.name}</div>
                     <div className="text-xs text-gray-500">{member.role}</div>
-                    {member.description && (
-                      <div className="text-xs text-gray-400 mt-1">{member.description}</div>
-                    )}
                   </div>
                 </div>
-              );
-            })}
+                {member.quickPrompts && member.quickPrompts.length > 0 && (
+                  <div className="space-y-1.5">
+                    {member.quickPrompts.map((prompt, j) => (
+                      <Link
+                        key={j}
+                        href={`/dashboard/chat?agent=${member.id}&prompt=${encodeURIComponent(prompt)}`}
+                        className="block text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2.5 py-1.5 rounded-md transition-colors truncate"
+                      >
+                        → {prompt}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </main>

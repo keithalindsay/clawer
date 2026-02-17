@@ -30,6 +30,8 @@ interface DashboardWorkspaceProps {
   isSubscribed: boolean;
   freeMessagesUsed: number;
   freeMessageLimit: number;
+  initialAgentId?: string;
+  initialPrompt?: string;
 }
 
 export function DashboardWorkspace({
@@ -43,8 +45,11 @@ export function DashboardWorkspace({
   isSubscribed,
   freeMessagesUsed,
   freeMessageLimit,
+  initialAgentId,
+  initialPrompt,
 }: DashboardWorkspaceProps) {
-  const [selectedAgent, setSelectedAgent] = useState<TeamMember | null>(teamMembers[0] || null);
+  const initAgent = initialAgentId ? teamMembers.find(m => m.id === initialAgentId) || teamMembers[0] : teamMembers[0];
+  const [selectedAgent, setSelectedAgent] = useState<TeamMember | null>(initAgent || null);
   const [chatHistory, setChatHistory] = useState<Record<string, Message[]>>({});
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,9 +58,58 @@ export function DashboardWorkspace({
 
   const messages = selectedAgent ? (chatHistory[selectedAgent.id] || []) : [];
 
+  const [autoSent, setAutoSent] = useState(false);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-send initial prompt from query params
+  useEffect(() => {
+    if (initialPrompt && selectedAgent && !autoSent && messages.length === 0) {
+      setAutoSent(true);
+      setInput(initialPrompt);
+      // Trigger send after a tick so the input is set
+      setTimeout(() => {
+        const userMsg: Message = { role: 'user', content: initialPrompt, timestamp: new Date() };
+        setChatHistory(prev => ({
+          ...prev,
+          [selectedAgent.id]: [...(prev[selectedAgent.id] || []), userMsg],
+        }));
+        setLoading(true);
+        fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: initialPrompt, agentId: selectedAgent.id }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            setChatHistory(prev => ({
+              ...prev,
+              [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
+                role: 'assistant' as const,
+                content: data.content || data.error || 'No response',
+                timestamp: new Date(),
+              }],
+            }));
+          })
+          .catch(() => {
+            setChatHistory(prev => ({
+              ...prev,
+              [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
+                role: 'assistant' as const,
+                content: 'Failed to connect. Please try again.',
+                timestamp: new Date(),
+              }],
+            }));
+          })
+          .finally(() => {
+            setLoading(false);
+            setInput('');
+          });
+      }, 100);
+    }
+  }, [initialPrompt, selectedAgent, autoSent, messages.length]);
 
   useEffect(() => {
     inputRef.current?.focus();

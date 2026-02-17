@@ -11,6 +11,7 @@ export interface TeamMember {
   description?: string;
   expertise?: string[];
   triggers?: string[];
+  quickPrompts?: string[];
 }
 
 export interface TeamConfig {
@@ -45,6 +46,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📋',
         description: 'Your right hand for prioritization and planning',
         triggers: ['morning', 'report', 'check-in', 'review', 'weekly', 'monthly', 'status', 'summary', 'what happened', "what's the plan", 'priorities', 'schedule', 'agenda'],
+        quickPrompts: ["What's my plan for today?", "Give me a weekly review", "Help me prioritize my tasks"],
       },
       {
         id: 'goal-tracker',
@@ -53,6 +55,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🎯',
         description: 'Progress tracking and accountability',
         triggers: ['goal', 'target', 'progress', 'milestone', 'deadline', 'on track', 'behind', 'ahead', 'habit', 'streak', 'accountability', 'measure', 'metric'],
+        quickPrompts: ["How am I tracking on my goals?", "Set a new goal for me", "What habits should I build?"],
       },
       {
         id: 'researcher',
@@ -61,6 +64,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🔍',
         description: 'Find information and save knowledge',
         triggers: ['research', 'find', 'look up', 'article', 'save this', 'bookmark', 'summarize', 'learn about', 'what is', 'compare', 'options', 'pros and cons', 'recommend'],
+        quickPrompts: ["Compare options for me", "Research this topic", "Summarize the pros and cons"],
       },
       {
         id: 'executor',
@@ -69,6 +73,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '⚡',
         description: 'Execute tasks and automate workflows',
         triggers: ['do this', 'handle', 'take care of', 'draft', 'write', 'create', 'build', 'send', 'email', 'respond', 'follow up', 'set up', 'automate'],
+        quickPrompts: ["Draft an email for me", "Write a follow-up message", "Help me create a checklist"],
       },
       {
         id: 'wellness',
@@ -77,6 +82,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '💪',
         description: 'Health, energy, and wellbeing support',
         triggers: ['workout', 'exercise', 'sleep', 'energy', 'tired', 'stressed', 'health', 'diet', 'meditation', 'mood', 'feeling', 'self-care', 'break', 'burnout'],
+        quickPrompts: ["I'm feeling stressed", "Suggest a quick workout", "How can I sleep better?"],
       },
     ],
     cadence: {
@@ -100,6 +106,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📋',
         description: 'Prioritization, meeting notes, checklists, weekly planning, calendar management',
         triggers: ['schedule', 'meeting', 'calendar', 'priorities', 'checklist', 'plan', 'organize', 'review', 'weekly', 'agenda', 'to-do', 'task list'],
+        quickPrompts: ["Plan my week", "Create a meeting agenda", "What should I prioritize today?"],
       },
       {
         id: 'research-analyst',
@@ -108,6 +115,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🔍',
         description: 'Market research, competitor analysis, synthesizing options into decisions, due diligence',
         triggers: ['research', 'compare', 'analyze', 'should I', 'options', 'competitors', 'market', 'vet', 'investigate', 'pros and cons', 'recommend', 'feasibility'],
+        quickPrompts: ["Analyze my competitors", "Should I do X or Y?", "Research this market for me"],
       },
       {
         id: 'outreach-specialist',
@@ -116,6 +124,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '💼',
         description: 'Cold outreach drafting, follow-ups, partnership pitches, lightweight CRM tracking',
         triggers: ['email', 'reach out', 'pitch', 'partnership', 'follow up', 'contact', 'outreach', 'proposal', 'intro', 'cold email', 'networking'],
+        quickPrompts: ["Draft a cold outreach email", "Write a partnership pitch", "Follow up on my last email"],
       },
     ],
     defaultMember: 'executive-assistant',
@@ -132,6 +141,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'Customer Support Lead',
         emoji: '💬',
         expertise: ['customer service', 'refund policies', 'FAQ'],
+        quickPrompts: ["Draft a refund response", "Help with a customer complaint", "Update our FAQ"],
       },
       {
         id: 'marketing',
@@ -139,6 +149,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'Marketing Strategist',
         emoji: '📱',
         expertise: ['social media', 'email campaigns', 'SEO'],
+        quickPrompts: ["Plan a social media campaign", "Write an email blast", "SEO ideas for my store"],
       },
       {
         id: 'analyst',
@@ -146,6 +157,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'Business Analyst',
         emoji: '📊',
         expertise: ['sales reports', 'inventory analysis', 'market research'],
+        quickPrompts: ["Analyze my sales this week", "What products should I restock?", "Show me market trends"],
       },
       {
         id: 'writer',
@@ -153,6 +165,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'Content Writer',
         emoji: '✍️',
         expertise: ['product listings', 'blog posts', 'ad copy'],
+        quickPrompts: ["Write a product description", "Draft a blog post idea", "Create ad copy for a sale"],
       },
       {
         id: 'operations',
@@ -160,6 +173,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'Operations Manager',
         emoji: '⚙️',
         expertise: ['order processing', 'logistics', 'vendor management'],
+        quickPrompts: ["Optimize my shipping process", "Draft a vendor email", "Help with order tracking"],
       },
     ],
   },
@@ -177,6 +191,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🎯',
         description: 'Positioning, content calendars, hooks, video ideas, brand voice guidelines',
         triggers: ['strategy', 'what should I', 'content calendar', 'ideas', 'positioning', 'brand voice', 'plan', 'hooks', 'video ideas', 'trending', 'niche'],
+        quickPrompts: ["Plan my content calendar", "Give me 10 video ideas", "Help with my brand positioning"],
       },
       {
         id: 'writer',
@@ -185,6 +200,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '✍️',
         description: 'YouTube scripts, blog posts, newsletters, social captions, ad copy',
         triggers: ['write', 'script', 'blog', 'newsletter', 'ad copy', 'draft', 'caption', 'description', 'sales page', 'email', 'long-form'],
+        quickPrompts: ["Write a YouTube script outline", "Draft this week's newsletter", "Write captions for my posts"],
       },
       {
         id: 'social-manager',
@@ -193,6 +209,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📱',
         description: 'Repurposing content into platform-specific posts/threads, scheduling cadence, engagement tracking',
         triggers: ['social', 'Instagram', 'Twitter', 'TikTok', 'LinkedIn', 'thread', 'post', 'repurpose', 'turn this into', 'schedule', 'engagement', 'clips'],
+        quickPrompts: ["Turn this into a Twitter thread", "Repurpose my video for Instagram", "What should I post today?"],
       },
       {
         id: 'outreach-pr',
@@ -201,6 +218,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🤝',
         description: 'Cold emails, partnership pitches, PR outreach, Product Hunt prep, influencer outreach',
         triggers: ['outreach', 'pitch', 'partnership', 'PR', 'press', 'influencer', 'collaboration', 'collab', 'reach out', 'Product Hunt', 'launch'],
+        quickPrompts: ["Draft a collab pitch email", "Prep my Product Hunt launch", "Find influencers in my niche"],
       },
     ],
     defaultMember: 'content-strategist',
@@ -218,6 +236,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🍳',
         description: 'Meal planning and nutrition',
         triggers: ['meal', 'dinner', 'lunch', 'breakfast', 'recipe', 'grocery', 'food', 'cook', 'snack', 'nutrition', 'diet', 'allergies', 'meal prep'],
+        quickPrompts: ["Plan dinners for this week", "Quick lunch ideas for kids", "Make me a grocery list"],
       },
       {
         id: 'scheduler',
@@ -226,6 +245,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📅',
         description: 'Schedule and calendar management',
         triggers: ['schedule', 'calendar', 'appointment', 'practice', 'pickup', 'dropoff', 'carpool', 'event', 'birthday', 'reminder', 'when is', 'what time'],
+        quickPrompts: ["What's on the schedule today?", "Remind me about pickup at 3", "Plan this weekend's activities"],
       },
       {
         id: 'tutor',
@@ -234,6 +254,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📚',
         description: 'Homework help and learning support',
         triggers: ['homework', 'math', 'science', 'reading', 'essay', 'project', 'study', 'test', 'quiz', 'grade', 'school', 'learn', 'explain', 'help with'],
+        quickPrompts: ["Help with math homework", "Explain this science concept", "Quiz me on vocabulary"],
       },
       {
         id: 'organizer',
@@ -242,6 +263,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🏠',
         description: 'Household organization and chores',
         triggers: ['chores', 'clean', 'organize', 'laundry', 'shopping', 'budget', 'bills', 'supplies', 'repair', 'maintenance', 'todo', 'list'],
+        quickPrompts: ["Create a chore schedule", "What household supplies do I need?", "Help me organize the garage"],
       },
       {
         id: 'wellness',
@@ -250,6 +272,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '💚',
         description: 'Family wellness and activities',
         triggers: ['activity', 'weekend', 'fun', 'sick', 'doctor', 'medication', 'sleep', 'routine', 'bedtime', 'exercise', 'screen time', 'behavior'],
+        quickPrompts: ["Fun weekend activity ideas", "Help with bedtime routine", "My kid has a fever, what to do?"],
       },
     ],
   },
@@ -267,6 +290,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '💪',
         description: 'Workout programming, progressive overload, adapting plans to schedule and equipment',
         triggers: ['workout', 'exercise', 'training', 'gym', 'lift', 'run', 'sets', 'reps', 'weights', 'program', 'routine', 'form', 'muscle', 'cardio', 'stretch'],
+        quickPrompts: ["Give me today's workout", "I only have 30 minutes to train", "Build me a 4-day split"],
       },
       {
         id: 'nutrition-coach',
@@ -275,6 +299,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '🥗',
         description: 'Macros, meal planning, grocery lists, making nutrition sustainable and practical',
         triggers: ['food', 'eat', 'meal', 'macro', 'calories', 'protein', 'grocery', 'recipe', 'diet', 'nutrition', 'supplement', 'carbs', 'fat', 'cook', 'prep'],
+        quickPrompts: ["High protein meal ideas", "Make me a meal prep plan", "What should I eat post-workout?"],
       },
       {
         id: 'accountability-partner',
@@ -283,6 +308,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📊',
         description: 'Reminders, check-ins, habit streaks, motivation, progress tracking',
         triggers: ['motivation', 'streak', 'habit', 'check-in', 'missed', 'skip', 'progress', 'accountability', 'feeling', 'tired', 'lazy', 'consistency', 'track', 'log'],
+        quickPrompts: ["I skipped the gym today", "Check in on my progress", "I need some motivation"],
       },
     ],
     defaultMember: 'training-coach',
@@ -301,6 +327,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '💰',
         description: 'Creating invoices, payment follow-ups, billing organization',
         triggers: ['invoice', 'bill', 'payment', 'overdue', 'accounts receivable', 'billing', 'client payment', 'send invoice', 'paid', 'owed'],
+        quickPrompts: ["Create an invoice", "Who hasn't paid yet?", "Draft a payment reminder"],
       },
       {
         id: 'expenses-bookkeeping',
@@ -309,6 +336,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📒',
         description: 'Expense tracking, categorization, clean books prep',
         triggers: ['expense', 'receipt', 'categorize', 'transaction', 'books', 'bookkeeping', 'profit', 'loss', 'cost', 'spending', 'budget', 'reconcile'],
+        quickPrompts: ["Categorize my recent expenses", "What's my profit this month?", "Help me prep my books"],
       },
       {
         id: 'tax-planner',
@@ -317,6 +345,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         emoji: '📅',
         description: 'Deadlines, document checklists, deduction tracking, tax prep readiness',
         triggers: ['tax', 'deduction', '1099', 'W-2', 'quarterly', 'IRS', 'write-off', 'tax prep', 'filing', 'estimated tax', 'deadline'],
+        quickPrompts: ["What tax deadlines are coming up?", "Track a new deduction", "Am I ready for tax season?"],
       },
     ],
     defaultMember: 'invoices-billing',
@@ -333,6 +362,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'Lead Generation & Intel',
         emoji: '🎯',
         description: 'Lead generation, competitor intel, opportunity scanning',
+        quickPrompts: ["Find leads in my niche", "What are competitors doing?", "Scan for new opportunities"],
       },
       {
         id: 'shield',
@@ -340,6 +370,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         role: 'SEO & Positioning',
         emoji: '🛡️',
         description: 'SEO audit, review monitoring, competitive positioning',
+        quickPrompts: ["Audit my SEO", "How's my brand positioning?", "Check for new reviews"],
       },
     ],
   },
