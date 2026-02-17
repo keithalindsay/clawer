@@ -105,7 +105,7 @@ async function patchContainerEntrypoint(containerId: string): Promise<void> {
   console.log(`[PATCH] Fixing entrypoint.sh in container ${containerId}`);
   
   // Copy entrypoint.sh from container to temp location
-  await sshExec(`docker cp ${containerId}:/app/entrypoint.sh /tmp/entrypoint_${containerId}.sh`);
+  await sshExec(`docker cp ${containerId}:/usr/local/bin/entrypoint.sh /tmp/entrypoint_${containerId}.sh`);
   
   // Fix 1: Remove --port 8080 flag
   await sshExec(`sed -i 's/--port 8080//g' /tmp/entrypoint_${containerId}.sh`);
@@ -114,7 +114,7 @@ async function patchContainerEntrypoint(containerId: string): Promise<void> {
   await sshExec(`sed -i 's/^unset GATEWAY_TOKEN/#unset GATEWAY_TOKEN/g' /tmp/entrypoint_${containerId}.sh`);
   
   // Copy patched file back to container
-  await sshExec(`docker cp /tmp/entrypoint_${containerId}.sh ${containerId}:/app/entrypoint.sh`);
+  await sshExec(`docker cp /tmp/entrypoint_${containerId}.sh ${containerId}:/usr/local/bin/entrypoint.sh`);
   
   // Cleanup temp file
   await sshExec(`rm /tmp/entrypoint_${containerId}.sh`);
@@ -152,7 +152,7 @@ async function patchOpenClawConfig(containerId: string): Promise<void> {
   await sshExec(`echo '${b64}' | base64 -d > /tmp/openclaw_${containerId}.json`);
   
   // Copy to container
-  await sshExec(`docker cp /tmp/openclaw_${containerId}.json ${containerId}:/app/openclaw.json`);
+  await sshExec(`docker cp /tmp/openclaw_${containerId}.json ${containerId}:/home/user/.openclaw/openclaw.json`);
   
   // Cleanup temp file
   await sshExec(`rm /tmp/openclaw_${containerId}.json`);
