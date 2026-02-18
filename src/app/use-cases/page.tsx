@@ -3,7 +3,16 @@
  * Shows users exactly what they can build with Clawer
  */
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "AI Team Use Cases — Clawer.ai",
+  description: "30 real automations your AI team can run today. Morning briefings, meeting notes, invoices, content creation, research — and much more.",
+  alternates: {
+    canonical: "https://clawer.ai/use-cases",
+  },
+};
 
 const USE_CASE_CATEGORIES = [
   {

@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Blog — Clawer.ai",
+  description: "Insights on AI assistants, OpenClaw hosting, security, and productivity from the Clawer team.",
+  alternates: {
+    canonical: "https://clawer.ai/blog",
+  },
+};
 
 const BLOG_POSTS = [
   {
