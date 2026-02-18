@@ -37,7 +37,7 @@ export default function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          {['Your', 'AI', 'team,'].map((word, i) => (
+          {['Your', 'Hosted', 'OpenClaw'].map((word, i) => (
             <motion.span
               key={i}
               className={i === 2 ? 'text-orange-500' : 'text-gray-900'}
@@ -53,7 +53,7 @@ export default function HeroSection() {
             </motion.span>
           ))}
           <br className="hidden md:block" />
-          {['always', 'on', 'duty'].map((word, i) => (
+          {['AI', 'Team,', 'Always', 'On', 'Duty'].map((word, i) => (
             <motion.span
               key={i + 3}
               className="text-gray-900"

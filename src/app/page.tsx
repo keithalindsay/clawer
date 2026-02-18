@@ -53,10 +53,22 @@ export default function Home() {
               AI Teams
             </Link>
             <Link 
-              href="#pricing" 
+              href="/pricing" 
               className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
             >
               Pricing
+            </Link>
+            <Link 
+              href="/blog" 
+              className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+            >
+              Blog
+            </Link>
+            <Link 
+              href="/use-cases" 
+              className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+            >
+              Use Cases
             </Link>
             <Link 
               href="/sign-in" 

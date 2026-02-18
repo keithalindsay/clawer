@@ -96,8 +96,38 @@ export default function PricingPage() {
     },
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.a,
+      },
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://clawer.ai" },
+      { "@type": "ListItem", position: 2, name: "Pricing", item: "https://clawer.ai/pricing" },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -105,14 +135,20 @@ export default function PricingPage() {
             🦞 CLAWER<span className="text-blue-600">.AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/use-cases" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Use Cases
+            <Link href="/#features" className="text-gray-600 hover:text-gray-900 transition-colors">
+              Features
+            </Link>
+            <Link href="/#teams" className="text-gray-600 hover:text-gray-900 transition-colors">
+              AI Teams
             </Link>
             <Link href="/pricing" className="text-blue-600 font-medium">
               Pricing
             </Link>
             <Link href="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">
               Blog
+            </Link>
+            <Link href="/use-cases" className="text-gray-600 hover:text-gray-900 transition-colors">
+              Use Cases
             </Link>
             <Link href="/sign-in" className="text-gray-600 hover:text-gray-900 transition-colors">
               Sign In

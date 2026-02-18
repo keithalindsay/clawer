@@ -26,6 +26,16 @@ export const metadata: Metadata = {
   },
 };
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://clawer.ai" },
+    { "@type": "ListItem", position: 2, name: "Blog", item: "https://clawer.ai/blog" },
+    { "@type": "ListItem", position: 3, name: "OpenClaw Security Guide", item: "https://clawer.ai/blog/openclaw-security-guide" },
+  ],
+};
+
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
@@ -45,6 +55,10 @@ export default function OpenClawSecurityGuidePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
