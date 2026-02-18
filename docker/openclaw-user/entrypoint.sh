@@ -64,7 +64,12 @@ unset OPENAI_API_KEY GEMINI_API_KEY MINIMAX_API_KEY
 # Install team template
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
 TEAM_DIR="/opt/teams/${TEAM_TEMPLATE}"
-[ -d "$TEAM_DIR" ] && cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md 2>/dev/null && echo "Team template installed: ${TEAM_TEMPLATE}"
+# Only install template if user hasn't customized AGENTS.md (preserves data on volume-mounted restarts)
+if [ -d "$TEAM_DIR" ] && [ ! -f /home/user/clawd/AGENTS.md ]; then
+  cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md 2>/dev/null && echo "Team template installed: ${TEAM_TEMPLATE}"
+else
+  echo "AGENTS.md already exists, skipping template install"
+fi
 
 # Patch Brave search URL to use local SearXNG proxy
 SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}"

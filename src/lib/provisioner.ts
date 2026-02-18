@@ -13,7 +13,7 @@ import { sshExec } from '@/lib/ssh';
 
 // v2026.2.16 image: correct api-server.js (Ed25519 auth), correct entrypoint.sh
 // DO NOT use 'ecommerce' — it has the old nonce-based api-server (breaks with v2026.2.16 gateway)
-const CONTAINER_IMAGE = 'clawer-openclaw:v2026.2.16';
+const CONTAINER_IMAGE = 'clawer-openclaw:v2026.2.18';
 const BASE_PORT = 4010;
 const MAX_PORT = 5000;
 
@@ -124,7 +124,7 @@ async function patchApiServerIfNeeded(containerId: string): Promise<void> {
   console.log(`[PATCH] Detected old nonce-based api-server in ${containerId}, patching...`);
   
   // Extract the correct api-server.js from the v2026.2.16 image
-  await sshExec(`docker run --rm --entrypoint cat clawer-openclaw:v2026.2.16 /usr/local/bin/api-server.js > /tmp/api-server-fixed.js`);
+  await sshExec(`docker run --rm --entrypoint cat clawer-openclaw:v2026.2.18 /usr/local/bin/api-server.js > /tmp/api-server-fixed.js`);
   
   // Copy to container
   await sshExec(`docker cp /tmp/api-server-fixed.js ${containerId}:/usr/local/bin/api-server.js`);
@@ -251,6 +251,10 @@ export async function provisionContainer(
     const { minimaxKey, openaiKey, geminiKey } = await getServerApiKeys();
     console.log(`[PROVISION] Retrieved API keys from server`);
     
+    // Create host directories for persistent user data (volume mounts survive container recreation)
+    await sshExec(`mkdir -p /opt/clawer/userdata/${containerName}/.openclaw /opt/clawer/userdata/${containerName}/clawd`);
+    console.log(`[PROVISION] Created userdata directories for ${containerName}`);
+
     // Create container with proper configuration
     // SECURITY: Hardened with capability drops, no-new-privileges, resource limits
     const dockerCmd = [
@@ -272,6 +276,9 @@ export async function provisionContainer(
       '--tmpfs /tmp:rw,noexec,nosuid,size=256m',
       // Network + port
       `-p 127.0.0.1:${apiPort}:8081`,
+      // Volume mounts — persistent user data survives container recreation
+      `-v /opt/clawer/userdata/${containerName}/.openclaw:/home/user/.openclaw`,
+      `-v /opt/clawer/userdata/${containerName}/clawd:/home/user/clawd`,
       // Environment
       `-e USER_ID=${userId}`,
       `-e TEAM_TEMPLATE=${teamTemplate}`,
