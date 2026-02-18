@@ -11,7 +11,9 @@ import { users } from '@/lib/db/schema/users';
 import { eq, desc } from 'drizzle-orm';
 import { sshExec } from '@/lib/ssh';
 
-const CONTAINER_IMAGE = 'clawer-openclaw:ecommerce';
+// v2026.2.16 image: correct api-server.js (Ed25519 auth), correct entrypoint.sh
+// DO NOT use 'ecommerce' — it has the old nonce-based api-server (breaks with v2026.2.16 gateway)
+const CONTAINER_IMAGE = 'clawer-openclaw:v2026.2.16';
 const BASE_PORT = 4010;
 const MAX_PORT = 5000;
 
@@ -99,10 +101,62 @@ async function getContainerId(containerName: string): Promise<string | null> {
 }
 
 /**
- * Patch container's entrypoint.sh to fix known issues
+ * Patch container's api-server.js if it has the old nonce-based protocol.
+ * 
+ * The 'ecommerce' image has a v2026.2.14 api-server that sends nonce in connect params.
+ * v2026.2.16 gateway rejects this with "unexpected property 'nonce'".
+ * This patch replaces the api-server with the correct Ed25519 device auth version.
+ * 
+ * NOTE: v2026.2.16 image already has the correct api-server — skip patching for that image.
+ * This function is kept as a safety net for any legacy containers.
+ */
+async function patchApiServerIfNeeded(containerId: string): Promise<void> {
+  // Check if the container's api-server has the nonce bug
+  const { stdout: hasNonce } = await sshExec(
+    `docker exec ${containerId} grep -l "connectNonce" /usr/local/bin/api-server.js 2>/dev/null || echo ""`
+  );
+  
+  if (!hasNonce.trim()) {
+    console.log(`[PATCH] api-server.js looks correct (no nonce bug), skipping patch`);
+    return;
+  }
+  
+  console.log(`[PATCH] Detected old nonce-based api-server in ${containerId}, patching...`);
+  
+  // Extract the correct api-server.js from the v2026.2.16 image
+  await sshExec(`docker run --rm --entrypoint cat clawer-openclaw:v2026.2.16 /usr/local/bin/api-server.js > /tmp/api-server-fixed.js`);
+  
+  // Copy to container
+  await sshExec(`docker cp /tmp/api-server-fixed.js ${containerId}:/usr/local/bin/api-server.js`);
+  await sshExec(`docker exec ${containerId} chmod +x /usr/local/bin/api-server.js`);
+  
+  // Cleanup
+  await sshExec(`rm /tmp/api-server-fixed.js`);
+  
+  console.log(`[PATCH] api-server.js patched successfully`);
+}
+
+/**
+ * DEPRECATED: These patches were needed for the old 'ecommerce' image.
+ * The v2026.2.16 image already has:
+ * - No --port 8080 flag in entrypoint.sh
+ * - GATEWAY_TOKEN not unset in entrypoint.sh  
+ * - Correct openclaw.json with dangerouslyDisableDeviceAuth
+ * 
+ * Keeping these functions for backward compatibility with legacy containers.
  */
 async function patchContainerEntrypoint(containerId: string): Promise<void> {
-  console.log(`[PATCH] Fixing entrypoint.sh in container ${containerId}`);
+  console.log(`[PATCH] Checking entrypoint.sh in container ${containerId}`);
+  
+  // Only patch if the old --port 8080 issue exists
+  const { stdout: hasPortFlag } = await sshExec(
+    `docker exec ${containerId} grep -c "port 8080" /usr/local/bin/entrypoint.sh 2>/dev/null || echo "0"`
+  );
+  
+  if (parseInt(hasPortFlag.trim() || '0') === 0) {
+    console.log(`[PATCH] entrypoint.sh looks correct, skipping patch`);
+    return;
+  }
   
   // Copy entrypoint.sh from container to temp location
   await sshExec(`docker cp ${containerId}:/usr/local/bin/entrypoint.sh /tmp/entrypoint_${containerId}.sh`);
@@ -123,41 +177,15 @@ async function patchContainerEntrypoint(containerId: string): Promise<void> {
 }
 
 /**
- * Patch container's openclaw.json to fix provider configuration
+ * DEPRECATED: Not needed for v2026.2.16 image.
+ * The v2026.2.16 entrypoint.sh already writes the correct openclaw.json at startup.
+ * This function used to overwrite it with a simpler version that was missing
+ * dangerouslyDisableDeviceAuth — DO NOT call this for new containers.
  */
-async function patchOpenClawConfig(containerId: string): Promise<void> {
-  console.log(`[PATCH] Fixing openclaw.json in container ${containerId}`);
-  
-  // Create proper openclaw.json with correct baseUrl and gateway mode
-  const config = {
-    gateway: {
-      mode: 'local',
-      token: '${GATEWAY_TOKEN}'
-    },
-    providers: {
-      openai: {
-        apiKey: '${OPENAI_API_KEY}',
-        baseUrl: 'https://api.openai.com/v1'
-      },
-      gemini: {
-        apiKey: '${GEMINI_API_KEY}'
-      }
-    }
-  };
-  
-  // Use printf + heredoc to safely write JSON without shell interpretation issues
-  const configJson = JSON.stringify(config, null, 2);
-  // Base64 encode to avoid any shell escaping issues with JSON content
-  const b64 = Buffer.from(configJson).toString('base64');
-  await sshExec(`echo '${b64}' | base64 -d > /tmp/openclaw_${containerId}.json`);
-  
-  // Copy to container
-  await sshExec(`docker cp /tmp/openclaw_${containerId}.json ${containerId}:/home/user/.openclaw/openclaw.json`);
-  
-  // Cleanup temp file
-  await sshExec(`rm /tmp/openclaw_${containerId}.json`);
-  
-  console.log(`[PATCH] openclaw.json patched successfully`);
+async function patchOpenClawConfig(_containerId: string): Promise<void> {
+  // v2026.2.16 entrypoint writes the correct config at container startup.
+  // Calling this would BREAK the config by removing dangerouslyDisableDeviceAuth.
+  console.log(`[PATCH] Skipping openclaw.json patch — v2026.2.16 image writes correct config at startup`);
 }
 
 /**
@@ -264,24 +292,20 @@ export async function provisionContainer(
     // Wait a moment for container to initialize
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Patch entrypoint.sh
+    // Safety net: patch api-server if it has the old nonce bug (shouldn't happen with v2026.2.16)
     try {
-      await patchContainerEntrypoint(cleanContainerId);
+      await patchApiServerIfNeeded(cleanContainerId);
     } catch (error) {
-      console.error('Failed to patch entrypoint.sh:', error);
-      // Continue anyway - container might still work
+      console.error('Failed to check/patch api-server.js:', error);
+      // Not fatal - container may still work
     }
     
-    // Patch openclaw.json
-    try {
-      await patchOpenClawConfig(cleanContainerId);
-    } catch (error) {
-      console.error('Failed to patch openclaw.json:', error);
-      // Continue anyway
-    }
+    // NOTE: patchContainerEntrypoint and patchOpenClawConfig are NOT called for v2026.2.16.
+    // The v2026.2.16 image's entrypoint.sh already handles everything correctly at startup.
+    // Calling patchOpenClawConfig would BREAK the config by removing dangerouslyDisableDeviceAuth.
     
-    // Restart container to apply patches
-    console.log(`[PROVISION] Restarting container to apply patches`);
+    // Restart container so the correct entrypoint runs and writes the proper config
+    console.log(`[PROVISION] Restarting container to finalize startup...`);
     await sshExec(`docker restart ${cleanContainerId}`);
     
     // Update database with container info
