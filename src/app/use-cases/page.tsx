@@ -15,44 +15,44 @@ const USE_CASES = [
     icon: "🚀",
     title: "Solo Founders",
     tagline:
-      "Your AI team handles customer support, content creation, and operations while you focus on building.",
+      "Not assistants — operators. Hunter monitors your competitors daily and alerts you to pricing changes. Shield runs SEO audits overnight. Harper auto-follows up on cold outreach. You wake up to results, not tasks.",
     bullets: [
-      "Auto-respond to customer emails and support tickets 24/7",
-      "Generate blog posts, social content, and newsletters on schedule",
-      "Track KPIs, summarize metrics, and flag what needs attention",
+      "Competitor monitoring runs daily — you get alerts when something changes",
+      "SEO audits and keyword tracking happen overnight while you sleep",
+      "Cold outreach follow-ups fire automatically so your pipeline never stalls",
     ],
   },
   {
     icon: "🎬",
     title: "Content Creators",
     tagline:
-      "Schedule posts, research trends, and manage your audience across platforms automatically.",
+      "You create once — your team multiplies it everywhere. Mia scans trends before they peak. Jordan turns one video into threads, reels, and blog posts. Blake drafts your newsletter overnight.",
     bullets: [
-      "Research trending topics and generate content briefs in seconds",
-      "Schedule and cross-post to Twitter, YouTube, TikTok, and more",
-      "Manage DMs, comments, and community engagement hands-free",
+      "Trending topic alerts hit your inbox before the wave peaks",
+      "Every video auto-repurposes into platform-specific content",
+      "Newsletter drafts ready for review every morning — you just approve",
     ],
   },
   {
     icon: "👥",
     title: "Small Teams",
     tagline:
-      "Give every team member AI-powered assistants that learn your workflows and tools.",
+      "Give every team member AI operators that run workflows, not just answer questions. Morning briefings, overnight research, and proactive task execution.",
     bullets: [
-      "Onboard new hires with AI that knows your SOPs and docs",
-      "Route tasks, summarize meetings, and keep projects on track",
-      "Connect Slack, Notion, Google Workspace — your tools, unified",
+      "Daily briefings delivered before standup — no one walks in blind",
+      "Research requests run overnight and deliver findings by morning",
+      "Tasks execute on schedule — drafts, reports, and follow-ups on autopilot",
     ],
   },
   {
     icon: "🏠",
     title: "Parents & Families",
     tagline:
-      "Homework help, meal planning, schedule management — your family's AI command center.",
+      "Cal sends WhatsApp reminders before every pickup. Mel plans meals on Sunday and sends the grocery list to your phone. Prof tracks what each kid struggles with and adapts over time.",
     bullets: [
-      "Step-by-step homework help that actually teaches, not just answers",
-      "Weekly meal plans with grocery lists tailored to your preferences",
-      "Coordinate family calendars, appointments, and reminders via WhatsApp",
+      "Proactive reminders before every practice, appointment, and pickup",
+      "Weekly meal plans auto-generated with grocery lists sent to your phone",
+      "Homework help that learns your child's weak spots and adapts",
     ],
   },
 ];
@@ -70,8 +70,9 @@ export default function UseCasesPage() {
             Built for the way <span className="text-orange-500">you</span> work
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Whether you&apos;re a one-person startup or a family of five, Clawer
-            gives you an AI team that adapts to your life.
+            These aren&apos;t chatbots. They monitor, research, follow up, and
+            execute — overnight, on schedule, without being asked. You wake up
+            to results.
           </p>
         </div>
       </section>
