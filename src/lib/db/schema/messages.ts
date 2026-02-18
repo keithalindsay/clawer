@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, jsonb, integer, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, jsonb, integer, boolean, pgEnum } from 'drizzle-orm/pg-core';
 import { conversations } from './conversations';
 
 /**
@@ -47,7 +47,10 @@ export const messages = pgTable('messages', {
   
   /** Message metadata */
   metadata: jsonb('metadata').notNull().default({}),
-  
+
+  /** Whether this message has been included in a memory summary */
+  summarized: boolean('summarized').notNull().default(false),
+
   /** Creation timestamp */
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });

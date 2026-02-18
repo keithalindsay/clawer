@@ -96,10 +96,15 @@ export async function POST(
     .set({ status: 'running', startedAt: new Date(), updatedAt: new Date() })
     .where(eq(tasks.id, id));
 
-  // Build the message to send
-  const message = task.description
-    ? `Task: ${task.title}\n\n${task.description}`
-    : task.title;
+  // Build the message to send — structured prompt so the agent understands context
+  const message = [
+    '[TASK ASSIGNMENT]',
+    `Title: ${task.title}`,
+    `Priority: ${task.priority || 'normal'}`,
+    task.description ? `Description: ${task.description}` : '',
+    '',
+    'Please complete this task thoroughly. When done, provide a clear summary of what you accomplished and any results.',
+  ].filter(line => line !== undefined).join('\n').trim();
 
   // Execute via container
   const result = await containerApi.chat(

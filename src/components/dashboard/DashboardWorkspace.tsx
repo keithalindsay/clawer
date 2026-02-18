@@ -51,6 +51,8 @@ export function DashboardWorkspace({
   const initAgent = initialAgentId ? teamMembers.find(m => m.id === initialAgentId) || teamMembers[0] : teamMembers[0];
   const [selectedAgent, setSelectedAgent] = useState<TeamMember | null>(initAgent || null);
   const [chatHistory, setChatHistory] = useState<Record<string, Message[]>>({});
+  const [historyLoaded, setHistoryLoaded] = useState<Record<string, boolean>>({});
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -59,6 +61,28 @@ export function DashboardWorkspace({
   const messages = selectedAgent ? (chatHistory[selectedAgent.id] || []) : [];
 
   const [autoSent, setAutoSent] = useState(false);
+
+  // Load message history when switching agents
+  useEffect(() => {
+    if (!selectedAgent || historyLoaded[selectedAgent.id]) return;
+
+    setHistoryLoading(true);
+    fetch(`/api/messages?agentId=${encodeURIComponent(selectedAgent.id)}`)
+      .then(res => res.json())
+      .then(data => {
+        const loaded: Message[] = (data.messages || []).map((m: { role: 'user' | 'assistant'; content: string; timestamp: string }) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+        }));
+        setChatHistory(prev => ({ ...prev, [selectedAgent.id]: loaded }));
+        setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
+      })
+      .catch(() => {
+        setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
+      })
+      .finally(() => setHistoryLoading(false));
+  }, [selectedAgent, historyLoaded]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -282,7 +306,16 @@ export function DashboardWorkspace({
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-                {messages.length === 0 && (
+                {historyLoading ? (
+                  <div className="flex flex-col items-center justify-center mt-20 gap-3">
+                    <div className="flex gap-1.5">
+                      <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#94a3b8', animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#94a3b8', animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#94a3b8', animationDelay: '300ms' }} />
+                    </div>
+                    <p className="text-sm" style={{ color: '#94a3b8' }}>Loading history…</p>
+                  </div>
+                ) : messages.length === 0 && (
                   <div className="text-center mt-20">
                     <div className="text-5xl mb-4">{selectedAgent.emoji || '🤖'}</div>
                     <p className="text-lg font-medium" style={{ color: '#0f172a' }}>Start chatting with {selectedAgent.name}</p>

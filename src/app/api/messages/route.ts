@@ -20,10 +20,50 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get limit from query params (default 50)
+    // Get query params
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const conversationId = searchParams.get('conversationId');
+    const agentId = searchParams.get('agentId');
+
+    // If agentId provided, look up the agent-specific conversation
+    if (agentId) {
+      const { isNull } = await import('drizzle-orm');
+      const conversation = await db.query.conversations.findFirst({
+        where: and(
+          eq(conversations.userId, userId),
+          eq(conversations.agentId, agentId),
+          isNull(conversations.deletedAt)
+        ),
+      });
+
+      if (!conversation) {
+        // No conversation yet for this agent — return empty
+        return NextResponse.json({ messages: [] });
+      }
+
+      const messageList = await db
+        .select({
+          id: messages.id,
+          role: messages.role,
+          content: messages.content,
+          createdAt: messages.createdAt,
+        })
+        .from(messages)
+        .where(eq(messages.conversationId, conversation.id))
+        .orderBy(asc(messages.createdAt))
+        .limit(limit);
+
+      return NextResponse.json({
+        conversationId: conversation.id,
+        messages: messageList.map(m => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: m.createdAt.toISOString(),
+        })),
+      });
+    }
 
     // Get or create default bot
     let bot = await db.query.bots.findFirst({

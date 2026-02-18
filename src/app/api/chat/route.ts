@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { bots } from '@/lib/db/schema/bots';
 import { conversations } from '@/lib/db/schema/conversations';
+import { messages } from '@/lib/db/schema/messages';
 import { eq, sql, and, isNull } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
@@ -285,6 +286,19 @@ export async function POST(req: NextRequest) {
         { error: result.error },
         { status: result.status }
       );
+    }
+
+    // Persist both messages to the DB for history
+    if (conversationId) {
+      try {
+        await db.insert(messages).values([
+          { conversationId, role: 'user', content: sanitizedMessage },
+          { conversationId, role: 'assistant', content: result.data?.content || '' },
+        ]);
+      } catch (saveErr) {
+        // Non-fatal: log but don't fail the response
+        console.error('[chat] Failed to save messages:', saveErr);
+      }
     }
 
     return NextResponse.json({
