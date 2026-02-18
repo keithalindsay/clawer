@@ -260,7 +260,7 @@ export default function ManagedOpenClawHostingPage() {
             </p>
 
             <p className="text-gray-700 mb-6">
-              Clawer Pro is $19/month. With model costs included. And zero hours of maintenance.
+              Clawer Pro is $49/month. With model costs included. And zero hours of maintenance.
             </p>
 
             <p className="text-gray-700 mb-6">
@@ -274,7 +274,7 @@ export default function ManagedOpenClawHostingPage() {
                 </Link>
               </p>
               <p className="text-gray-700">
-                Free tier: 100 messages/day, GPT-4o-mini, web chat. No credit card. Upgrade to Pro ($19/mo) for unlimited messages, AI Teams, and all channels.
+                Free tier: 25 messages/day, GPT-4o-mini, web chat. No credit card. Upgrade to Pro ($49/mo) for unlimited messages, AI Teams, and all channels.
               </p>
             </div>
 
