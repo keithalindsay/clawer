@@ -214,15 +214,30 @@ function TeamTemplateSection() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Switch to {TEAM_CONFIGS[selectedTeam]?.name}?
             </h3>
+            {/* Team members preview */}
+            <div className="mb-4 space-y-2">
+              {TEAM_CONFIGS[selectedTeam]?.members.map((member) => (
+                <div key={member.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-gray-50">
+                  <span className="text-lg flex-shrink-0 mt-0.5">{member.emoji || '🤖'}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">{member.name}</span>
+                      <span className="text-xs text-gray-400">·</span>
+                      <span className="text-xs text-gray-500">{member.role}</span>
+                    </div>
+                    {member.description && (
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{member.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-amber-800">
                 ⚠️ <strong>Warning:</strong> Changing your team template will replace your current team members.
                 Your conversation history will be preserved, but you&apos;ll be chatting with a new team.
               </p>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
-              New team: <strong>{TEAM_CONFIGS[selectedTeam]?.name}</strong> ({TEAM_CONFIGS[selectedTeam]?.members.length} members)
-            </p>
             <div className="flex justify-end gap-3">
               <button
                 type="button"
