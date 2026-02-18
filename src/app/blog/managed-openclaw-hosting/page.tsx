@@ -305,7 +305,7 @@ export default function ManagedOpenClawHostingPage() {
                 </Link>
               </p>
               <p className="text-gray-700">
-                Free tier: 25 messages/day, GPT-4o-mini, web chat. No credit card. Upgrade to Pro ($49/mo) for unlimited messages, AI Teams, and all channels.
+                Free tier: 200 total messages, web chat only. No credit card. Upgrade to Pro ($49/mo) for 500 messages/day, AI Teams, and all channels.
               </p>
             </div>
 

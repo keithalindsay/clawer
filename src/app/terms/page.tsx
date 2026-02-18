@@ -23,7 +23,7 @@ export default function TermsOfService() {
           Terms of Service
         </h1>
         <p className="text-sm text-gray-500 mb-12">
-          Last updated: February 17, 2026
+          Last updated: February 18, 2026
         </p>
 
         <div className="prose prose-gray max-w-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-10 [&_h2]:mb-4 [&_p]:text-gray-600 [&_p]:leading-relaxed [&_li]:text-gray-600">
@@ -66,7 +66,7 @@ export default function TermsOfService() {
           <p>We offer the following plans:</p>
           <ul className="list-disc pl-6 space-y-2 my-4">
             <li>
-              <strong>Free Tier:</strong> Up to 25 messages per day, 1 team member. No
+              <strong>Free Tier:</strong> Up to 200 total messages, 1 team member. No
               service level guarantees.
             </li>
             <li>

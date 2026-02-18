@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Use Cases — CLAWER.AI 🦞 | AI Teams for Every Workflow",
+  title: "Use Cases — Clawer.ai | AI Teams for Founders, Creators & Families",
   description:
-    "Discover how solo founders, content creators, small teams, and families use CLAWER.AI to automate workflows, save time, and get more done with AI-powered assistants.",
+    "Discover how solo founders, content creators, small teams, and families use Clawer to automate workflows, save time, and get more done with AI-powered assistants.",
   alternates: {
     canonical: "https://clawer.ai/use-cases",
   },
@@ -70,7 +70,7 @@ export default function UseCasesPage() {
             Built for the way <span className="text-orange-500">you</span> work
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Whether you&apos;re a one-person startup or a family of five, CLAWER.AI
+            Whether you&apos;re a one-person startup or a family of five, Clawer
             gives you an AI team that adapts to your life.
           </p>
         </div>

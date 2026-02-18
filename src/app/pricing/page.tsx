@@ -2,7 +2,7 @@
 /**
  * CLAWER.AI Pricing Page
  *
- * Three tiers: Free, Pro ($19/mo), Enterprise ($49/mo)
+ * Three tiers: Free, Pro ($49/mo), Enterprise (custom)
  * Comparison table + FAQ section
  */
 

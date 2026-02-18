@@ -30,13 +30,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/blog/managed-openclaw-hosting`,
-      lastModified: new Date("2026-02-16"),
+      lastModified: new Date("2026-02-18"),
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/blog/openclaw-security-guide`,
-      lastModified: new Date("2026-02-16"),
+      lastModified: new Date("2026-02-18"),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog/best-openclaw-hosting`,
+      lastModified: new Date("2026-02-18"),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog/openclaw-self-hosted-vs-managed`,
+      lastModified: new Date("2026-02-18"),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog/openclaw-security`,
+      lastModified: new Date("2026-02-18"),
       changeFrequency: "monthly",
       priority: 0.6,
     },
@@ -45,6 +63,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/sign-in`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/terms`,

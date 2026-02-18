@@ -308,7 +308,7 @@ export default function SelfHostedVsManagedPage() {
             </p>
 
             <p className="text-gray-700 mb-6">
-              <strong>Exception:</strong> If you genuinely enjoy infrastructure work and would spend that time anyway, subtract the maintenance cost from self-hosted. It&apos;s still more expensive on server + API alone ($19/mo vs $49/mo for Clawer, $19/mo vs $39/mo for xCloud), but the gap narrows to something reasonable.
+              <strong>Exception:</strong> If you genuinely enjoy infrastructure work and would spend that time anyway, subtract the maintenance cost from self-hosted. It&apos;s still more expensive on server + API alone ($49/mo for Clawer, $19/mo vs $39/mo for xCloud), but the gap narrows to something reasonable.
             </p>
 
             {/* Scenario 2 */}
@@ -661,7 +661,7 @@ export default function SelfHostedVsManagedPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 my-6">
               <p className="font-semibold text-gray-900 mb-2">Not sure which path fits you?</p>
               <p className="text-gray-700 mb-3 text-sm">
-                Start with Clawer&apos;s free tier — 25 messages/day, no credit card. If you find yourself wanting more control, you can always export your config and move to self-hosted. No lock-in.
+                Start with Clawer&apos;s free tier — 200 total messages, no credit card. If you find yourself wanting more control, you can always export your config and move to self-hosted. No lock-in.
               </p>
               <Link href="/pricing" className="inline-block bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                 Try free — 60 seconds to setup →

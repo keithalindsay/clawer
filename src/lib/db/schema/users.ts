@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, pgEnum, integer } from 'drizzle-orm/pg-core';
 
 /**
  * User subscription tier enum
- * - free: Qwen3 only, 100 messages/day
+ * - free: Qwen3 only, 200 total messages
  * - basic: Kimi access, 500 messages/day
  * - pro: Sonnet access, 2000 messages/day
  * - enterprise: Opus access, unlimited
