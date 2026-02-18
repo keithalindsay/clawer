@@ -2,8 +2,12 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { tasks } from '@/lib/db/schema/tasks';
+import { users } from '@/lib/db/schema/users';
 import { eq, and, desc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+import { containerApi } from '@/lib/container-client';
+import { getTeamConfig, getAgentFromTeam, buildAgentSystemPrompt } from '@/lib/teams';
+import { FREE_TIER_PORT, FREE_TIER_TOKEN } from '@/lib/constants';
 
 /**
  * GET /api/tasks

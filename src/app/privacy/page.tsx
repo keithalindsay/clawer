@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — Clawer.ai",
+  description: "Privacy Policy for Clawer.ai — how we handle your data with managed AI Teams powered by OpenClaw.",
+  alternates: {
+    canonical: "https://clawer.ai/privacy",
+  },
+};
+
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-white">

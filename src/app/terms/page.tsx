@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service — Clawer.ai",
+  description: "Terms of Service for Clawer.ai — Managed AI Teams powered by OpenClaw.",
+  alternates: {
+    canonical: "https://clawer.ai/terms",
+  },
+};
+
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-white">

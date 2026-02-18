@@ -48,6 +48,15 @@ export const metadata: Metadata = {
   },
 };
 
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Clawer",
+  url: "https://clawer.ai",
+  logo: "https://clawer.ai/logo.png",
+  description: "Managed AI Teams powered by OpenClaw",
+};
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -74,6 +83,10 @@ export default function RootLayout({
       <html lang="en" className="">
         <head>
           <meta name="theme-color" content="#ffffff" />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+          />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

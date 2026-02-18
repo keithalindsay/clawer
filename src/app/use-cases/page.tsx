@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Use Cases — CLAWER.AI 🦞 | AI Teams for Every Workflow",
   description:
     "Discover how solo founders, content creators, small teams, and families use CLAWER.AI to automate workflows, save time, and get more done with AI-powered assistants.",
+  alternates: {
+    canonical: "https://clawer.ai/use-cases",
+  },
 };
 
 const USE_CASES = [
