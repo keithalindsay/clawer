@@ -96,7 +96,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
   solopreneur: {
     industry: 'solopreneur',
     name: 'Solopreneur Team',
-    description: 'Run your business like you have a team. Executive assistant for planning, research analyst for decisions, outreach specialist for partnerships.',
+    description: 'Run your business like you have a team. Planning, research, outreach, lead generation, and SEO — all covered.',
     isDefault: false,
     members: [
       {
@@ -125,6 +125,32 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
         description: 'Cold outreach drafting, follow-ups, partnership pitches, lightweight CRM tracking',
         triggers: ['email', 'reach out', 'pitch', 'partnership', 'follow up', 'contact', 'outreach', 'proposal', 'intro', 'cold email', 'networking'],
         quickPrompts: ["Draft a cold outreach email", "Write a partnership pitch", "Follow up on my last email"],
+      },
+      {
+        id: 'hunter',
+        name: 'Hunter',
+        role: 'Lead Generation & Intel',
+        emoji: '🎯',
+        description: 'Lead generation, competitor intel, opportunity scanning, market research',
+        triggers: ['leads', 'competitors', 'opportunities', 'intel', 'prospect', 'market research', 'competitive analysis'],
+        quickPrompts: [
+          "Analyze my top 3 competitors — extract their services, strengths, and trust signals",
+          "Find content gaps in my competitors' sites and give me 5 topics to cover",
+          "Research my competitor's top 20 pages and give me a prioritized keyword list",
+        ],
+      },
+      {
+        id: 'shield',
+        name: 'Shield',
+        role: 'SEO & Positioning',
+        emoji: '🛡️',
+        description: 'SEO audit, review monitoring, competitive positioning, keyword research, schema analysis',
+        triggers: ['seo', 'keywords', 'ranking', 'schema', 'google', 'search', 'positioning', 'brand'],
+        quickPrompts: [
+          "Scan these competitor sites and find 5 content gaps I should cover to outrank them",
+          "List 20 high-intent local keywords for my business that indicate a customer is ready to buy NOW",
+          "Analyze my competitor's GBP posts and build me an actionable posting plan",
+        ],
       },
     ],
     defaultMember: 'executive-assistant',
@@ -351,37 +377,6 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
     defaultMember: 'invoices-billing',
   },
 
-  'growth-ops': {
-    name: 'Growth Ops',
-    description: 'Two-agent growth automation: Hunter finds leads and opportunities, Shield monitors SEO, competitors, and brand positioning.',
-    industry: 'growth',
-    members: [
-      {
-        id: 'hunter',
-        name: 'Hunter',
-        role: 'Lead Generation & Intel',
-        emoji: '🎯',
-        description: 'Lead generation, competitor intel, opportunity scanning, market research',
-        quickPrompts: [
-          "Analyze my top 3 competitors — extract their services, target locations, strengths, and trust signals, then compare to mine",
-          "Find content gaps in my competitors' sites and give me 5 topics to cover that they're missing",
-          "Research my competitor's top 20 pages and give me a prioritized keyword list with difficulty scores",
-        ],
-      },
-      {
-        id: 'shield',
-        name: 'Shield',
-        role: 'SEO & Positioning',
-        emoji: '🛡️',
-        description: 'SEO audit, review monitoring, competitive positioning, keyword research, schema analysis',
-        quickPrompts: [
-          "Scan these competitor sites and find 5 content gaps I should cover to outrank them",
-          "List 20 high-intent local keywords for my business that indicate a customer is ready to buy NOW",
-          "Analyze my competitor's GBP posts and build me an actionable posting plan with frequency, themes, and CTAs",
-        ],
-      },
-    ],
-  },
 };
 
 /**
