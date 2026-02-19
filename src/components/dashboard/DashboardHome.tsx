@@ -55,6 +55,7 @@ export function DashboardHome({
               <Link href="/dashboard" className="text-blue-600 font-medium">Dashboard</Link>
               <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900">Tasks</Link>
               <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
+              <Link href="/dashboard/agent" className="text-gray-500 hover:text-gray-900">Agent</Link>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
               {/* <Link href="/dashboard/api-keys" className="text-gray-500 hover:text-gray-900">API Keys</Link> */}
             </nav>
@@ -140,6 +141,13 @@ export function DashboardHome({
               >
                 <span className="text-xl">📋</span>
                 <span className="text-sm font-medium text-gray-900">Task Board</span>
+              </Link>
+              <Link
+                href="/dashboard/agent"
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              >
+                <span className="text-xl">🤖</span>
+                <span className="text-sm font-medium text-gray-900">Agent Files</span>
               </Link>
               <Link
                 href="/dashboard/settings"
