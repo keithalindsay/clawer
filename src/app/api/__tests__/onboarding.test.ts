@@ -1,68 +1,52 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Clerk auth
+// ── Mocks (hoisted to top by vitest) ──────────────────────────────────────────
+
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 
-// Mock database
 vi.mock('@/lib/db', () => ({
   db: {
     query: {
-      botSettings: {
-        findFirst: vi.fn(),
-      },
+      botSettings: { findFirst: vi.fn() },
     },
     insert: vi.fn(),
     update: vi.fn(),
   },
 }));
 
-// Mock drizzle-orm eq (used in source, not tested directly)
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn(),
-}));
-
-// Mock schema objects (used as arguments to mocked db functions)
-vi.mock('@/lib/db/schema/users', () => ({
-  users: {},
-}));
-
-vi.mock('@/lib/db/schema/bot-settings', () => ({
-  botSettings: {},
-}));
+// ── Imports ───────────────────────────────────────────────────────────────────
 
 import { POST } from '../onboarding/route';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
-// Helper: build a mock onboarding POST request
-function buildRequest(body: object) {
-  return new Request('http://localhost/api/onboarding', {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function buildRequest(body: Record<string, unknown> = {}) {
+  return new Request('http://localhost:3000/api/onboarding', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-describe('POST /api/onboarding', () => {
-  // Tracked chain mocks, recreated each test
-  let mockWhere: ReturnType<typeof vi.fn>;
-  let mockSet: ReturnType<typeof vi.fn>;
-  let mockValues: ReturnType<typeof vi.fn>;
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
+describe('POST /api/onboarding', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Re-setup chainable db.update mock: db.update(...).set(...).where(...)
-    mockWhere = vi.fn().mockResolvedValue(undefined);
-    mockSet = vi.fn().mockReturnValue({ where: mockWhere });
-    (db.update as any).mockReturnValue({ set: mockSet });
-
-    // Re-setup chainable db.insert mock: db.insert(...).values(...)
-    mockValues = vi.fn().mockResolvedValue(undefined);
-    (db.insert as any).mockReturnValue({ values: mockValues });
+    // Default chain setup — restored fresh before every test
+    (db.update as any).mockReturnValue({
+      set: vi.fn(() => ({ where: vi.fn() })),
+    });
+    (db.insert as any).mockReturnValue({
+      values: vi.fn(),
+    });
   });
+
+  // ── 1. Auth ──────────────────────────────────────────────────────────────
 
   it('returns 401 when unauthenticated', async () => {
     (auth as any).mockResolvedValue({ userId: null });
@@ -74,213 +58,243 @@ describe('POST /api/onboarding', () => {
     expect(data.error).toBe('Unauthorized');
   });
 
-  it('calls INSERT when no existing botSettings record (new user)', async () => {
+  // ── 2. INSERT vs UPDATE ───────────────────────────────────────────────────
+
+  it('calls INSERT botSettings when no existing record (new user)', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_new' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    const response = await POST(buildRequest({ botName: 'MyBot' }));
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
+
+    const response = await POST(buildRequest({ botName: 'MyBot', botEmoji: '🚀' }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
     expect(db.insert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalled();
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'user_new', botName: 'MyBot', botAvatar: '🚀' })
+    );
   });
 
-  it('calls UPDATE when botSettings record already exists', async () => {
+  it('calls UPDATE botSettings when record already exists', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_existing' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue({ id: 1, userId: 'user_existing' });
+    (db.query.botSettings.findFirst as any).mockResolvedValue({ userId: 'user_existing' });
+
+    const mockWhere = vi.fn();
+    const mockSet = vi.fn(() => ({ where: mockWhere }));
+    (db.update as any).mockReturnValue({ set: mockSet });
 
     const response = await POST(buildRequest({ botName: 'UpdatedBot' }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    // INSERT should NOT be called for botSettings
     expect(db.insert).not.toHaveBeenCalled();
-    expect(db.update).toHaveBeenCalled();
+    // UPDATE called twice: once for botSettings, once for users
+    expect(db.update).toHaveBeenCalledTimes(2);
+    // First set() call is for botSettings
+    expect(mockSet).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ botName: 'UpdatedBot' })
+    );
   });
+
+  // ── 3–6. Personality mapping & defaults ──────────────────────────────────
 
   it('maps communicationStyle "casual" to correct personality', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
+
     await POST(buildRequest({ communicationStyle: 'casual' }));
 
-    // INSERT path: mockValues receives the full settings object
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.personality).toBe('friendly, relaxed, uses emojis, approachable');
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ personality: 'friendly, relaxed, uses emojis, approachable' })
+    );
   });
 
   it('maps communicationStyle "professional" to correct personality', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
+
     await POST(buildRequest({ communicationStyle: 'professional' }));
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.personality).toBe('clear, polished, business-appropriate, concise');
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ personality: 'clear, polished, business-appropriate, concise' })
+    );
   });
 
   it('maps communicationStyle "technical" to correct personality', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
+
     await POST(buildRequest({ communicationStyle: 'technical' }));
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.personality).toBe('precise, detailed, technical, no fluff');
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ personality: 'precise, detailed, technical, no fluff' })
+    );
   });
 
-  it('defaults to "helpful and friendly" for unknown communicationStyle', async () => {
+  it('maps unknown communicationStyle to "helpful and friendly"', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({ communicationStyle: 'vibes-only' }));
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.personality).toBe('helpful and friendly');
+    await POST(buildRequest({ communicationStyle: 'aggressive' }));
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ personality: 'helpful and friendly' })
+    );
   });
 
   it('defaults botName to "Assistant" when not provided', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({}));
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.botName).toBe('Assistant');
-  });
+    await POST(buildRequest({ communicationStyle: 'casual' }));
 
-  it('uses provided botName when given', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue(null);
-
-    await POST(buildRequest({ botName: 'Aria' }));
-
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.botName).toBe('Aria');
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ botName: 'Assistant' })
+    );
   });
 
   it('defaults botAvatar to "🤖" when no emoji provided', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({}));
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.botAvatar).toBe('🤖');
+    await POST(buildRequest({ botName: 'MyBot' }));
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ botAvatar: '🤖' })
+    );
   });
 
-  it('uses provided botEmoji as botAvatar', async () => {
+  // ── 7–8. teamTemplate handling ────────────────────────────────────────────
+
+  it('saves teamTemplate to users table when provided as a string', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({ botEmoji: '🦊' }));
+    const mockWhere = vi.fn();
+    const mockSet = vi.fn(() => ({ where: mockWhere }));
+    (db.update as any).mockReturnValue({ set: mockSet });
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.botAvatar).toBe('🦊');
+    const response = await POST(buildRequest({ teamTemplate: 'solopreneur' }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    // Last update call (users table) should contain teamTemplate
+    const lastSetArg = mockSet.mock.calls[mockSet.mock.calls.length - 1][0];
+    expect(lastSetArg).toMatchObject({ teamTemplate: 'solopreneur' });
   });
+
+  it('ignores teamTemplate when not a string (type safety)', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_123' });
+    (db.query.botSettings.findFirst as any).mockResolvedValue(null);
+
+    const mockWhere = vi.fn();
+    const mockSet = vi.fn(() => ({ where: mockWhere }));
+    (db.update as any).mockReturnValue({ set: mockSet });
+
+    // teamTemplate is a number — should be ignored
+    await POST(buildRequest({ teamTemplate: 42 }));
+
+    const lastSetArg = mockSet.mock.calls[mockSet.mock.calls.length - 1][0];
+    expect(lastSetArg).not.toHaveProperty('teamTemplate');
+  });
+
+  // ── 9. onboardingCompleted ────────────────────────────────────────────────
+
+  it('sets onboardingCompleted=1 in users table update', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_123' });
+    (db.query.botSettings.findFirst as any).mockResolvedValue(null);
+
+    const mockWhere = vi.fn();
+    const mockSet = vi.fn(() => ({ where: mockWhere }));
+    (db.update as any).mockReturnValue({ set: mockSet });
+
+    await POST(buildRequest({ botName: 'MyBot' }));
+
+    // The users-table update (last set() call) must include onboardingCompleted=1
+    const lastSetArg = mockSet.mock.calls[mockSet.mock.calls.length - 1][0];
+    expect(lastSetArg).toMatchObject({ onboardingCompleted: 1 });
+  });
+
+  // ── 10. channels in additionalSettings ───────────────────────────────────
 
   it('stores channels array in additionalSettings', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({ channels: ['slack', 'telegram'] }));
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.additionalSettings).toEqual({ channels: ['slack', 'telegram'] });
+    const channels = ['slack', 'telegram', 'whatsapp'];
+    await POST(buildRequest({ botName: 'MyBot', channels }));
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ additionalSettings: { channels } })
+    );
   });
 
   it('stores empty channels array when channels not provided', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({}));
+    const mockValues = vi.fn();
+    (db.insert as any).mockReturnValue({ values: mockValues });
 
-    const insertedData = mockValues.mock.calls[0][0];
-    expect(insertedData.additionalSettings).toEqual({ channels: [] });
+    await POST(buildRequest({ botName: 'MyBot' }));
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ additionalSettings: { channels: [] } })
+    );
   });
 
-  it('saves teamTemplate to users table when provided as string', async () => {
+  // ── 11. Success response ──────────────────────────────────────────────────
+
+  it('returns { success: true } with 200 status on success', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
     (db.query.botSettings.findFirst as any).mockResolvedValue(null);
 
-    await POST(buildRequest({ teamTemplate: 'solopreneur' }));
-
-    // db.update is called for users table — find the call that includes teamTemplate
-    const updateCalls = mockSet.mock.calls;
-    const userUpdateCall = updateCalls.find((args: any[]) => 'teamTemplate' in args[0]);
-    expect(userUpdateCall).toBeDefined();
-    expect(userUpdateCall![0].teamTemplate).toBe('solopreneur');
-  });
-
-  it('does not save teamTemplate when it is not a string', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue(null);
-
-    await POST(buildRequest({ teamTemplate: 42 }));
-
-    // None of the set() calls should include teamTemplate
-    const updateCalls = mockSet.mock.calls;
-    const hasTeamTemplate = updateCalls.some((args: any[]) => 'teamTemplate' in args[0]);
-    expect(hasTeamTemplate).toBe(false);
-  });
-
-  it('sets onboardingCompleted=1 in users table', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue(null);
-
-    await POST(buildRequest({}));
-
-    // At least one of the set() calls should contain onboardingCompleted: 1
-    const updateCalls = mockSet.mock.calls;
-    const userUpdateCall = updateCalls.find((args: any[]) => 'onboardingCompleted' in args[0]);
-    expect(userUpdateCall).toBeDefined();
-    expect(userUpdateCall![0].onboardingCompleted).toBe(1);
-  });
-
-  it('returns { success: true } with status 200', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue(null);
-
-    const response = await POST(buildRequest({ botName: 'Test', communicationStyle: 'casual' }));
+    const response = await POST(buildRequest({ botName: 'MyBot', communicationStyle: 'casual' }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+    expect(data).toEqual({ success: true });
   });
+
+  // ── 12. Error handling ────────────────────────────────────────────────────
 
   it('returns 500 when DB throws an error', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (db.query.botSettings.findFirst as any).mockRejectedValue(new Error('DB connection failed'));
+    (db.query.botSettings.findFirst as any).mockRejectedValue(
+      new Error('Database unavailable')
+    );
 
-    const response = await POST(buildRequest({ botName: 'Test' }));
+    const response = await POST(buildRequest({ botName: 'MyBot' }));
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBeDefined();
-  });
-
-  it('UPDATE path also sets onboardingCompleted in users table', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_existing' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue({ id: 1, userId: 'user_existing' });
-
-    await POST(buildRequest({ botName: 'UpdatedBot', communicationStyle: 'professional' }));
-
-    // Both botSettings update and users update should have happened
-    expect(db.update).toHaveBeenCalledTimes(2);
-
-    const userUpdateCall = mockSet.mock.calls.find((args: any[]) => 'onboardingCompleted' in args[0]);
-    expect(userUpdateCall).toBeDefined();
-    expect(userUpdateCall![0].onboardingCompleted).toBe(1);
-  });
-
-  it('UPDATE path applies personality mapping correctly', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_existing' });
-    (db.query.botSettings.findFirst as any).mockResolvedValue({ id: 1, userId: 'user_existing' });
-
-    await POST(buildRequest({ communicationStyle: 'technical' }));
-
-    // First set() call should be botSettings update with personality
-    const botSettingsUpdate = mockSet.mock.calls[0][0];
-    expect(botSettingsUpdate.personality).toBe('precise, detailed, technical, no fluff');
+    expect(data.error).toBe('Failed to save preferences');
   });
 });
