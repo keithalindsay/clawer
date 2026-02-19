@@ -382,6 +382,34 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
     defaultMember: 'invoices-billing',
   },
 
+  'growth-ops': {
+    industry: 'growth',
+    name: 'Growth Ops',
+    description: 'Two-agent growth automation for your business. Hunter scans the internet for leads and competitor intel, serving up a daily Kill Report. Shield monitors your SEO, brand, and competitive position, delivering a daily Wall Report. Both require human approval before acting.',
+    isDefault: false,
+    members: [
+      {
+        id: 'hunter',
+        name: 'Hunter',
+        role: 'Lead Generation & Competitor Intel',
+        emoji: '🎯',
+        description: 'Scans Reddit, X/Twitter, Indie Hackers, and HackerNews for leads and competitor weaknesses. Generates pre-written outreach. All outreach requires human approval.',
+        triggers: ['leads', 'outreach', 'competitor', 'prospects', 'kill report', 'opportunities', 'reddit', 'twitter', 'indie hackers', 'lead gen'],
+        quickPrompts: ["Show me today's Kill Report", "Find leads complaining about competitors", "What opportunities did you spot this week?"],
+      },
+      {
+        id: 'shield',
+        name: 'Shield',
+        role: 'SEO & Brand Defense',
+        emoji: '🛡️',
+        description: 'Monitors SEO rankings, competitor moves, brand mentions, and ecosystem news. Scores defensive posture and surfaces gaps with recommended fixes.',
+        triggers: ['seo', 'rankings', 'brand mentions', 'wall report', 'competitors', 'defensive', 'search', 'keyword', 'backlinks', 'content gap'],
+        quickPrompts: ["Show me today's Wall Report", "What are my SEO gaps?", "What are competitors doing this week?"],
+      },
+    ],
+    defaultMember: 'hunter',
+  },
+
 };
 
 /**
