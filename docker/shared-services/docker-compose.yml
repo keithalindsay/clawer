@@ -1,0 +1,167 @@
+# Clawer.ai Shared Services
+# ============================================================================
+# This compose file manages the shared infrastructure containers that all
+# user containers access via the clawer_shared Docker network.
+#
+# Deploy to: /opt/clawer-shared/docker-compose.yml on the production server
+#
+# Usage:
+#   docker compose up -d            # Start all services
+#   docker compose down             # Stop all services
+#   docker compose logs -f ollama   # Follow logs for a specific service
+#   docker compose pull             # Update images
+#
+# After starting, connect existing user containers:
+#   docker network connect clawer_shared <container_name>
+#
+# New user containers provisioned via provisioner.ts will be auto-connected
+# because --network clawer_shared is added to the docker run command.
+# ============================================================================
+
+services:
+
+  # ─── SearXNG ───────────────────────────────────────────────────────────────
+  # Self-hosted metasearch engine. Aggregates Google, DDG, Bing, Wikipedia.
+  # NOTE: This is already running as a standalone container on the server.
+  # If it's already running, you can either:
+  #   a) Stop the existing one and let compose manage it (recommended)
+  #   b) Just connect it to clawer_shared: docker network connect clawer_shared searxng
+  # This definition is here for completeness / future rebuilds.
+  # ─────────────────────────────────────────────────────────────────────────────
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    volumes:
+      - /opt/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    ports:
+      # Expose on host for direct browser access / debugging
+      # Not needed by user containers (they use searxng-proxy via Docker DNS)
+      - "0.0.0.0:8888:8080"
+    networks:
+      - clawer_shared
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── SearXNG Proxy ─────────────────────────────────────────────────────────
+  # Translates Brave Search API format → SearXNG format.
+  # OpenClaw's web_search tool uses Brave API format. This proxy shims it.
+  #
+  # User containers reach this via: http://searxng-proxy:8889
+  #
+  # Currently running as a bare Node process (/opt/searxng-proxy.js on host).
+  # This containerizes it for proper restart/health management.
+  # ─────────────────────────────────────────────────────────────────────────────
+  searxng-proxy:
+    image: node:22-alpine
+    container_name: searxng-proxy
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./proxy.js:/app/proxy.js:ro
+    command: ["node", "/app/proxy.js"]
+    environment:
+      - PROXY_PORT=8889
+      # Use Docker DNS name to reach SearXNG within the shared network
+      - SEARXNG_URL=http://searxng:8080
+    networks:
+      - clawer_shared
+    ports:
+      # Expose on host for backward compat (172.17.0.1:8889 still works)
+      # and for debugging
+      - "127.0.0.1:8889:8889"
+    depends_on:
+      searxng:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.2'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8889/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ─── Ollama ────────────────────────────────────────────────────────────────
+  # Local LLM runtime. Two uses:
+  #   1. Heartbeats — use qwen2.5:3b instead of MiniMax (saves money)
+  #   2. Embeddings — use nomic-embed-text instead of OpenAI (saves money)
+  #
+  # User containers reach this via: http://ollama:11434
+  #
+  # Model sizes:
+  #   qwen2.5:3b         — ~2.3 GB RAM  (heartbeats, simple tasks)
+  #   nomic-embed-text — ~270 MB RAM  (embeddings for memory_search)
+  #
+  # IMPORTANT: Add 4GB swap to the server BEFORE starting this service.
+  # See SHARED-SERVICES-ARCHITECTURE.md Phase 1, Step 1.1.
+  #
+  # After starting, pull models:
+  #   docker exec ollama ollama pull qwen2.5:3b
+  #   docker exec ollama ollama pull nomic-embed-text
+  # ─────────────────────────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      # Persist downloaded models — don't re-download on container restart
+      - ollama_models:/root/.ollama
+    environment:
+      # Limit concurrent requests to prevent any one user from hogging the model.
+      # Ollama queues beyond this. Raise to 2-3 as user count grows.
+      - OLLAMA_MAX_QUEUE=4
+      # Keep model loaded in RAM between requests (seconds). 
+      # 300s = 5 min idle before unloading. Balances RAM vs cold-start latency.
+      - OLLAMA_KEEP_ALIVE=300
+      # Disable GPU (CPU-only VPS)
+      - OLLAMA_NO_CUDA=1
+    networks:
+      - clawer_shared
+    ports:
+      # Expose on localhost for direct testing / model management
+      # Not needed by user containers (they use Docker DNS)
+      - "127.0.0.1:11434:11434"
+    deploy:
+      resources:
+        limits:
+          # qwen2.5:3b needs ~2.3 GB. Give 3 GB to handle spikes.
+          # nomic-embed-text is small — fits within this budget.
+          memory: 3G
+          # Allow up to 2 cores for inference (4-core VPS, leaves 2 for other services)
+          cpus: '2.0'
+        reservations:
+          # Reserve at least 512 MB so Linux doesn't OOM-kill Ollama under pressure
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# ─── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  ollama_models:
+    name: ollama_models
+    # Named volume — survives compose down/up, models don't need to be re-downloaded
+
+# ─── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  clawer_shared:
+    name: clawer_shared
+    # Declared external because the network was created manually (not by compose).
+    # This tells compose to use the existing network rather than creating a new one.
+    external: true

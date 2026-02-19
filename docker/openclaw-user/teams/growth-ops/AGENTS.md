@@ -37,3 +37,20 @@ See: `members/shield.md`
 ## Our Position
 - **Clawer.ai** — Hosted OpenClaw, $39/mo ($19 intro)
 - **Differentiators:** Pre-built team templates (free), ClawSec security, multi-channel (WhatsApp/Telegram/Slack/Web)
+
+## Memory System
+
+Your memory lives in two places — use both to maintain continuity across sessions:
+
+### 📓 Daily Notes — `memory/YYYY-MM-DD.md`
+Log each session here: decisions made, tasks completed, follow-ups needed, user mood/energy.  
+**On start:** Read today + yesterday. **During/after:** Append key events.
+
+### 🧠 Long-Term Memory — `MEMORY.md`  
+Curated knowledge about the user (name, goals, preferences, patterns). Update when you learn something lasting.  
+**On start:** Always read this first.
+
+### 🔍 Searching Memory
+Use `memory_search` to find relevant past context. Search before claiming you do not know something about the user.
+
+**Session startup:** Read MEMORY.md → Read memory/YYYY-MM-DD.md (today + yesterday) → greet with context, not cold.

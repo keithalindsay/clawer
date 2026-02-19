@@ -13,7 +13,7 @@ import { sshExec } from '@/lib/ssh';
 
 // v2026.2.16 image: correct api-server.js (Ed25519 auth), correct entrypoint.sh
 // DO NOT use 'ecommerce' — it has the old nonce-based api-server (breaks with v2026.2.16 gateway)
-const CONTAINER_IMAGE = 'clawer-openclaw:v2026.2.18';
+const CONTAINER_IMAGE = 'clawer-openclaw:v2026.2.19';
 const BASE_PORT = 4010;
 const MAX_PORT = 5000;
 

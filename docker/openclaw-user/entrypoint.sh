@@ -44,11 +44,38 @@ fi
 # Override primary model if explicitly set
 [ -n "$PRIMARY_MODEL" ] && PRIMARY="$PRIMARY_MODEL"
 
+# ─── Shared Services (Ollama) ──────────────────────────────────────────────
+# Ollama runs as a shared container accessible via Docker DNS on clawer_shared network
+OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
+HEARTBEAT_MODEL="${HEARTBEAT_MODEL:-ollama/qwen2.5:3b}"
+
+# Add Ollama as a provider for heartbeats and local inference
+OLLAMA_PROVIDER="\"ollama\":{\"baseUrl\":\"${OLLAMA_BASE_URL}\",\"api\":\"ollama\",\"models\":[{\"id\":\"qwen2.5:3b\",\"name\":\"Qwen2.5 3B (local)\",\"reasoning\":false,\"input\":[\"text\"],\"cost\":{\"input\":0,\"output\":0},\"contextWindow\":32768,\"maxTokens\":4096}]}"
+[ -n "$PROVIDERS" ] && PROVIDERS="${PROVIDERS},"
+PROVIDERS="${PROVIDERS}${OLLAMA_PROVIDER}"
+
+# ─── Memory search config (embeddings) ────────────────────────────────────
+# Priority: OpenAI (best quality) > Gemini > Ollama local (free) > disabled
+# Must be built before env vars are cleared
+MEMORY_SEARCH_CONFIG=""
+if [ -n "$OPENAI_KEY" ]; then
+  MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"openai\",\"remote\":{\"apiKey\":\"${OPENAI_KEY}\"}}"
+  echo "Memory search configured with provider: openai"
+elif [ -n "$GEMINI_KEY" ]; then
+  MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"gemini\",\"remote\":{\"apiKey\":\"${GEMINI_KEY}\"}}"
+  echo "Memory search configured with provider: gemini"
+else
+  # Note: Ollama-based embeddings are not yet supported in this version of OpenClaw
+  # When supported, this will use nomic-embed-text via Ollama
+  # FUTURE: elif [ -n "$OLLAMA_BASE_URL" ]; then ...
+  echo "WARNING: No embedding provider available — memory_search will be disabled"
+fi
+
 # Generate config file
 cat > /home/user/.openclaw/openclaw.json << EOF
 {
   "models": {"providers": {${PROVIDERS}}},
-  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd"}},
+  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd"${MEMORY_SEARCH_CONFIG}}},
   "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}, "controlUi": {"allowInsecureAuth": true, "dangerouslyDisableDeviceAuth": true}},
   "plugins": {"entries": {"whatsapp": {"enabled": true}, "telegram": {"enabled": true}}},
   "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}},
@@ -61,18 +88,37 @@ echo "OpenClaw config created. Primary model: ${PRIMARY}"
 # Clear sensitive env vars
 unset OPENAI_API_KEY GEMINI_API_KEY MINIMAX_API_KEY
 
-# Install team template
+# Install default workspace files (copy-on-missing — never overwrites existing user files)
+# Runs every boot; safe because we check before copying each file.
+# AGENTS.md is skipped here — team-specific version is installed below.
+DEFAULTS_DIR="/opt/defaults"
+if [ -d "$DEFAULTS_DIR" ]; then
+  for f in "$DEFAULTS_DIR"/*; do
+    fname=$(basename "$f")
+    dest="/home/user/clawd/$fname"
+    [ "$fname" = "AGENTS.md" ] && continue   # handled by team template below
+    if [ ! -f "$dest" ]; then
+      cp "$f" "$dest" && echo "Installed default: $fname"
+    fi
+  done
+fi
+
+# Install team-specific AGENTS.md (first boot only — preserves user customizations)
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
 TEAM_DIR="/opt/teams/${TEAM_TEMPLATE}"
-# Only install template if user hasn't customized AGENTS.md (preserves data on volume-mounted restarts)
 if [ -d "$TEAM_DIR" ] && [ ! -f /home/user/clawd/AGENTS.md ]; then
   cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md 2>/dev/null && echo "Team template installed: ${TEAM_TEMPLATE}"
 else
   echo "AGENTS.md already exists, skipping template install"
 fi
 
+# Ensure memory directory exists
+mkdir -p /home/user/clawd/memory
+
 # Patch Brave search URL to use local SearXNG proxy
-SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://172.17.0.1:8889/res/v1/web/search}"
+# Default uses Docker DNS name (works when container is on clawer_shared network)
+# Override with SEARXNG_PROXY_URL env var for containers not on the shared network
+SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://searxng-proxy:8889/res/v1/web/search}"
 for f in $(grep -rl "api.search.brave.com" /usr/local/lib/node_modules/openclaw/dist/ 2>/dev/null); do
     sed -i "s|https://api.search.brave.com/res/v1/web/search|${SEARXNG_PROXY_URL}|g" "$f"
 done

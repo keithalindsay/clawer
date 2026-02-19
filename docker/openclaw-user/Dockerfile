@@ -15,7 +15,7 @@ RUN npm install -g /tmp/openclaw-2026.2.18.tgz && rm /tmp/openclaw-2026.2.18.tgz
 
 # Copy files
 COPY config-template.json /home/user/.openclaw/openclaw.json.template
-COPY SOUL.md /home/user/clawd/SOUL.md
+COPY defaults/ /opt/defaults/
 COPY api-server.js /usr/local/bin/api-server.js
 COPY teams/ /opt/teams/
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
