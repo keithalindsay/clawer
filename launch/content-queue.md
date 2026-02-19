@@ -19,7 +19,7 @@
    - **Word count:** 2,500-3,500
    - **Priority:** 🔴 Cluster post linking to /blog/best-openclaw-hosting
 
-2. [ ] `/blog/how-to-set-up-openclaw`
+2. [x] `/blog/how-to-set-up-openclaw` — "How to Set Up OpenClaw in 2026: Complete Guide" (Feb 19)
    - **Title:** "How to Set Up OpenClaw in 2026: Complete Guide"
    - **Target keywords:** how to set up openclaw, openclaw setup guide, openclaw without server, openclaw setup without coding
    - **Angle:** Show the full self-hosted setup (Docker, config, channels) then the 60-second Clawer way. Highest volume keyword in the category.
