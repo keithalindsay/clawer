@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { NextRequest } from "next/server";
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
 // vi.hoisted() runs before the vi.mock() factory, so mockVerify is available
@@ -69,7 +70,7 @@ function buildClerkRequest(
     }
   }
 
-  return new Request('http://localhost/api/webhooks/clerk', {
+  return new NextRequest('http://localhost/api/webhooks/clerk', {
     method: 'POST',
     body,
     headers: finalHeaders,

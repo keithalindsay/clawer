@@ -205,8 +205,8 @@ export default function PricingPage() {
                 <span className="ml-1 text-lg text-gray-500">{tier.period}</span>
               </div>
 
-              {"billingNote" in tier && tier.billingNote && (
-                <p className="mt-1 text-sm text-gray-500">{tier.billingNote}</p>
+              {"billingNote" in tier && (tier as any).billingNote && (
+                <p className="mt-1 text-sm text-gray-500">{(tier as any).billingNote}</p>
               )}
 
               <p className="mt-2 text-gray-600 text-sm">{tier.description}</p>

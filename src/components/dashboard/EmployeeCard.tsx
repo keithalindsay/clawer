@@ -70,7 +70,7 @@ export function EmployeeCard({ employee, index = 0 }: EmployeeCardProps) {
     return `${diffDays}d ago`;
   };
 
-  const cardVariants = {
+  const cardVariants: any = {
     hidden: { 
       opacity: 0, 
       y: 20 

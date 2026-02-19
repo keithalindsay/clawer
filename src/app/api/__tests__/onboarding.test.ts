@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from "next/server";
 
 // ── Mocks (hoisted to top by vitest) ──────────────────────────────────────────
 
@@ -25,7 +26,7 @@ import { db } from '@/lib/db';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildRequest(body: Record<string, unknown> = {}) {
-  return new Request('http://localhost:3000/api/onboarding', {
+  return new NextRequest('http://localhost:3000/api/onboarding', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -203,7 +204,7 @@ describe('POST /api/onboarding', () => {
 
     expect(response.status).toBe(200);
     // Last update call (users table) should contain teamTemplate
-    const lastSetArg = mockSet.mock.calls[mockSet.mock.calls.length - 1][0];
+    const lastSetArg = (mockSet.mock.calls[mockSet.mock.calls.length - 1] as any)[0];
     expect(lastSetArg).toMatchObject({ teamTemplate: 'solopreneur' });
   });
 
@@ -218,7 +219,7 @@ describe('POST /api/onboarding', () => {
     // teamTemplate is a number — should be ignored
     await POST(buildRequest({ teamTemplate: 42 }));
 
-    const lastSetArg = mockSet.mock.calls[mockSet.mock.calls.length - 1][0];
+    const lastSetArg = (mockSet.mock.calls[mockSet.mock.calls.length - 1] as any)[0];
     expect(lastSetArg).not.toHaveProperty('teamTemplate');
   });
 
@@ -235,7 +236,7 @@ describe('POST /api/onboarding', () => {
     await POST(buildRequest({ botName: 'MyBot' }));
 
     // The users-table update (last set() call) must include onboardingCompleted=1
-    const lastSetArg = mockSet.mock.calls[mockSet.mock.calls.length - 1][0];
+    const lastSetArg = (mockSet.mock.calls[mockSet.mock.calls.length - 1] as any)[0];
     expect(lastSetArg).toMatchObject({ onboardingCompleted: 1 });
   });
 
