@@ -1,39 +1,8 @@
-/**
- * Tests for POST /api/chat
- * src/app/api/chat/route.ts
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const {
-  mockUsersQuery,
-  mockBotsQuery,
-  mockConversationsQuery,
-  mockUpdateSetWhere,
-  mockUpdateSet,
-  mockUpdate,
-  mockInsertReturning,
-  mockInsertValues,
-  mockInsert,
-} = vi.hoisted(() => {
-  const mockUpdateSetWhere = vi.fn();
-  const mockUpdateSet = vi.fn(() => ({ where: mockUpdateSetWhere }));
-  const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
-  const mockInsertReturning = vi.fn();
-  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }));
-  const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
-  return {
-    mockUsersQuery: vi.fn(),
-    mockBotsQuery: vi.fn(),
-    mockConversationsQuery: vi.fn(),
-    mockUpdateSetWhere,
-    mockUpdateSet,
-    mockUpdate,
-    mockInsertReturning,
-    mockInsertValues,
-    mockInsert,
-  };
-});
+// ──────────────────────────────────────────────
+// Module mocks (hoisted — must precede all imports)
+// ──────────────────────────────────────────────
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -48,12 +17,12 @@ vi.mock('@/lib/rate-limit', () => ({
 vi.mock('@/lib/db', () => ({
   db: {
     query: {
-      users: { findFirst: mockUsersQuery },
-      bots: { findFirst: mockBotsQuery },
-      conversations: { findFirst: mockConversationsQuery },
+      users: { findFirst: vi.fn() },
+      bots: { findFirst: vi.fn() },
+      conversations: { findFirst: vi.fn() },
     },
-    update: mockUpdate,
-    insert: mockInsert,
+    update: vi.fn(),
+    insert: vi.fn(),
   },
 }));
 
@@ -64,453 +33,539 @@ vi.mock('@/lib/container-client', () => ({
 }));
 
 vi.mock('@/lib/router', () => ({
-  routeRequest: vi.fn(() => ({
-    tier: 'SIMPLE',
-    model: 'google/gemini-2.0-flash-lite',
-    confidence: 0.95,
-    signals: ['simple_question'],
-    costEstimate: 0.0001,
-    baselineCost: 0.01,
-    savings: 0.99,
-    useOrchestrator: false,
-  })),
+  routeRequest: vi.fn(),
 }));
 
 vi.mock('@/lib/teams', () => ({
   getTeamConfig: vi.fn(),
   getAgentFromTeam: vi.fn(),
-  buildAgentSystemPrompt: vi.fn(() => 'You are Scout, a research agent.'),
+  buildAgentSystemPrompt: vi.fn(),
 }));
 
+// ──────────────────────────────────────────────
+// Imports (after mocks)
+// ──────────────────────────────────────────────
+
+import { POST } from '../chat/route';
 import { auth } from '@clerk/nextjs/server';
 import { checkUserRateLimit, trackDailyUsage, checkDailyLimit } from '@/lib/rate-limit';
+import { db } from '@/lib/db';
 import { containerApi } from '@/lib/container-client';
-import { getTeamConfig, getAgentFromTeam } from '@/lib/teams';
-import { POST } from '../chat/route';
+import { routeRequest } from '@/lib/router';
+import { getTeamConfig, getAgentFromTeam, buildAgentSystemPrompt } from '@/lib/teams';
 
-// Default mock returns
-const DEFAULT_RATE_LIMIT_OK = {
-  allowed: true,
-  remaining: 99,
-  limit: 100,
-  resetAt: new Date(Date.now() + 60000),
-};
+// ──────────────────────────────────────────────
+// Test helpers
+// ──────────────────────────────────────────────
 
-const DEFAULT_FREE_USER = {
-  id: 'user_123',
-  tier: 'free',
-  stripeSubscriptionId: null,
-  containerPort: null,
-  containerStatus: null,
-  freeMessagesUsed: 0,
-  teamTemplate: 'lifeos',
-  name: 'Test User',
-};
-
-const DEFAULT_PAID_USER = {
-  id: 'user_123',
-  tier: 'pro',
-  stripeSubscriptionId: 'sub_stripe_123',
-  containerPort: 4100,
-  containerStatus: 'running',
-  freeMessagesUsed: 0,
-  teamTemplate: 'lifeos',
-  name: 'Test User',
-};
-
-function makeRequest(body: Record<string, unknown>) {
-  return new Request('http://localhost/api/chat', {
+function buildRequest(body: Record<string, unknown>) {
+  return new Request('http://localhost:3000/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-describe('POST /api/chat — Authentication & validation', () => {
+function setupRateLimitPassed() {
+  (checkUserRateLimit as any).mockResolvedValue({
+    allowed: true,
+    remaining: 99,
+    limit: 100,
+    resetAt: new Date(Date.now() + 3_600_000),
+  });
+}
+
+function setupRateLimitFailed() {
+  const resetAt = new Date(Date.now() + 30_000); // 30 seconds from now
+  (checkUserRateLimit as any).mockResolvedValue({
+    allowed: false,
+    remaining: 0,
+    limit: 100,
+    resetAt,
+  });
+  return resetAt;
+}
+
+/** Queues two findFirst responses: tier-only record, then full user record. */
+function setupFreeUserDB(overrides: Record<string, unknown> = {}) {
+  const fullUser = {
+    stripeSubscriptionId: null,
+    containerPort: null,
+    containerStatus: null,
+    freeMessagesUsed: 0,
+    teamTemplate: 'lifeos',
+    name: 'Test User',
+    ...overrides,
+  };
+  (db.query.users.findFirst as any)
+    .mockResolvedValueOnce({ tier: 'free' }) // first call: tier check
+    .mockResolvedValueOnce(fullUser);         // second call: full user
+}
+
+/** Queues two findFirst responses for a paid/pro user. */
+function setupPaidUserDB(overrides: Record<string, unknown> = {}) {
+  const fullUser = {
+    stripeSubscriptionId: 'sub_123',
+    containerPort: 4200,
+    containerStatus: 'running',
+    freeMessagesUsed: 50,
+    teamTemplate: 'lifeos',
+    name: 'Paid User',
+    ...overrides,
+  };
+  (db.query.users.findFirst as any)
+    .mockResolvedValueOnce({ tier: 'pro' }) // first call: tier check
+    .mockResolvedValueOnce(fullUser);        // second call: full user
+}
+
+function setupContainerSuccess(content = 'Hello! How can I help?') {
+  (containerApi.chat as any).mockResolvedValue({
+    data: { content },
+    error: null,
+    status: 200,
+  });
+}
+
+// ──────────────────────────────────────────────
+// Test suite
+// ──────────────────────────────────────────────
+
+describe('POST /api/chat', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
 
-  it('returns 401 when unauthenticated', async () => {
-    (auth as any).mockResolvedValue({ userId: null });
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(401);
-  });
-
-  it('returns 400 when message is missing', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    const req = makeRequest({});
-    const response = await POST(req as any);
-    expect(response.status).toBe(400);
-  });
-
-  it('returns 400 when message is not a string', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    const req = makeRequest({ message: 42 });
-    const response = await POST(req as any);
-    expect(response.status).toBe(400);
-  });
-
-  it('returns 400 when message exceeds MAX_MESSAGE_LENGTH (32768)', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    const longMessage = 'a'.repeat(32769);
-    const req = makeRequest({ message: longMessage });
-    const response = await POST(req as any);
-    expect(response.status).toBe(400);
-  });
-});
-
-describe('POST /api/chat — Rate limiting', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockUsersQuery.mockResolvedValue({ tier: 'free' });
-  });
-
-  it('returns 429 when rate limit exceeded', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (checkUserRateLimit as any).mockResolvedValue({
-      allowed: false,
-      remaining: 0,
-      limit: 20,
-      resetAt: new Date(Date.now() + 30000),
+    // Default smart-router response
+    (routeRequest as any).mockReturnValue({
+      tier: 'SIMPLE',
+      model: 'google/gemini-2.0-flash-lite',
+      confidence: 0.95,
+      signals: ['simple_greeting'],
     });
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(429);
-  });
 
-  it('429 response includes Retry-After header', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (checkUserRateLimit as any).mockResolvedValue({
-      allowed: false,
-      remaining: 0,
-      limit: 20,
-      resetAt: new Date(Date.now() + 30000),
+    // Default: daily limit is not hit, trackDailyUsage is a no-op
+    (checkDailyLimit as any).mockReturnValue(true);
+    (trackDailyUsage as any).mockReturnValue(undefined);
+
+    // Default db.update chain (used for freeMessagesUsed increment)
+    (db.update as any).mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
     });
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.headers.get('Retry-After')).toBeTruthy();
-  });
 
-  it('429 response includes X-RateLimit headers', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (checkUserRateLimit as any).mockResolvedValue({
-      allowed: false,
-      remaining: 0,
-      limit: 20,
-      resetAt: new Date(Date.now() + 30000),
+    // Default db.insert chain — supports both:
+    //   db.insert(conversations).values({}).returning()   → returns array
+    //   db.insert(messages).values([...])                 → return value unused
+    (db.insert as any).mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([
+          { id: 'conv_new', userId: 'user_123', agentId: 'agent_1' },
+        ]),
+      }),
     });
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.headers.get('X-RateLimit-Limit')).toBeTruthy();
-    expect(response.headers.get('X-RateLimit-Remaining')).toBeTruthy();
-  });
 
-  it('rate limited response has error=rate_limited', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (checkUserRateLimit as any).mockResolvedValue({
-      allowed: false,
-      remaining: 0,
-      limit: 20,
-      resetAt: new Date(Date.now() + 30000),
+    // Default: no existing agent conversation; a bot exists for the user
+    (db.query.conversations.findFirst as any).mockResolvedValue(null);
+    (db.query.bots.findFirst as any).mockResolvedValue({
+      id: 'bot_123',
+      userId: 'user_123',
     });
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    const body = await response.json();
-    expect(body.error).toBe('rate_limited');
-  });
-});
 
-describe('POST /api/chat — Free tier message cap', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockUsersQuery.mockResolvedValue({ tier: 'free' });
-    (checkUserRateLimit as any).mockResolvedValue(DEFAULT_RATE_LIMIT_OK);
+    // Default agent prompt builder response
+    (buildAgentSystemPrompt as any).mockReturnValue('You are a helpful agent.');
+
+    // Default container success response
+    setupContainerSuccess();
   });
 
-  it('returns 403 with free_trial_exceeded when freeMessagesUsed >= 200', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    // First call for tier check, second call for full user details
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({
-        ...DEFAULT_FREE_USER,
-        freeMessagesUsed: 200,
+  // ──────────────────────────────────────────
+  describe('Authentication & input validation', () => {
+    it('1. returns 401 when unauthenticated', async () => {
+      (auth as any).mockResolvedValue({ userId: null });
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe('Unauthorized');
+    });
+
+    it('2. returns 400 when message is missing', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+
+      const res = await POST(buildRequest({}) as any);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toMatch(/message/i);
+    });
+
+    it('3. returns 400 when message is not a string', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+
+      const res = await POST(buildRequest({ message: 123 }) as any);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toMatch(/message/i);
+    });
+
+    it('4. returns 400 when message exceeds MAX_MESSAGE_LENGTH (32768 chars)', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+
+      const tooLong = 'a'.repeat(32_769);
+      const res = await POST(buildRequest({ message: tooLong }) as any);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toMatch(/too long/i);
+    });
+
+    it('5. strips null bytes from message before processing', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+
+      const res = await POST(buildRequest({ message: 'hello\0world' }) as any);
+
+      expect(res.status).toBe(200);
+      // containerApi.chat must receive the sanitized string (no null bytes)
+      expect(containerApi.chat).toHaveBeenCalled();
+      const [, receivedMessage] = (containerApi.chat as any).mock.calls[0];
+      expect(receivedMessage).toBe('helloworld');
+    });
+  });
+
+  // ──────────────────────────────────────────
+  describe('Rate limiting', () => {
+    it('6. returns 429 with error=rate_limited when rate limit exceeded', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      (db.query.users.findFirst as any).mockResolvedValueOnce({ tier: 'free' });
+      setupRateLimitFailed();
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(429);
+      const data = await res.json();
+      expect(data.error).toBe('rate_limited');
+    });
+
+    it('7. includes Retry-After header in rate-limited response', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      (db.query.users.findFirst as any).mockResolvedValueOnce({ tier: 'free' });
+      setupRateLimitFailed();
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      const retryAfter = res.headers.get('Retry-After');
+      expect(retryAfter).toBeTruthy();
+      expect(Number(retryAfter)).toBeGreaterThan(0);
+    });
+
+    it('8. includes X-RateLimit-Limit and X-RateLimit-Remaining headers when rate limited', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      (db.query.users.findFirst as any).mockResolvedValueOnce({ tier: 'free' });
+      setupRateLimitFailed();
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
+      expect(res.headers.get('X-RateLimit-Remaining')).toBe('0');
+    });
+  });
+
+  // ──────────────────────────────────────────
+  describe('Free tier — total message cap', () => {
+    it('9. returns 403 with free_trial_exceeded when freeMessagesUsed >= 200', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB({ freeMessagesUsed: 200 });
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toBe('free_trial_exceeded');
+    });
+
+    it('10. 403 response includes upgradeUrl, freeMessagesUsed, and freeMessageLimit', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB({ freeMessagesUsed: 200 });
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+      const data = await res.json();
+
+      expect(data.upgradeUrl).toBe('/pricing');
+      expect(data.freeMessagesUsed).toBe(200);
+      expect(data.freeMessageLimit).toBe(200);
+    });
+  });
+
+  // ──────────────────────────────────────────
+  describe('Free tier — daily limit', () => {
+    it('11. returns 429 with daily_limit_exceeded when daily limit is hit', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB({ freeMessagesUsed: 5 });
+      (checkDailyLimit as any).mockReturnValue(false);
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(429);
+      const data = await res.json();
+      expect(data.error).toBe('daily_limit_exceeded');
+    });
+
+    it('12. calls trackDailyUsage when daily limit is not hit', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+
+      await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(trackDailyUsage).toHaveBeenCalledWith('user_123');
+    });
+
+    it('13. routes free users to FREE_TIER_PORT (4000)', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+
+      await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(containerApi.chat).toHaveBeenCalled();
+      const [port] = (containerApi.chat as any).mock.calls[0];
+      expect(port).toBe(4000);
+    });
+
+    it('14. increments freeMessagesUsed counter on successful free-tier message', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+
+      await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(db.update).toHaveBeenCalled();
+    });
+  });
+
+  // ──────────────────────────────────────────
+  describe('Paid tier routing', () => {
+    it('15. returns 503 when user has no containerPort', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupPaidUserDB({ containerPort: null });
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(503);
+      const data = await res.json();
+      expect(data.error).toMatch(/not provisioned/i);
+    });
+
+    it('16. returns 503 when containerStatus is not running', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupPaidUserDB({ containerStatus: 'stopped' });
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(503);
+      const data = await res.json();
+      expect(data.error).toMatch(/stopped/i);
+    });
+
+    it('17. routes paid users to their dedicated containerPort', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupPaidUserDB({ containerPort: 4200, containerStatus: 'running' });
+
+      await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(containerApi.chat).toHaveBeenCalled();
+      const [port] = (containerApi.chat as any).mock.calls[0];
+      expect(port).toBe(4200);
+    });
+  });
+
+  // ──────────────────────────────────────────
+  describe('Agent routing', () => {
+    const mockAgent = {
+      id: 'scout',
+      name: 'Scout',
+      role: 'Research',
+      emoji: '🔍',
+      description: 'Research agent',
+      triggers: [],
+    };
+    const mockTeamConfig = { id: 'lifeos', name: 'Life OS', agents: [mockAgent] };
+
+    it('18. returns 404 when team template not found', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (getTeamConfig as any).mockReturnValue(null);
+
+      const res = await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
+
+      expect(res.status).toBe(404);
+      const data = await res.json();
+      expect(data.error).toMatch(/team template/i);
+    });
+
+    it('19. returns 404 when agentId not found in team', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (getTeamConfig as any).mockReturnValue(mockTeamConfig);
+      (getAgentFromTeam as any).mockReturnValue(null);
+
+      const res = await POST(buildRequest({ message: 'hello', agentId: 'bad_agent' }) as any);
+
+      expect(res.status).toBe(404);
+      const data = await res.json();
+      expect(data.error).toMatch(/agent not found/i);
+    });
+
+    it('20. calls buildAgentSystemPrompt with agent, teamConfig, and user name', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB({ name: 'Alice' });
+      (getTeamConfig as any).mockReturnValue(mockTeamConfig);
+      (getAgentFromTeam as any).mockReturnValue(mockAgent);
+
+      await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
+
+      expect(buildAgentSystemPrompt).toHaveBeenCalledWith(mockAgent, mockTeamConfig, 'Alice');
+    });
+
+    it('21. creates new agent conversation when none exists', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (getTeamConfig as any).mockReturnValue(mockTeamConfig);
+      (getAgentFromTeam as any).mockReturnValue(mockAgent);
+      (db.query.conversations.findFirst as any).mockResolvedValue(null); // no existing conv
+
+      await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
+
+      // db.insert should have been called to create the new conversation
+      expect(db.insert).toHaveBeenCalled();
+    });
+
+    it('22. uses existing agent conversation when found', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (getTeamConfig as any).mockReturnValue(mockTeamConfig);
+      (getAgentFromTeam as any).mockReturnValue(mockAgent);
+      (db.query.conversations.findFirst as any).mockResolvedValue({
+        id: 'conv_existing',
+        userId: 'user_123',
+        agentId: 'scout',
       });
 
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(403);
-    const body = await response.json();
-    expect(body.error).toBe('free_trial_exceeded');
-  });
+      const res = await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
+      const data = await res.json();
 
-  it('free_trial_exceeded response includes upgradeUrl', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER, freeMessagesUsed: 200 });
-
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    const body = await response.json();
-    expect(body.upgradeUrl).toBe('/pricing');
-  });
-
-  it('returns 429 with daily_limit_exceeded when daily limit hit', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER, freeMessagesUsed: 5 });
-    (checkDailyLimit as any).mockReturnValue(false);
-
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(429);
-    const body = await response.json();
-    expect(body.error).toBe('daily_limit_exceeded');
-  });
-
-  it('calls trackDailyUsage when daily limit not hit', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER });
-    (checkDailyLimit as any).mockReturnValue(true);
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'Hello back!' },
-      error: null,
-      status: 200,
+      expect(data.conversationId).toBe('conv_existing');
     });
-    mockBotsQuery.mockResolvedValue({ id: 'bot_1', userId: 'user_123' });
-    mockConversationsQuery.mockResolvedValue(null);
-    mockInsertReturning.mockResolvedValue([{ id: 'conv_1' }]);
-    mockUpdateSetWhere.mockResolvedValue(undefined);
 
-    const req = makeRequest({ message: 'hello' });
-    await POST(req as any);
-    expect(trackDailyUsage).toHaveBeenCalledWith('user_123');
+    it('23. saves both user and assistant messages to DB after successful response', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (getTeamConfig as any).mockReturnValue(mockTeamConfig);
+      (getAgentFromTeam as any).mockReturnValue(mockAgent);
+      // Use an existing conversation so conversationId is set
+      (db.query.conversations.findFirst as any).mockResolvedValue({
+        id: 'conv_123',
+        userId: 'user_123',
+        agentId: 'scout',
+      });
+      setupContainerSuccess('Great answer!');
+
+      await POST(buildRequest({ message: 'test message', agentId: 'scout' }) as any);
+
+      // db.insert should be called (for messages persistence)
+      expect(db.insert).toHaveBeenCalled();
+    });
   });
-});
 
-describe('POST /api/chat — Paid tier routing', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (checkUserRateLimit as any).mockResolvedValue(DEFAULT_RATE_LIMIT_OK);
-  });
+  // ──────────────────────────────────────────
+  describe('Success path', () => {
+    it('24. calls containerApi.chat with port, sanitized message, context, settings+routing, and token', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
 
-  it('returns 503 when containerPort is null', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'pro' })
-      .mockResolvedValueOnce({
-        ...DEFAULT_PAID_USER,
-        containerPort: null,
+      await POST(buildRequest({ message: 'hello', context: { history: [] } }) as any);
+
+      expect(containerApi.chat).toHaveBeenCalled();
+      const [port, msg, , settings] = (containerApi.chat as any).mock.calls[0];
+      expect(port).toBe(4000);                          // FREE_TIER_PORT
+      expect(msg).toBe('hello');                        // sanitized message
+      expect(settings).toMatchObject({                  // routing fields merged into settings
+        model: 'google/gemini-2.0-flash-lite',
+        tier: 'SIMPLE',
+        confidence: 0.95,
+      });
+    });
+
+    it('25. returns { content, routing } on success (conversationId present when agent used)', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      setupContainerSuccess('Here is the answer!');
+
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.content).toBe('Here is the answer!');
+      // conversationId is undefined (no agentId) so it's omitted from JSON
+      expect(data.conversationId).toBeUndefined();
+      expect(data).toHaveProperty('routing');
+    });
+
+    it('26. returns container error with original status code', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (containerApi.chat as any).mockResolvedValue({
+        error: 'Model overloaded',
+        status: 503,
+        data: null,
       });
 
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(503);
-  });
+      const res = await POST(buildRequest({ message: 'hello' }) as any);
 
-  it('returns 503 when containerStatus is not running', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'pro' })
-      .mockResolvedValueOnce({
-        ...DEFAULT_PAID_USER,
-        containerStatus: 'stopped',
+      expect(res.status).toBe(503);
+      const data = await res.json();
+      expect(data.error).toBe('Model overloaded');
+    });
+
+    it('27. routing object includes tier, model, and confidence', async () => {
+      (auth as any).mockResolvedValue({ userId: 'user_123' });
+      setupRateLimitPassed();
+      setupFreeUserDB();
+      (routeRequest as any).mockReturnValue({
+        tier: 'COMPLEX',
+        model: 'google/gemini-3-flash',
+        confidence: 0.85,
+        signals: ['complex_reasoning'],
       });
 
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(503);
-  });
-});
+      const res = await POST(buildRequest({ message: 'analyze this carefully' }) as any);
 
-describe('POST /api/chat — Agent routing', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (checkUserRateLimit as any).mockResolvedValue(DEFAULT_RATE_LIMIT_OK);
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER });
-    (checkDailyLimit as any).mockReturnValue(true);
-  });
-
-  it('returns 404 when agentId provided but team config not found', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (getTeamConfig as any).mockReturnValue(null);
-
-    const req = makeRequest({ message: 'hello', agentId: 'researcher' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(404);
-  });
-
-  it('returns 404 when agentId not found in team', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    (getTeamConfig as any).mockReturnValue({
-      name: 'Life OS',
-      members: [{ id: 'researcher', name: 'Scout' }],
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.routing).toEqual({
+        tier: 'COMPLEX',
+        model: 'google/gemini-3-flash',
+        confidence: 0.85,
+      });
     });
-    (getAgentFromTeam as any).mockReturnValue(null);
-
-    const req = makeRequest({ message: 'hello', agentId: 'nonexistent' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(404);
-  });
-
-  it('calls buildAgentSystemPrompt when valid agent provided', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    const mockAgent = { id: 'researcher', name: 'Scout', role: 'Researcher', emoji: '🔬' };
-    const mockTeam = { name: 'Life OS', members: [mockAgent] };
-    (getTeamConfig as any).mockReturnValue(mockTeam);
-    (getAgentFromTeam as any).mockReturnValue(mockAgent);
-    mockConversationsQuery.mockResolvedValue(null);
-    mockBotsQuery.mockResolvedValue({ id: 'bot_1', userId: 'user_123' });
-    mockInsertReturning.mockResolvedValue([{ id: 'conv_agent_1' }]);
-    mockUpdateSetWhere.mockResolvedValue(undefined);
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'Research complete!' },
-      error: null,
-      status: 200,
-    });
-
-    const { buildAgentSystemPrompt } = await import('@/lib/teams');
-    const req = makeRequest({ message: 'research this', agentId: 'researcher' });
-    await POST(req as any);
-    expect(buildAgentSystemPrompt).toHaveBeenCalledWith(mockAgent, mockTeam, 'Test User');
-  });
-
-  it('saves user and assistant messages when conversationId exists', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    const mockAgent = { id: 'researcher', name: 'Scout', role: 'Researcher', emoji: '🔬' };
-    const mockTeam = { name: 'Life OS', members: [mockAgent] };
-    (getTeamConfig as any).mockReturnValue(mockTeam);
-    (getAgentFromTeam as any).mockReturnValue(mockAgent);
-    // Existing conversation
-    mockConversationsQuery.mockResolvedValue({ id: 'conv_existing' });
-    mockUpdateSetWhere.mockResolvedValue(undefined);
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'Research done!' },
-      error: null,
-      status: 200,
-    });
-    mockInsertValues.mockResolvedValue(undefined);
-
-    const req = makeRequest({ message: 'research this', agentId: 'researcher' });
-    await POST(req as any);
-
-    // messages.insert should have been called to save the conversation
-    expect(mockInsert).toHaveBeenCalled();
-  });
-});
-
-describe('POST /api/chat — Success path', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (checkUserRateLimit as any).mockResolvedValue(DEFAULT_RATE_LIMIT_OK);
-    (checkDailyLimit as any).mockReturnValue(true);
-    mockBotsQuery.mockResolvedValue({ id: 'bot_1', userId: 'user_123' });
-    mockConversationsQuery.mockResolvedValue(null);
-    mockInsertReturning.mockResolvedValue([{ id: 'conv_new' }]);
-    mockUpdateSetWhere.mockResolvedValue(undefined);
-  });
-
-  it('returns { content, conversationId, routing } on success', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER });
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'Hello back!' },
-      error: null,
-      status: 200,
-    });
-
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body).toHaveProperty('content');
-    expect(body).toHaveProperty('routing');
-    expect(body.routing).toHaveProperty('tier');
-    expect(body.routing).toHaveProperty('model');
-    expect(body.routing).toHaveProperty('confidence');
-  });
-
-  it('strips null bytes from message before processing', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER });
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'Response' },
-      error: null,
-      status: 200,
-    });
-
-    const req = makeRequest({ message: 'hello\0world' });
-    await POST(req as any);
-
-    // containerApi.chat should have been called with sanitized message (no null bytes)
-    const chatCall = (containerApi.chat as any).mock.calls[0];
-    expect(chatCall[1]).toBe('helloworld'); // null byte stripped
-  });
-
-  it('returns container error when result.error is set', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER });
-    (containerApi.chat as any).mockResolvedValue({
-      data: null,
-      error: 'Model overloaded',
-      status: 503,
-    });
-
-    const req = makeRequest({ message: 'hello' });
-    const response = await POST(req as any);
-    expect(response.status).toBe(503);
-    const body = await response.json();
-    expect(body.error).toBe('Model overloaded');
-  });
-
-  it('routing object includes tier, model, confidence', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'free' })
-      .mockResolvedValueOnce({ ...DEFAULT_FREE_USER });
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'ok' },
-      error: null,
-      status: 200,
-    });
-
-    const req = makeRequest({ message: 'test' });
-    const response = await POST(req as any);
-    const body = await response.json();
-    expect(body.routing.tier).toBe('SIMPLE');
-    expect(body.routing.model).toBe('google/gemini-2.0-flash-lite');
-    expect(body.routing.confidence).toBe(0.95);
-  });
-
-  it('calls containerApi.chat with correct port for paid user', async () => {
-    (auth as any).mockResolvedValue({ userId: 'user_123' });
-    mockUsersQuery
-      .mockResolvedValueOnce({ tier: 'pro' })
-      .mockResolvedValueOnce({ ...DEFAULT_PAID_USER });
-    (containerApi.chat as any).mockResolvedValue({
-      data: { content: 'Pro response' },
-      error: null,
-      status: 200,
-    });
-
-    const req = makeRequest({ message: 'hello paid user' });
-    await POST(req as any);
-
-    const chatCall = (containerApi.chat as any).mock.calls[0];
-    expect(chatCall[0]).toBe(4100); // containerPort
   });
 });
