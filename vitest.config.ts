@@ -11,7 +11,18 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/**/*.test.ts', 'src/**/__tests__/**'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/__tests__/**',
+        'src/app/(auth)/**',
+        'src/app/blog/**',
+        'src/app/terms/**',
+        'src/app/privacy/**',
+        'src/app/about/**',
+        'src/app/sitemap.ts',
+        'src/app/robots.ts',
+        'src/lib/db/schema/**',
+      ],
     },
   },
   resolve: {
