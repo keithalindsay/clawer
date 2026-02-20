@@ -398,7 +398,7 @@ This UAT plan covers comprehensive testing of Clawer.ai before public launch. It
 3. Verify database `freeMessagesUsed` field
 
 **Expected Result:**
-- Counter shows `5 / 200 free messages used`
+- Counter shows `5 / 100 free messages used`
 - Database field updated to `5`
 - Each message increments counter by 1
 
@@ -425,7 +425,7 @@ This UAT plan covers comprehensive testing of Clawer.ai before public launch. It
 **Expected Result:**
 - First message succeeds
 - Second message returns 403 error
-- Error message: "You've used all 200 free messages. Upgrade to keep chatting!"
+- Error message: "You've used all 100 free messages. Upgrade to keep chatting!"
 - `upgradeUrl` included in response
 - User cannot send more messages without upgrading
 

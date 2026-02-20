@@ -862,7 +862,7 @@ Use 4px base unit (consistent with Tailwind):
 - ✅ Good use of whitespace  
 - ✅ Trust badge "Built on OpenClaw — trusted by 300,000+ users" front and center  
 - ✅ CTA "Deploy Your First Agent" is prominent and clear  
-- ✅ "No credit card required • 200 free messages" reduces friction  
+- ✅ "No credit card required • 100 free messages" reduces friction  
 - ❌ Brand name "CLAWER.AI" inconsistent (see Critical Issue #1)  
 - ❌ Orange CTA color (good choice) but not used on other pages  
 - ⚠️ Emoji usage (🦞, 💬, ✈️, 🎮, 💼) — consider SVG for consistency across devices  

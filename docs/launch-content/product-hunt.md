@@ -26,7 +26,7 @@ I'm Keith, and I've been running OpenClaw (300K+ users, featured in Fast Company
 **What you get:**
 ✅ AI team on WhatsApp, Telegram, Slack, or web
 ✅ 7 pre-built templates (Solopreneur, Parent HQ, Fitness, Finance, E-commerce, Content Marketing, Personal HQ)
-✅ 200 free messages/month to test
+✅ 100 free messages/month to test
 ✅ No technical setup - just pick your template and go
 
 We're basically the "Squarespace of AI assistants" - all the power of OpenClaw, zero complexity.

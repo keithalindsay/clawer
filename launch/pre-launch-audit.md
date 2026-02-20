@@ -50,7 +50,7 @@
 **Severity:** BLOCKER  
 **Impact:** The security guide CTA says "AI Teams and custom skills on Pro ($19/mo)" — contradicts the $49/mo price everywhere else. Visitors who see this will be confused or feel baited.  
 **Location:** `/blog/openclaw-security-guide` — bottom CTA: *"100 messages per day, free forever. No credit card. Security patches applied automatically. AI Teams and custom skills on Pro ($19/mo)."*  
-**Fix:** Change `$19/mo` → `$49/mo` in the blog post content. Also fix "100 messages per day, free forever" which contradicts the free tier (200 total messages, not 100/day).
+**Fix:** Change `$19/mo` → `$49/mo` in the blog post content. Also fix "100 messages per day, free forever" which contradicts the free tier (100 total messages, not 100/day).
 
 ---
 
@@ -62,8 +62,8 @@
 
 | Page | Free tier described as |
 |------|----------------------|
-| Homepage | "200 free messages included" |
-| Pricing page | "200 total messages" ✅ |
+| Homepage | "100 free messages included" |
+| Pricing page | "100 total messages" ✅ |
 | Terms of Service | "25 messages per day" ❌ |
 | Blog: managed-openclaw-hosting | "25 messages/day, GPT-4o-mini" ❌ |
 | Blog: best-openclaw-hosting | "25 messages/day" ❌ |
@@ -71,8 +71,8 @@
 | Blog: security-guide | "100 messages per day, free forever" ❌ |
 | Use cases | "200 messages" ✅ |
 
-**The correct spec is:** 200 total messages, 1 team member, no daily limit mentioned on pricing page.  
-**Fix:** Search all blog posts and Terms for "25 messages" and "100 messages" and update to match the pricing page (200 total messages). Update Terms §4 to say "200 total messages" not "25 messages per day."
+**The correct spec is:** 100 total messages, 1 team member, no daily limit mentioned on pricing page.  
+**Fix:** Search all blog posts and Terms for "25 messages" and "100 messages" and update to match the pricing page (100 total messages). Update Terms §4 to say "100 total messages" not "25 messages per day."
 
 ### 5. Use-cases page title is generic
 **Severity:** WARNING  
@@ -98,8 +98,8 @@
 
 ### 9. Blog: best-openclaw-hosting has inconsistent Clawer free tier description
 **Severity:** WARNING  
-**Issue:** The comparison table and body text reference "25 messages/day" for the free tier, which conflicts with pricing page "200 total messages." Also says "Free tier (25 messages/day, GPT-4o-mini)" in the Clawer section.  
-**Fix:** Update all "25 messages/day" references to "200 total messages."
+**Issue:** The comparison table and body text reference "25 messages/day" for the free tier, which conflicts with pricing page "100 total messages." Also says "Free tier (25 messages/day, GPT-4o-mini)" in the Clawer section.  
+**Fix:** Update all "25 messages/day" references to "100 total messages."
 
 ### 10. Terms page missing "Last updated" date
 **Severity:** WARNING  
@@ -139,7 +139,7 @@
 | Nav consistent across pages | ✅ (web_fetch can't fully verify nav, but all pages load consistently) |
 | Footer consistent | ✅ |
 | Pricing: $49/mo Pro | ✅ on homepage, pricing, most blogs. ❌ $19/mo on security-guide |
-| Free tier: 200 total messages | ❌ Inconsistent — see issue #4 |
+| Free tier: 100 total messages | ❌ Inconsistent — see issue #4 |
 | Pro: 500/day, full team, WA+TG+Slack | ✅ Consistent on pricing page |
 | 🦞 Lobster branding | ✅ Present on use-cases and 404 page |
 | "Clawer" not "Clawer.ai" in body | ⚠️ "CLAWER.AI" on use-cases, sign-up, sign-in |
@@ -168,7 +168,7 @@
 
 1. **🔴 Upload og-image.png** — 2 min fix, massive social share impact
 2. **🔴 Fix $19/mo → $49/mo in security guide** — 1 min fix, pricing trust issue  
-3. **🔴 Fix "100 messages per day free forever" → "200 total messages" in security guide** — 1 min
+3. **🔴 Fix "100 messages per day free forever" → "100 total messages" in security guide** — 1 min
 4. **🟡 Fix free tier inconsistency across all blog posts and Terms** — 15 min, search-and-replace "25 messages/day" and "25 messages per day"
 5. **🟡 Update sitemap.xml** to include all blog posts and /sign-in — 5 min
 6. **🟡 Fix unique page titles** for /use-cases, /blog, /terms, /privacy — 5 min

@@ -1026,7 +1026,7 @@ API Keys page
 **Test cases:**
 ```
   ✓ renders upgrade prompt when messages used > 0
-  ✓ shows correct count: "X of 200 free messages used"
+  ✓ shows correct count: "X of 100 free messages used"
   ✓ shows upgrade button linking to /pricing
   ✓ renders banner when freeMessagesUsed = 0 (new user)
   ✓ shows 'limit reached' state when freeMessagesUsed >= 200
@@ -2092,7 +2092,7 @@ vi.mock('next/navigation', () => ({
 
 Test cases:
 1. Renders without crashing when freeMessagesUsed=0
-2. Shows message count: "X of 200 free messages used" (find the number in rendered output)
+2. Shows message count: "X of 100 free messages used" (find the number in rendered output)
 3. Has a link or button pointing to /pricing
 4. When freeMessagesUsed >= 200: shows a distinct 'limit reached' state
 5. Snapshot test (optional): toMatchSnapshot() for regression protection

@@ -320,15 +320,15 @@ NEW:
 - Early Access
 - Clawer Pro: $49/month
 - Up to 3 AI agents
-- 200 free messages included, no credit card required
+- 100 free messages included, no credit card required
 
 **Table 2 (Pricing page):**
-- Free: $0/forever, 200 total messages, 1 team member
+- Free: $0/forever, 100 total messages, 1 team member
 - Pro: $49/month, 500 messages/day, full team
 
 **Inconsistencies:**
 - Landing says "Up to 3 AI agents", Pricing says "Full team — all members unlocked"
-- Landing says "200 free messages included" (with Pro?), Pricing says Free tier gets "200 total messages"
+- Landing says "100 free messages included" (with Pro?), Pricing says Free tier gets "100 total messages"
 - Landing has "Team" and "Business" tiers "Coming Soon", Pricing doesn't mention them
 
 **Impact:** Users can't determine what they get. Confusion = abandonment.
@@ -337,7 +337,7 @@ NEW:
 1. **Remove pricing from landing page** — link to /pricing instead
 2. **Pricing page becomes single source of truth**
 3. **Clarify on pricing page:**
-   - Free: 200 total messages (lifetime cap)
+   - Free: 100 total messages (lifetime cap)
    - Pro: 500 messages per day (15,000/month)
    - What is "Full team"? List agent names/count explicitly
 
@@ -346,7 +346,7 @@ NEW:
 
 #### Free Tier Visibility (Severity: MAJOR)
 **Problem:** Free tier is mentioned but not prominently positioned:
-- Landing page: "200 free messages included. No credit card required" appears as small text under CTA
+- Landing page: "100 free messages included. No credit card required" appears as small text under CTA
 - Pricing page: Free tier is first column but labeled generically
 
 **Recommended Fix:**
@@ -717,7 +717,7 @@ Small: 14px
 - **No H1 detected** — "Simple, transparent pricing" should be H1
 
 #### Major Issues 🟡
-- Free tier: "200 total messages" — is this lifetime? Per month? Needs clarification
+- Free tier: "100 total messages" — is this lifetime? Per month? Needs clarification
 - Pro tier: "500 messages per day" — what happens if you exceed? Hard block? Overage charges?
 - "Most Popular" badge on Pro — is this accurate or marketing fluff?
 - CTA inconsistency: "Start Free" vs "Get Pro →"

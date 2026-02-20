@@ -690,7 +690,7 @@ $970 = Lifetime Pro
 
 **Option A: More generous free tier (recommended)**
 ```
-200 messages/month = ~6-7/day
+100 messages/month = ~6-7/day
 Enough to:
 - Check email summaries daily
 - Do research 2-3x/week  
@@ -1093,7 +1093,7 @@ What made Winrey a full-time IT desk, we handle for you.
 
 ━━━━━ What You Pay ━━━━━
 
-Free: 200 messages/month, web only
+Free: 100 messages/month, web only
 Pro: $49/month, everything unlimited
 
 vs. DIY: 40-60 hours + ongoing maintenance
@@ -1103,7 +1103,7 @@ vs. Consultant: $10-20K implementation + $2-5K/mo
 
 Nothing.
 
-200 free messages (no card required)
+100 free messages (no card required)
 7-day money-back guarantee if you upgrade
 Cancel in literally one click [see proof →]
 Export your data anytime
@@ -1138,7 +1138,7 @@ Built by [Founder], previously [credible background]
 
 ### Week 2 (High Impact)
 
-1. **Increase free tier** to 200 messages/month
+1. **Increase free tier** to 100 messages/month
 2. **Add annual pricing** ($470/year)
 3. **Launch /security page** with architecture proof
 4. **Record 2-minute Loom** showing container isolation
