@@ -2,22 +2,27 @@
 
 import { motion } from 'framer-motion';
 
-const TESTIMONIALS = [
+const TRUST_SIGNALS = [
   {
-    name: 'Eric Siu',
-    role: 'CEO, SingleGrain',
-    handle: '@ericosiu',
-    avatar: '👨‍💼',
-    quote: 'This is exactly what I built for my 14-agent team. They made it work in 60 seconds.',
-    context: 'After weeks building OpenClaw infrastructure',
+    icon: '🦞',
+    title: 'Built on OpenClaw',
+    description: 'Powered by the open-source AI agent framework',
+    link: 'https://openclaw.ai',
   },
   {
-    name: 'Winrey',
-    role: 'Team9.ai',
-    handle: '@team9_ai',
-    avatar: '👩‍💻',
-    quote: 'After deploying OpenClaw to 50 people, I learned: The hard part isn\'t the AI. It\'s the hosting.',
-    context: 'On why managed hosting matters',
+    icon: '⚡',
+    title: 'Deploy in 60 seconds',
+    description: 'From zero to production-ready AI team',
+  },
+  {
+    icon: '🤝',
+    title: 'AI teams, not chatbots',
+    description: 'Multi-agent collaboration out of the box',
+  },
+  {
+    icon: '💬',
+    title: 'WhatsApp, Telegram & Slack',
+    description: 'Deploy anywhere your team works',
   },
 ];
 
@@ -43,16 +48,16 @@ export default function SocialProof() {
             Trusted by Teams Worldwide
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Join thousands of teams already using Clawer
+            The managed platform for OpenClaw AI agents
           </p>
         </motion.div>
 
-        {/* Testimonials */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {TESTIMONIALS.map((testimonial, index) => (
+        {/* Trust Signals */}
+        <div className="grid md:grid-cols-4 gap-6 mb-16">
+          {TRUST_SIGNALS.map((signal, index) => (
             <motion.div
-              key={testimonial.name}
-              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all"
+              key={signal.title}
+              className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-all"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
@@ -63,30 +68,29 @@ export default function SocialProof() {
               }}
               whileHover={{ y: -4 }}
             >
-              {/* Quote */}
-              <p className="text-gray-700 leading-relaxed mb-4 italic">
-                &ldquo;{testimonial.quote}&rdquo;
-              </p>
+              {/* Icon */}
+              <div className="text-4xl mb-3">{signal.icon}</div>
               
-              {/* Context */}
-              <p className="text-sm text-gray-500 mb-5 pb-5 border-b border-gray-100">
-                {testimonial.context}
+              {/* Title */}
+              {signal.link ? (
+                <a
+                  href={signal.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block font-semibold text-gray-900 mb-2 hover:text-orange-500 transition-colors"
+                >
+                  {signal.title}
+                </a>
+              ) : (
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {signal.title}
+                </h3>
+              )}
+              
+              {/* Description */}
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {signal.description}
               </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center text-2xl">
-                  {testimonial.avatar}
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">
-                    {testimonial.name}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {testimonial.role}
-                  </div>
-                </div>
-              </div>
             </motion.div>
           ))}
         </div>
