@@ -26,7 +26,7 @@
    - **Word count:** 3,000-4,000
    - **Priority:** 🔴 Highest search volume informational keyword
 
-3. [ ] `/blog/openclaw-whatsapp-setup`
+3. [x] `/blog/openclaw-whatsapp-setup` — "OpenClaw on WhatsApp: Complete Setup Guide" (Feb 20)
    - **Title:** "OpenClaw on WhatsApp: Complete Setup Guide"
    - **Target keywords:** personal AI assistant WhatsApp, openclaw whatsapp setup, openclaw whatsapp hosting
    - **Angle:** WhatsApp is the #1 requested channel. Show QR code flow, baileys setup, common gotchas. Compare DIY vs managed.
