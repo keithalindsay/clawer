@@ -76,11 +76,12 @@ fi
 cat > /home/user/.openclaw/openclaw.json << EOF
 {
   "models": {"providers": {${PROVIDERS}}},
-  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd"${MEMORY_SEARCH_CONFIG}}},
+  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd", "compaction": {"mode": "default", "maxHistoryShare": 0.1, "memoryFlush": {"enabled": true}}${MEMORY_SEARCH_CONFIG}}},
   "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}, "controlUi": {"allowInsecureAuth": true, "dangerouslyDisableDeviceAuth": true}},
   "plugins": {"entries": {"whatsapp": {"enabled": true}, "telegram": {"enabled": true}}},
   "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}},
-  "channels": {"whatsapp": {"dmPolicy": "open", "allowFrom": ["*"]}}
+  "channels": {"whatsapp": {"dmPolicy": "open", "allowFrom": ["*"]}},
+  "memorySearch": {"experimental": {"sessionMemory": true, "sources": ["memory", "sessions"]}}
 }
 EOF
 

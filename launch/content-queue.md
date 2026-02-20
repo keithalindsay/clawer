@@ -33,7 +33,14 @@
    - **Word count:** 2,500-3,500
    - **Priority:** 🔴 Channel guides drive massive long-tail traffic
 
-3b. [ ] `/blog/openclaw-agents-md-tips`
+3b. [ ] `/blog/openclaw-mistakes-cost-money`
+   - **Title:** "10 OpenClaw Mistakes That Cost You Money (And How to Fix Them)"
+   - **Target keywords:** openclaw tips mistakes
+   - **Angle:** Each tip covers a common costly mistake, then ends with how Clawer handles it automatically.
+   - **Word count:** ~3,000
+   - **Priority:** 🔴 High
+
+3c. [ ] `/blog/openclaw-agents-md-tips`
    - **Title:** "5 AGENTS.md Rules That Make Your Agent 10x Better"
    - **Target keywords:** openclaw agents.md tips
    - **Angle:** Community-proven rules that dramatically improve agent behavior — covering session start checklists, memory management, error recovery, subagent orchestration, and communication style. Real before/after examples. Why most AGENTS.md files are empty and what you're leaving on the table.
