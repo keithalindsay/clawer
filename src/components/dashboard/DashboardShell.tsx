@@ -238,6 +238,14 @@ export function DashboardShell({
             <span>Tasks</span>
           </Link>
           <Link
+            href="/dashboard/files"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-50"
+            style={{ color: '#475569' }}
+          >
+            <span>📂</span>
+            <span>Files</span>
+          </Link>
+          <Link
             href="/dashboard/agent"
             className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-50"
             style={{ color: '#475569' }}

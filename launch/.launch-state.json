@@ -1,0 +1,44 @@
+{
+  "launch_time": null,
+  "status": "pre-launch",
+  "platforms": {
+    "producthunt": {
+      "live": false,
+      "url": "",
+      "rank": null,
+      "upvotes": 0,
+      "comments": 0,
+      "last_check": null
+    },
+    "x": {
+      "posted": false,
+      "thread_url": "",
+      "impressions": 0,
+      "engagements": 0,
+      "last_check": null
+    },
+    "reddit": {
+      "posted": false,
+      "url": "",
+      "upvotes": 0,
+      "comments": 0
+    },
+    "hackernews": {
+      "posted": false,
+      "url": "",
+      "points": 0,
+      "comments": 0
+    },
+    "indiehackers": {
+      "posted": false,
+      "url": "",
+      "upvotes": 0
+    }
+  },
+  "metrics": {
+    "signups": 0,
+    "containers_started": 0,
+    "total_engagement": 0
+  },
+  "timeline": []
+}

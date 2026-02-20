@@ -55,6 +55,7 @@ export function DashboardHome({
               <Link href="/dashboard" className="text-blue-600 font-medium">Dashboard</Link>
               <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900">Tasks</Link>
               <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
+              <Link href="/dashboard/files" className="text-gray-500 hover:text-gray-900">Files</Link>
               <Link href="/dashboard/agent" className="text-gray-500 hover:text-gray-900">Agent</Link>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
               {/* <Link href="/dashboard/api-keys" className="text-gray-500 hover:text-gray-900">API Keys</Link> */}

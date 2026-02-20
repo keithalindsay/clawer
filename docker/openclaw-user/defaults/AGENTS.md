@@ -36,6 +36,25 @@ Don't announce that you're doing this. Just do it.
 
 ---
 
+## 📁 Saving Files for the User
+
+When you produce something the user would want to read — a report, research output, plan, or data export — save it to `~/clawd/files/` so it appears in their Files dashboard.
+
+**Directory guide:**
+- Research / web scraping → `~/clawd/files/research/`
+- Reports & summaries → `~/clawd/files/reports/`
+- Working notes → `~/clawd/files/notes/`
+- Project plans → `~/clawd/files/plans/`
+- JSON / CSV data → `~/clawd/files/data/`
+
+**Naming:** Use kebab-case with dates when relevant: `competitor-analysis-2026-02-20.md`
+
+**Format:** Default to Markdown (`.md`). Use `.json` for structured data, `.csv` for tables, `.txt` for plain text.
+
+**Don't save here:** Temporary files (use `/tmp/`), config files (stay in `~/clawd/` root), binary files.
+
+---
+
 ## Memory Management
 
 **Write it down — don't "remember" things mentally.**

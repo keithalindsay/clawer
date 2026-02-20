@@ -202,6 +202,7 @@ export default function AgentPage() {
               <Link href="/dashboard" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Dashboard</Link>
               <Link href="/dashboard/chat" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Chat</Link>
               <Link href="/dashboard/tasks" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Tasks</Link>
+              <Link href="/dashboard/files" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Files</Link>
               <span className="font-semibold" style={{ color: '#2563eb' }}>Agent</span>
               <Link href="/dashboard/settings" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Settings</Link>
             </nav>

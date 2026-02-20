@@ -257,6 +257,10 @@ export function DashboardWorkspace({
             <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94a3b8' }}>General</h3>
           </div>
           <nav className="px-2 space-y-0.5">
+            <Link href="/dashboard/files" className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors hover:bg-gray-50" style={{ borderLeft: '3px solid transparent' }}>
+              <span className="text-lg">📂</span>
+              <span className="text-sm" style={{ color: '#0f172a' }}>Files</span>
+            </Link>
             <Link href="/dashboard/settings" className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors hover:bg-gray-50" style={{ borderLeft: '3px solid transparent' }}>
               <span className="text-lg">⚙️</span>
               <span className="text-sm" style={{ color: '#0f172a' }}>Settings</span>

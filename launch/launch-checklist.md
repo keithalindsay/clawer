@@ -2,6 +2,10 @@
 
 _Product Hunt launches at 12:01am Pacific Time. Plan around that._
 
+**🎯 NEW: Launch Command Center** — Real-time dashboard for multi-platform coordination  
+**Usage:** `cd ~/projects/clawer/scripts && ./launch-command-center.sh monitor`  
+**Docs:** `~/projects/clawer/scripts/README-launch-command-center.md`
+
 ---
 
 ## DAY BEFORE (T-24h)
