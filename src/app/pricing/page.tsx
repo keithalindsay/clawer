@@ -24,7 +24,6 @@ export default function PricingPage() {
       description: "Kick the tires — no credit card required.",
       features: [
         "100 total messages",
-        "1 AI team member",
         "Basic model",
         "Web chat only",
         "Community support",
@@ -59,7 +58,6 @@ export default function PricingPage() {
 
   const COMPARISON = [
     { name: "Messages", free: "100 total", pro: "500/day" },
-    { name: "AI team members", free: "1", pro: "Full team" },
     { name: "AI model", free: "Basic", pro: "MiniMax M2.5" },
     { name: "Custom skills", free: false, pro: true },
     { name: "Channels", free: "Web only", pro: "WhatsApp, Telegram, Slack" },

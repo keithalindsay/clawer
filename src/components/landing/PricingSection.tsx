@@ -53,7 +53,6 @@ export default function PricingSection() {
 
             <ul className="space-y-3 mb-8">
               {[
-                'Up to 3 AI agents',
                 'All channels (WhatsApp, Telegram, Discord, Slack)',
                 'Pre-built AI team configurations',
                 'Automated tasks & scheduling',

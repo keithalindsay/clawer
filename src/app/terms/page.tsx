@@ -66,7 +66,7 @@ export default function TermsOfService() {
           <p>We offer the following plans:</p>
           <ul className="list-disc pl-6 space-y-2 my-4">
             <li>
-              <strong>Free Tier:</strong> Up to 100 total messages, 1 team member. No
+              <strong>Free Tier:</strong> Up to 100 total messages. No
               service level guarantees.
             </li>
             <li>
