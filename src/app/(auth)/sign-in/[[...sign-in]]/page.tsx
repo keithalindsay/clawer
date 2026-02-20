@@ -9,11 +9,12 @@ export default function SignInPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
+          <div className="text-5xl mb-4">🦞</div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Welcome to <span className="text-blue-600">Clawer</span>
+            Welcome to Clawer.ai
           </h1>
           <p className="mt-2 text-gray-600">
-            Sign in to access your AI assistants
+            Your AI team is waiting.
           </p>
         </div>
         
@@ -29,6 +30,18 @@ export default function SignInPage() {
           signUpUrl="/sign-up"
           fallbackRedirectUrl="/dashboard"
         />
+        
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500 mb-3">
+            🔒 Secure and private
+          </p>
+          <p className="text-xs text-gray-500">
+            New here?{' '}
+            <a href="/sign-up" className="text-orange-500 hover:text-orange-600 font-medium">
+              Start free — no credit card required
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -37,10 +37,10 @@ export default function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          {['Your', 'Hosted', 'OpenClaw'].map((word, i) => (
+          {['Not', 'a', 'Chatbot.'].map((word, i) => (
             <motion.span
               key={i}
-              className={i === 2 ? 'text-orange-500' : 'text-gray-900'}
+              className="text-gray-900"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
@@ -53,10 +53,10 @@ export default function HeroSection() {
             </motion.span>
           ))}
           <br className="hidden md:block" />
-          {['AI', 'Team,', 'Always', 'On', 'Duty'].map((word, i) => (
+          {['An', 'AI', 'Team.'].map((word, i) => (
             <motion.span
               key={i + 3}
-              className="text-gray-900"
+              className={i === 1 || i === 2 ? 'text-orange-500' : 'text-gray-900'}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
@@ -77,8 +77,7 @@ export default function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          Deploy specialized AI agents across WhatsApp, Telegram, and Slack. 
-          No setup, no maintenance — they just work.
+          Deploy specialized agents across WhatsApp, Telegram, and Slack. They monitor competitors, draft content, and execute tasks — while you sleep.
         </motion.p>
 
         {/* CTA */}
@@ -92,7 +91,7 @@ export default function HeroSection() {
             href="/sign-up"
             className="inline-block bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all hover:shadow-xl hover:shadow-orange-500/25 hover:-translate-y-0.5"
           >
-            Deploy Your First Agent
+            Start Free
           </Link>
           <p className="text-sm text-gray-500 mt-4">
             No credit card required • 100 free messages

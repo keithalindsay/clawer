@@ -18,7 +18,7 @@ export default function PricingPage() {
   const TIERS = [
     {
       name: "Free",
-      badge: "Get Started",
+      badge: "Try It Free",
       price: "$0",
       period: "/forever",
       description: "Kick the tires — no credit card required.",
@@ -163,10 +163,10 @@ export default function PricingPage() {
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
-            Simple, transparent pricing
+            Simple pricing. Start free, upgrade when ready.
           </h1>
           <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-            Start free. Upgrade when you need more power. No surprises.
+            100 free messages to try everything. No credit card required.
           </p>
 
         </div>

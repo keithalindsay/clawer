@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Use Cases — Clawer.ai | AI Teams for Founders, Creators & Families",
   description:
-    "Discover how solo founders, content creators, small teams, and families use Clawer to automate workflows, save time, and get more done with AI-powered assistants.",
+    "See how AI teams replace chatbots. Competitor monitoring, content drafting, task execution — all autonomous. Not assistants. Operators.",
   alternates: {
     canonical: "https://clawer.ai/use-cases",
   },

@@ -21,7 +21,7 @@ export default function FinalCTA() {
             viewport={{ once: true }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            Ready to build your AI team?
+            Ready to Wake Up to Done?
           </motion.h2>
           
           <motion.p
@@ -31,7 +31,7 @@ export default function FinalCTA() {
             viewport={{ once: true }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            Deploy your first AI agent in under 60 seconds. No credit card required.
+            Deploy your AI team now. 100 free messages. No credit card.
           </motion.p>
 
           <motion.div
@@ -44,7 +44,7 @@ export default function FinalCTA() {
               href="/sign-up"
               className="inline-block bg-orange-500 text-white px-10 py-4 rounded-full text-lg font-semibold hover:bg-orange-600 transition-all hover:shadow-xl hover:shadow-orange-500/25 hover:-translate-y-0.5"
             >
-              Start Free — 100 Messages
+              Start Free
             </Link>
           </motion.div>
 

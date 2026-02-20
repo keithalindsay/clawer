@@ -11,17 +11,17 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Clawer.ai — Hosted OpenClaw, Personal AI Assistant",
+  title: "Clawer.ai — AI Teams That Do the Work While You Sleep",
   description:
-    "Your personal AI assistant powered by OpenClaw. No setup, no servers. Works in WhatsApp, Telegram & Slack. Start free in 60 seconds.",
+    "Deploy AI teams across WhatsApp, Telegram, and Slack in 60 seconds. They monitor competitors, draft content, and execute tasks — while you sleep. Start free.",
   metadataBase: new URL("https://clawer.ai"),
   alternates: {
     canonical: "https://clawer.ai",
   },
   openGraph: {
-    title: "Clawer.ai — Hosted OpenClaw, Personal AI Assistant",
+    title: "Clawer.ai — AI Teams That Do the Work While You Sleep",
     description:
-      "Your personal AI assistant powered by OpenClaw. No setup, no servers. Works in WhatsApp, Telegram & Slack. Start free in 60 seconds.",
+      "Deploy AI teams across WhatsApp, Telegram, and Slack in 60 seconds. They monitor competitors, draft content, and execute tasks — while you sleep. Start free.",
     url: "https://clawer.ai",
     siteName: "Clawer.ai",
     images: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Clawer.ai — Hosted OpenClaw, Personal AI Assistant",
+        alt: "Clawer.ai — AI Teams That Do the Work While You Sleep",
       },
     ],
     locale: "en_US",
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Clawer.ai — Your AI Team, Ready to Work",
+    title: "Clawer.ai — AI Teams That Do the Work While You Sleep",
     description:
-      "Personal AI assistant with WhatsApp, Telegram, and web chat. Smart model routing, team templates, and enterprise security. Starting at $49/mo.",
+      "Deploy AI teams across WhatsApp, Telegram, and Slack. They monitor, draft, and execute — autonomously. 100 free messages. No credit card.",
     images: ["/og-image.png"],
   },
   robots: {

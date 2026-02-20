@@ -38,10 +38,10 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            How It Works
+            From Idea to AI Team in 60 Seconds
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            From idea to deployed agents in under 60 seconds
+            No code. No setup. Just pick your team, connect, and deploy.
           </p>
         </motion.div>
 
