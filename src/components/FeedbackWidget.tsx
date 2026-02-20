@@ -100,11 +100,11 @@ export function FeedbackWidget() {
   };
 
   return (
-    <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50">
+    <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[70]">
       {/* Feedback Tab */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
+        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
         aria-label="Open feedback form"
       >
         <svg
@@ -124,13 +124,17 @@ export function FeedbackWidget() {
         <span className="[writing-mode:vertical-rl]">Feedback</span>
       </button>
 
+      {/* Backdrop */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/20 z-[60]" onClick={handleClose} />
+      )}
+
       {/* Feedback Panel */}
       <div
         ref={panelRef}
-        className={`fixed right-0 top-0 h-full bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 h-full w-[400px] max-w-[90vw] bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[70] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ width: '400px', maxWidth: '100vw' }}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
