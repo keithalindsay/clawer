@@ -33,7 +33,14 @@
    - **Word count:** 2,500-3,500
    - **Priority:** 🔴 Channel guides drive massive long-tail traffic
 
-3b. [ ] `/blog/openclaw-content-engine`
+3b. [ ] `/blog/openclaw-agents-md-tips`
+   - **Title:** "5 AGENTS.md Rules That Make Your Agent 10x Better"
+   - **Target keywords:** openclaw agents.md tips
+   - **Angle:** Community-proven rules that dramatically improve agent behavior — covering session start checklists, memory management, error recovery, subagent orchestration, and communication style. Real before/after examples. Why most AGENTS.md files are empty and what you're leaving on the table.
+   - **Word count:** ~2,500
+   - **Priority:** 🔴 High — practical how-to with strong search + social share potential
+
+3c. [ ] `/blog/openclaw-content-engine`
    - **Title:** "How to Use OpenClaw as a Content Engine: The Creator's Playbook"
    - **Target keywords:** openclaw content creation, AI content automation, openclaw tweet writer, openclaw tiktok
    - **Angle:** Real examples from creators getting 820K impressions and millions of TikTok views using OpenClaw. Voice cloning, hook analysis, cross-platform repurposing, scheduling pipelines. Show exact workflows — not theory. Link to Clawer's Content Creator template.
