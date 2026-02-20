@@ -42,7 +42,7 @@ export default function PricingPage() {
       description: "Your full AI team, unleashed.",
       features: [
         "500 messages per day",
-        "Full AI team — all members unlocked",
+        "Full AI team — 5+ specialized agents",
         "Priority model (MiniMax M2.5)",
         "Custom skills from curated marketplace",
         "WhatsApp + Telegram + Slack",

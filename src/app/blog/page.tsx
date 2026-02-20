@@ -45,9 +45,9 @@ export default function BlogPage() {
           <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 mb-4 inline-block">
             ← Back to Clawer.ai
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mt-2">Clawer Blog</h1>
-          <p className="text-lg text-gray-600 mt-2">
-            Insights on AI assistants, security, and productivity
+          <h1 className="text-4xl font-bold text-gray-900 mt-2">Blog</h1>
+          <p className="mt-2 text-xl text-gray-600">
+            Guides, comparisons, and insights for running AI teams.
           </p>
         </div>
       </header>

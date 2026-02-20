@@ -67,7 +67,7 @@ export default function UseCasesPage() {
             🦞 Use Cases
           </p>
           <h1 className="text-4xl md:text-5xl font-bold mb-5 leading-tight">
-            Built for the way <span className="text-orange-500">you</span> work
+            Not Assistants. <span className="text-orange-500">Operators.</span>
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             These aren&apos;t chatbots. They monitor, research, follow up, and

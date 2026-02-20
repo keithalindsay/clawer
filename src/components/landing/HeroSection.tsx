@@ -2,12 +2,13 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const CHANNEL_ICONS = [
-  { name: 'WhatsApp', icon: '💬', color: 'bg-green-50 text-green-600' },
-  { name: 'Telegram', icon: '✈️', color: 'bg-blue-50 text-blue-600' },
-  { name: 'Discord', icon: '🎮', color: 'bg-indigo-50 text-indigo-600' },
-  { name: 'Slack', icon: '💼', color: 'bg-purple-50 text-purple-600' },
+  { name: 'WhatsApp', icon: '/icons/platforms/whatsapp.svg', color: 'bg-green-50 text-green-600' },
+  { name: 'Telegram', icon: '/icons/platforms/telegram.svg', color: 'bg-blue-50 text-blue-600' },
+  { name: 'Discord', icon: '/icons/platforms/discord.svg', color: 'bg-indigo-50 text-indigo-600' },
+  { name: 'Slack', icon: '/icons/platforms/slack.svg', color: 'bg-purple-50 text-purple-600' },
 ];
 
 export default function HeroSection() {
@@ -96,6 +97,9 @@ export default function HeroSection() {
           <p className="text-sm text-gray-500 mt-4">
             No credit card required • 100 free messages
           </p>
+          <p className="text-sm text-orange-600 font-medium mt-2">
+            🔥 Early access pricing — $49/mo locks in at this rate
+          </p>
         </motion.div>
 
         {/* Channel badges */}
@@ -115,7 +119,13 @@ export default function HeroSection() {
               transition={{ delay: 1 + i * 0.1 }}
               whileHover={{ scale: 1.05 }}
             >
-              <span className="text-lg">{channel.icon}</span>
+              <Image 
+                src={channel.icon} 
+                alt={channel.name} 
+                width={20} 
+                height={20} 
+                className="inline-block"
+              />
               <span className="text-sm font-medium text-gray-700">{channel.name}</span>
             </motion.div>
           ))}
