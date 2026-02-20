@@ -167,6 +167,30 @@ ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U claw
 DATABASE_URL=postgresql://clawer:YOUR_DB_PASSWORD@localhost:5432/clawer
 ```
 
+### 8. Qwen Cron Jobs Going Off-Script
+
+**Symptom:** Qwen cron job output is nonsensical — explaining errors instead of doing the task, trying to spawn sub-agents, discussing tools it doesn't have.
+
+**Cause:** Session pollution. Qwen cron jobs reuse sessions. A single bad run (script error, tool failure, rate limit) creates confused output that becomes context for every subsequent run. Qwen then "helps" with the previous error instead of executing the prompt.
+
+**Diagnosis:**
+```
+cron → runs → runs (list runs for the job ID)
+```
+Look for the transition point: runs go from OK summaries to confused responses.
+
+**Fix:**
+1. Fix the underlying script error (check exit codes, add `trap '' SIGPIPE` if pipelines involved)
+2. The job will naturally get a fresh session after the cron config is updated (any `cron update` resets the session)
+3. If still broken: disable + re-enable the job to force a fresh session
+
+**Prevention rules for Qwen cron prompts:**
+- Be **brutally explicit**: exact tool name, exact command, nothing ambiguous
+- Say what NOT to do: `DO NOT use memory_search, cron tools, sessions_spawn`
+- Scripts must handle errors gracefully — exit 0 with an error message, not non-zero
+- Use `delivery: "none"` for utility jobs (no need to announce)
+- Add `trap '' SIGPIPE` to any script with `set -euo pipefail` that uses pipes
+
 ---
 
 ## Container Inventory
@@ -261,6 +285,21 @@ ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U claw
 - **Fix:** Keith upgraded MiniMax plan, got new API key. Had to RECREATE all containers (not just restart) because env vars are baked at container creation. Then synced new gateway tokens to DB.
 - **Lesson:** Config edits inside running containers are lost on restart — entrypoint regenerates from env vars. Must recreate containers for env var changes.
 - **Prevention:** Add MiniMax balance monitoring to War Machine cron. Consider a `/health` endpoint that tests LLM connectivity.
+
+### 2026-02-20: Qwen Memory Summarizer cron broken for 3 days
+
+- **Impact:** No hourly memory summaries written from Feb 18-20. Low severity (background utility job).
+- **Root cause (3 compounding issues):**
+  1. **SIGPIPE (exit 141):** The script uses `sort -rn | head -1` with `set -euo pipefail`. `head -1` closes the pipe early, `sort` gets SIGPIPE, `pipefail` makes it fatal. Script exits 141.
+  2. **Session pollution:** Qwen cron jobs reuse the same session. Once the script errored, Qwen's confused "here's how to fix SIGPIPE" response became context for the next run. Each subsequent run built on the previous garbage — trying to spawn sub-agents, discussing embedding models, saying "exec tool not available."
+  3. **Announce delivery failure:** Job had `delivery: "announce"` which tried to send Qwen's nonsensical output to the user, generating additional error noise.
+- **Detection:** Cron run history showed a progression: OK → OK → rate_limit → SIGPIPE explanation → agentId errors → embedding talk → "exec not found."
+- **Fix:**
+  1. Added `trap '' SIGPIPE` to `~/clawd/scripts/hourly-memory-summarizer.sh`
+  2. Changed delivery mode to `"none"` (utility job, doesn't need to announce)
+  3. Job naturally got a fresh session after the fix
+- **Lesson:** **Qwen session pollution is a systemic risk.** Any Qwen cron that errors once will cascade into increasingly confused runs. All Qwen cron prompts must be brutally explicit and self-contained. Consider: (a) forcing fresh sessions per run, or (b) adding `set +o pipefail` or `trap '' SIGPIPE` to ALL scripts run by Qwen crons.
+- **Scripts to audit for SIGPIPE:** Any script using `sort | head`, `grep -q` in a pipeline, or similar patterns with `set -euo pipefail`.
 
 ---
 
