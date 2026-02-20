@@ -16,7 +16,7 @@ So I built Clawer.ai — managed OpenClaw hosting. You pick a pre-built AI team 
 
 What makes it different from single-agent chatbot hosting: **AI Teams**. Instead of one agent, you deploy a coordinated crew — a researcher that hands off to a writer that hands off to a publisher. 8 templates ship today (Life OS, E-commerce, Developer Companion, etc.). The model layer uses MiniMax M2.5 by default with BYOK support for Anthropic/OpenAI/Google.
 
-Tech stack: isolated Docker containers per workspace, Node.js orchestration, Stripe billing, multi-channel message routing (WhatsApp via Baileys, Telegram Bot API, Discord.js, Slack Bolt). Free tier is 200 messages total (no credit card). Pro is $49/mo.
+Tech stack: isolated Docker containers per workspace, Node.js orchestration, Stripe billing, multi-channel message routing (WhatsApp via Baileys, Telegram Bot API, Discord.js, Slack Bolt). Free tier is 100 messages total (no credit card). Pro is $49/mo.
 
 Happy to answer questions about the architecture or the OpenClaw ecosystem.
 

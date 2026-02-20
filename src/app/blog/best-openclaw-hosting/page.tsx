@@ -69,7 +69,7 @@ const faqSchema = {
       name: "Can I host OpenClaw for free?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Oracle Cloud's Always Free tier offers 4 ARM CPUs and 24GB RAM — more than enough for OpenClaw with local AI models via Ollama. Clawer.ai also offers a free tier with 200 total messages. Self-hosting for free requires solid Linux and Docker knowledge, and you'll still pay for AI model API access unless you run local models.",
+        text: "Yes. Oracle Cloud's Always Free tier offers 4 ARM CPUs and 24GB RAM — more than enough for OpenClaw with local AI models via Ollama. Clawer.ai also offers a free tier with 100 total messages. Self-hosting for free requires solid Linux and Docker knowledge, and you'll still pay for AI model API access unless you run local models.",
       },
     },
     {
@@ -341,7 +341,7 @@ export default function BestOpenClawHostingPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 my-6">
               <p className="text-gray-700 mb-0">
-                Want to just get started? <Link href="/pricing" className="text-blue-600 hover:text-blue-700 font-semibold">Try Clawer free →</Link> 200 messages included, no credit card required.
+                Want to just get started? <Link href="/pricing" className="text-blue-600 hover:text-blue-700 font-semibold">Try Clawer free →</Link> 100 messages included, no credit card required.
               </p>
             </div>
 
@@ -427,7 +427,7 @@ export default function BestOpenClawHostingPage() {
             </div>
 
             <p className="text-gray-700 mb-4">
-              <strong>Pricing:</strong> Free tier (200 total messages, web chat only) | Pro $49/month (500 messages/day, AI Teams, all channels) | Enterprise: custom
+              <strong>Pricing:</strong> Free tier (100 total messages, web chat only) | Pro $49/month (500 messages/day, AI Teams, all channels) | Enterprise: custom
             </p>
             <p className="text-gray-700 mb-4">
               <strong>Setup time:</strong> Under 60 seconds to a working instance
@@ -460,7 +460,7 @@ export default function BestOpenClawHostingPage() {
             <p className="text-gray-700 mb-4"><strong>Weaknesses (being honest):</strong></p>
             <ul className="list-disc pl-6 mb-6 space-y-1 text-gray-700">
               <li>Newer provider — less track record than xCloud or Hetzner</li>
-              <li>Free tier is limited (200 total messages) — competitors offer more free usage</li>
+              <li>Free tier is limited (100 total messages) — competitors offer more free usage</li>
               <li>Pro at $49/month is more expensive than xCloud&apos;s $24/month if you already have API keys</li>
               <li>No self-hosting option if you want full server control</li>
               <li>Curated skills marketplace is smaller than ClawHub</li>
@@ -1065,7 +1065,7 @@ export default function BestOpenClawHostingPage() {
                   <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
                 </summary>
                 <p className="text-gray-700 mt-3">
-                  Yes. Oracle Cloud&apos;s Always Free tier offers 4 ARM CPUs and 24GB RAM — more than enough to run OpenClaw with local AI models via Ollama for $0/month total. Clawer.ai also offers a free tier with 200 total messages. The trade-off for Oracle&apos;s free tier is significant setup time (3+ hours), difficulty getting an instance (capacity is often full), and full responsibility for security. The Cognio Labs guide walks through the entire Oracle + Ollama setup step by step.
+                  Yes. Oracle Cloud&apos;s Always Free tier offers 4 ARM CPUs and 24GB RAM — more than enough to run OpenClaw with local AI models via Ollama for $0/month total. Clawer.ai also offers a free tier with 100 total messages. The trade-off for Oracle&apos;s free tier is significant setup time (3+ hours), difficulty getting an instance (capacity is often full), and full responsibility for security. The Cognio Labs guide walks through the entire Oracle + Ollama setup step by step.
                 </p>
               </details>
 
@@ -1184,7 +1184,7 @@ export default function BestOpenClawHostingPage() {
                 </Link>
               </p>
               <p className="text-gray-700 mb-0">
-                200 total messages, web chat included. No credit card required. Upgrade to Pro ($49/mo) for 500 messages/day, AI Teams, and all messaging channels.
+                100 total messages, web chat included. No credit card required. Upgrade to Pro ($49/mo) for 500 messages/day, AI Teams, and all messaging channels.
               </p>
             </div>
 

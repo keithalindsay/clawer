@@ -60,7 +60,7 @@ Assign tasks to your team, track progress, see what's done. Like a Trello board,
 
 | Plan | Price | Messages | Team Members |
 |------|-------|----------|--------------|
-| Free | $0 | 200 total, 25/day | 1 |
+| Free | $0 | 100 total, 25/day | 1 |
 | Pro | $49/mo | 500/day | Full team |
 
 Start free. Upgrade when you're ready. Cancel anytime (Stripe billing, no funny business).

@@ -90,7 +90,7 @@ export default function PricingSection() {
             </Link>
 
             <p className="text-center text-xs text-gray-500 mt-3">
-              200 free messages included. No credit card required.
+              100 free messages included. No credit card required.
             </p>
           </motion.div>
 

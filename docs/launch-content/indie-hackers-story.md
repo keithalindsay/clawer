@@ -77,7 +77,7 @@ You're not starting with a blank AI chatbot. You're getting a specialist.
 
 ### Pricing
 
-- **Free tier:** 200 messages/month (enough to test real workflows)
+- **Free tier:** 100 messages/month (enough to test real workflows)
 - **Pro:** $49/mo unlimited messages
 
 All AI models included (Claude Opus, Claude Sonnet, GPT-4). No "bring your own API key" nonsense.
@@ -162,7 +162,7 @@ Specificity sells. Abstraction confuses.
 
 **5. Free Tier Must Be Generous**
 
-200 messages/month is enough to test real workflows.
+100 messages/month is enough to test real workflows.
 
 100 messages = too limiting (people can't build trust)
 500 messages = too generous (no urgency to upgrade)
@@ -201,7 +201,7 @@ When should I nudge free users to upgrade?
 
 Too early = feels pushy. Too late = they've moved on.
 
-Testing: gentle reminder at 150/200 messages used.
+Testing: gentle reminder at 150/100 messages used.
 
 **4. Support Load**
 
@@ -291,7 +291,7 @@ That's the entire SaaS model. I just forgot it for a while.
 
 Link: **https://clawer.ai**
 
-Free tier (200 messages/mo) - no credit card required.
+Free tier (100 messages/mo) - no credit card required.
 
 Pick a template, connect to WhatsApp/Telegram/Slack, and let me know what breaks.
 

@@ -67,7 +67,7 @@ Templates solve problems.
 ### Tweet 7/7
 Pricing:
 
-Free tier: 200 messages/mo
+Free tier: 100 messages/mo
 Pro: $49/mo (unlimited)
 
 vs competitors charging $1,875/mo
@@ -149,7 +149,7 @@ This is what I built Clawer.ai for.
 
 Not to replace you. To handle the boring stuff so you can focus on what matters.
 
-$49/mo. Free tier (200 messages).
+$49/mo. Free tier (100 messages).
 
 Built on OpenClaw (300K users).
 

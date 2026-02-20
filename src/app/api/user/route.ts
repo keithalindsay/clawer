@@ -8,6 +8,7 @@ import { checkUserRateLimit } from '@/lib/rate-limit';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { FREE_MESSAGE_LIMIT } from '@/lib/constants';
 
 export async function GET() {
   try {
@@ -50,7 +51,6 @@ export async function GET() {
 
     const isSubscribed = user?.stripeSubscriptionId !== null;
     const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
-    const FREE_MESSAGE_LIMIT = 200;
     
     const profile = {
       id: userId,

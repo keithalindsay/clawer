@@ -322,7 +322,7 @@ export default function OpenClawSecurityGuidePage() {
                 </Link>
               </p>
               <p className="text-gray-700">
-                200 messages included, no credit card required. Security patches applied automatically. AI Teams and custom skills on Pro ($49/mo).
+                100 messages included, no credit card required. Security patches applied automatically. AI Teams and custom skills on Pro ($49/mo).
               </p>
             </div>
 

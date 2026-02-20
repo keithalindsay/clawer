@@ -16,7 +16,7 @@ vi.mock('next/link', () => ({
 // The free limit used in the component is passed via props (freeMessageLimit).
 // To trigger visible output we need freeMessagesUsed >= 30.
 
-const FREE_LIMIT = 200;
+const FREE_LIMIT = 100;
 
 describe('FreeTrialBanner', () => {
   it('renders without crashing when freeMessagesUsed = 0', () => {
@@ -44,12 +44,12 @@ describe('FreeTrialBanner', () => {
   });
 
   it('shows the correct message count in the low-usage banner', () => {
-    // At 30 used / 200 limit → 170 remaining → "low" state
+    // At 30 used / 100 limit → 70 remaining → "low" state
     // The "low" state config shows: "${freeMessagesUsed} of ${freeMessageLimit} free messages used"
     render(
       <FreeTrialBanner freeMessagesUsed={30} freeMessageLimit={FREE_LIMIT} />
     );
-    expect(screen.getByText(/30 of 200 free messages used/i)).toBeTruthy();
+    expect(screen.getByText(/30 of 100 free messages used/i)).toBeTruthy();
   });
 
   it('has a link pointing to /pricing', () => {
@@ -79,7 +79,7 @@ describe('FreeTrialBanner', () => {
 
   it('shows limit-reached (exhausted) state when freeMessagesUsed >= freeMessageLimit', () => {
     render(
-      <FreeTrialBanner freeMessagesUsed={200} freeMessageLimit={FREE_LIMIT} />
+      <FreeTrialBanner freeMessagesUsed={100} freeMessageLimit={FREE_LIMIT} />
     );
     // At exhaustion the modal appears: "Your free trial is complete!"
     expect(screen.getByText(/free trial is complete/i)).toBeTruthy();
@@ -87,7 +87,7 @@ describe('FreeTrialBanner', () => {
 
   it('shows upgrade link in the exhausted modal', () => {
     render(
-      <FreeTrialBanner freeMessagesUsed={200} freeMessageLimit={FREE_LIMIT} />
+      <FreeTrialBanner freeMessagesUsed={100} freeMessageLimit={FREE_LIMIT} />
     );
     // Modal has "Upgrade Now →" link to /pricing
     const upgradeLinks = screen.getAllByRole('link');
@@ -99,9 +99,9 @@ describe('FreeTrialBanner', () => {
 
   it('shows the message count sent in the exhausted modal', () => {
     render(
-      <FreeTrialBanner freeMessagesUsed={200} freeMessageLimit={FREE_LIMIT} />
+      <FreeTrialBanner freeMessagesUsed={100} freeMessageLimit={FREE_LIMIT} />
     );
-    // "You've sent 200 messages with your AI assistant"
-    expect(screen.getByText(/200 messages/i)).toBeTruthy();
+    // "You've sent 100 messages with your AI assistant"
+    expect(screen.getByText(/100 messages/i)).toBeTruthy();
   });
 });

@@ -115,7 +115,7 @@ export default function UseCasesPage() {
             Ready to meet your AI team?
           </h2>
           <p className="text-gray-600 mb-8 text-lg">
-            Start free — no credit card required. 200 messages to try everything.
+            Start free — no credit card required. 100 messages to try everything.
           </p>
           <Link
             href="/sign-up"

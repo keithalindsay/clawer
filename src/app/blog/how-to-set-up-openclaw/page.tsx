@@ -578,7 +578,7 @@ systemctl status openclaw`}</code>
             </p>
 
             <p className="text-gray-700 mb-6">
-              If you want to try the managed route: <Link href="/pricing" className="text-blue-600 hover:text-blue-700 font-semibold">Clawer.ai offers 200 free messages</Link> with no credit card required — useful for evaluating whether OpenClaw fits your workflow before committing to either a VPS or a paid managed plan.
+              If you want to try the managed route: <Link href="/pricing" className="text-blue-600 hover:text-blue-700 font-semibold">Clawer.ai offers 100 free messages</Link> with no credit card required — useful for evaluating whether OpenClaw fits your workflow before committing to either a VPS or a paid managed plan.
             </p>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 my-6">
@@ -955,7 +955,7 @@ openclaw update`}</code>
                 </Link>
               </p>
               <p className="text-gray-700 mb-0">
-                200 messages included, no credit card required, no server setup, AI models included. If you decide self-hosting is the right move after testing, the knowledge carries over — OpenClaw config is config regardless of where it runs.
+                100 messages included, no credit card required, no server setup, AI models included. If you decide self-hosting is the right move after testing, the knowledge carries over — OpenClaw config is config regardless of where it runs.
               </p>
             </div>
 

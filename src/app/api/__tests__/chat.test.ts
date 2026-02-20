@@ -276,10 +276,10 @@ describe('POST /api/chat', () => {
 
   // ──────────────────────────────────────────
   describe('Free tier — total message cap', () => {
-    it('9. returns 403 with free_trial_exceeded when freeMessagesUsed >= 200', async () => {
+    it('9. returns 403 with free_trial_exceeded when freeMessagesUsed >= 100', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
-      setupFreeUserDB({ freeMessagesUsed: 200 });
+      setupFreeUserDB({ freeMessagesUsed: 100 });
 
       const res = await POST(buildRequest({ message: 'hello' }) as any);
 
@@ -291,14 +291,14 @@ describe('POST /api/chat', () => {
     it('10. 403 response includes upgradeUrl, freeMessagesUsed, and freeMessageLimit', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
-      setupFreeUserDB({ freeMessagesUsed: 200 });
+      setupFreeUserDB({ freeMessagesUsed: 100 });
 
       const res = await POST(buildRequest({ message: 'hello' }) as any);
       const data = await res.json();
 
       expect(data.upgradeUrl).toBe('/pricing');
-      expect(data.freeMessagesUsed).toBe(200);
-      expect(data.freeMessageLimit).toBe(200);
+      expect(data.freeMessagesUsed).toBe(100);
+      expect(data.freeMessageLimit).toBe(100);
     });
   });
 

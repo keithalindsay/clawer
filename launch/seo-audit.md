@@ -217,7 +217,7 @@ Covers 100+ topics that people actively search for, including:
       "name": "Free",
       "price": "0",
       "priceCurrency": "USD",
-      "description": "200 total messages, 1 AI team member, web chat only"
+      "description": "100 total messages, 1 AI team member, web chat only"
     },
     {
       "@type": "Offer",
@@ -265,7 +265,7 @@ Covers 100+ topics that people actively search for, including:
       "name": "How does the free plan work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "You get 200 total messages to try everything out — no credit card required. Once you've used them, upgrade to Pro for 500 messages per day and your full AI team."
+        "text": "You get 100 total messages to try everything out — no credit card required. Once you've used them, upgrade to Pro for 500 messages per day and your full AI team."
       }
     },
     {
@@ -428,7 +428,7 @@ Covers 100+ topics that people actively search for, including:
 | Element | Current | Assessment | Fix |
 |---------|---------|------------|-----|
 | Title | `Clawer.ai — Hosted OpenClaw, Personal AI Assistant` (49 chars) | ❌ **SAME AS HOMEPAGE** — duplicate title | Must change to: "Clawer.ai Pricing — Free & Pro Plans \| Managed OpenClaw Hosting" |
-| Meta Description | "Your personal AI assistant powered by OpenClaw. No setup, no servers..." | ❌ **SAME AS HOMEPAGE** — duplicate description | Change to: "Clawer.ai pricing: Free (200 messages) or Pro at $49/mo. Deploy OpenClaw AI agents on WhatsApp, Telegram & Slack. No credit card for free plan." |
+| Meta Description | "Your personal AI assistant powered by OpenClaw. No setup, no servers..." | ❌ **SAME AS HOMEPAGE** — duplicate description | Change to: "Clawer.ai pricing: Free (100 messages) or Pro at $49/mo. Deploy OpenClaw AI agents on WhatsApp, Telegram & Slack. No credit card for free plan." |
 | **Canonical** | `https://clawer.ai` (homepage!) | 🚨 **CRITICAL BUG** — canonicalizes to homepage | Must change to `https://clawer.ai/pricing` — this is causing the pricing page to be de-indexed! |
 | H1 | "Simple, transparent pricing" | ⚠️ Missing keyword | Change to: "Clawer.ai Pricing — OpenClaw Hosting Plans" |
 | H2s | "Compare plans side by side", "Frequently asked questions", "Ready to build with AI Teams?" | ✅ Clear structure | Add "OpenClaw" to H2s |
@@ -589,7 +589,7 @@ These are small changes that can be done in hours and have immediate impact:
 
 2. **Fix /pricing title tag** — "Clawer.ai — Hosted OpenClaw, Personal AI Assistant" is identical to the homepage. Change to: `"Clawer.ai Pricing — Free & Pro Plans | Managed OpenClaw Hosting"` (62 chars)
 
-3. **Fix /pricing meta description** — Identical to homepage. Change to: `"Deploy OpenClaw AI agents on WhatsApp, Telegram & Slack. Free plan: 200 messages, no credit card. Pro: $49/mo with 500/day messages and full AI team."`
+3. **Fix /pricing meta description** — Identical to homepage. Change to: `"Deploy OpenClaw AI agents on WhatsApp, Telegram & Slack. Free plan: 100 messages, no credit card. Pro: $49/mo with 500/day messages and full AI team."`
 
 4. **Implement SSR/SSG for blog posts** — Google is likely seeing "Loading..." for all blog content. Use Next.js `generateStaticParams()` or ensure Server Components render blog body text. This is the biggest SEO opportunity on the site.
 

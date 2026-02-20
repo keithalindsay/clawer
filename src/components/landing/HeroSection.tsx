@@ -95,7 +95,7 @@ export default function HeroSection() {
             Deploy Your First Agent
           </Link>
           <p className="text-sm text-gray-500 mt-4">
-            No credit card required • 200 free messages
+            No credit card required • 100 free messages
           </p>
         </motion.div>
 

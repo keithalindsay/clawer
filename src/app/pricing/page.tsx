@@ -25,7 +25,7 @@ export default function PricingPage() {
       period: "/forever",
       description: "Kick the tires — no credit card required.",
       features: [
-        "200 total messages",
+        "100 total messages",
         "1 AI team member",
         "Basic model",
         "Web chat only",
@@ -60,7 +60,7 @@ export default function PricingPage() {
   ] as const;
 
   const COMPARISON = [
-    { name: "Messages", free: "200 total", pro: "500/day" },
+    { name: "Messages", free: "100 total", pro: "500/day" },
     { name: "AI team members", free: "1", pro: "Full team" },
     { name: "AI model", free: "Basic", pro: "MiniMax M2.5" },
     { name: "Custom skills", free: false, pro: true },
@@ -72,7 +72,7 @@ export default function PricingPage() {
   const FAQS = [
     {
       q: "How does the free plan work?",
-      a: "You get 200 total messages to try everything out — no credit card required. Once you've used them, upgrade to Pro for 500 messages per day and your full AI team.",
+      a: "You get 100 total messages to try everything out — no credit card required. Once you've used them, upgrade to Pro for 500 messages per day and your full AI team.",
     },
     {
       q: "What are AI Teams?",
@@ -296,7 +296,7 @@ export default function PricingPage() {
             Ready to build with AI Teams?
           </h2>
           <p className="mt-4 text-blue-100 text-lg">
-            200 free messages to start. No credit card. Upgrade whenever.
+            100 free messages to start. No credit card. Upgrade whenever.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link

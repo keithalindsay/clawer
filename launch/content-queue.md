@@ -33,6 +33,13 @@
    - **Word count:** 2,500-3,500
    - **Priority:** 🔴 Channel guides drive massive long-tail traffic
 
+3b. [ ] `/blog/openclaw-content-engine`
+   - **Title:** "How to Use OpenClaw as a Content Engine: The Creator's Playbook"
+   - **Target keywords:** openclaw content creation, AI content automation, openclaw tweet writer, openclaw tiktok
+   - **Angle:** Real examples from creators getting 820K impressions and millions of TikTok views using OpenClaw. Voice cloning, hook analysis, cross-platform repurposing, scheduling pipelines. Show exact workflows — not theory. Link to Clawer's Content Creator template.
+   - **Word count:** 3,000-4,000
+   - **Priority:** 🔴 Proven viral topic, multiple creators showing results NOW
+
 ### Week 2: Comparison & Differentiation Posts
 
 4. [ ] `/blog/openclaw-vs-chatgpt`

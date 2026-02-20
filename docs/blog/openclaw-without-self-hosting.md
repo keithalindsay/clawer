@@ -149,7 +149,7 @@ OpenClaw is brilliant software. But brilliant software shouldn't require a CS de
 
 You just need Clawer.
 
-👉 **Try it free:** 200 messages, no credit card required.  
+👉 **Try it free:** 100 messages, no credit card required.  
 👉 **Sign up in 60 seconds:** [clawer.ai/sign-up](https://clawer.ai/sign-up)
 
 ---

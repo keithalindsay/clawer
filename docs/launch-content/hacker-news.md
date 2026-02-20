@@ -44,7 +44,7 @@ I automated the setup process and dropped the price to $49/mo.
 - Hosted on [your infrastructure - AWS/GCP/DigitalOcean/etc.]
 
 **Pricing & Economics:**
-- Free tier: 200 messages/mo (enough to test real workflows)
+- Free tier: 100 messages/mo (enough to test real workflows)
 - Pro: $49/mo unlimited
 - COGS: ~$8-12/user/month (AI API costs + infrastructure)
 - All models included - no BYOK (bring your own key)
@@ -132,7 +132,7 @@ Competitors at $1,875/mo don't have this pressure. I think constraints breed bet
 
 Link: **https://clawer.ai**
 
-200 messages/month, no credit card required. Test it, break it, tell me what's broken.
+100 messages/month, no credit card required. Test it, break it, tell me what's broken.
 
 ### Questions I can answer
 

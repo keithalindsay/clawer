@@ -222,7 +222,7 @@ H2: Final Verdict
       "name": "Can I host OpenClaw for free?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes — Oracle Cloud's free tier offers enough resources to run OpenClaw. Clawer.ai also offers a free plan with 200 messages. Self-hosting for free requires technical knowledge and you still pay for AI model API access."
+        "text": "Yes — Oracle Cloud's free tier offers enough resources to run OpenClaw. Clawer.ai also offers a free plan with 100 messages. Self-hosting for free requires technical knowledge and you still pay for AI model API access."
       }
     },
     {
@@ -401,7 +401,7 @@ H2: Final Verdict
   - "Best budget managed: MyClaw ($19/mo)"
   - "Best VPS: Hetzner (community favorite, cheapest)"
   - "Best free: Oracle Cloud free tier (if you're technical)"
-- **CTA:** "Try Clawer free — 200 messages, no credit card → [Start free](/pricing)"
+- **CTA:** "Try Clawer free — 100 messages, no credit card → [Start free](/pricing)"
 
 ### CTA Placement Strategy
 

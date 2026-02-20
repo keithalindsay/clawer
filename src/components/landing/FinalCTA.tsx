@@ -44,7 +44,7 @@ export default function FinalCTA() {
               href="/sign-up"
               className="inline-block bg-orange-500 text-white px-10 py-4 rounded-full text-lg font-semibold hover:bg-orange-600 transition-all hover:shadow-xl hover:shadow-orange-500/25 hover:-translate-y-0.5"
             >
-              Start Free — 200 Messages
+              Start Free — 100 Messages
             </Link>
           </motion.div>
 
@@ -74,7 +74,7 @@ export default function FinalCTA() {
                   clipRule="evenodd"
                 />
               </svg>
-              <span>200 free messages</span>
+              <span>100 free messages</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">

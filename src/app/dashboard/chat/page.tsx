@@ -6,6 +6,7 @@ import { botSettings } from '@/lib/db/schema/bot-settings';
 import { eq } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
 import { DashboardWorkspace } from '@/components/dashboard/DashboardWorkspace';
+import { FREE_MESSAGE_LIMIT } from '@/lib/constants';
 
 export default async function ChatPage({ searchParams }: { searchParams: Promise<{ agent?: string; prompt?: string }> }) {
   const { agent: initialAgentId, prompt: initialPrompt } = await searchParams;
@@ -36,7 +37,6 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
 
   const isSubscribed = user?.stripeSubscriptionId !== null;
   const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
-  const FREE_MESSAGE_LIMIT = 200;
 
   const teamTemplate = (user as any)?.teamTemplate || 'lifeos';
   const teamConfig = getTeamConfig(teamTemplate);

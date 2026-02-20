@@ -43,7 +43,7 @@ I'm not trying to replace DIY OpenClaw. I'm trying to grow the ecosystem by maki
 
 Link: https://clawer.ai
 
-**Free tier available** (200 messages/mo) if you want to poke around.
+**Free tier available** (100 messages/mo) if you want to poke around.
 
 Roast it, break it, tell me what's missing. This community made OpenClaw what it is - I want your input on this too.
 
@@ -72,7 +72,7 @@ I thought: what if we just automate the setup?
 - Get a fully configured AI assistant that runs automations, answers questions, manages your workflow
 
 **Pricing:**
-- Free tier: 200 messages/month
+- Free tier: 100 messages/month
 - Pro: $49/mo (unlimited)
 
 **Tech:** Built on OpenClaw (battle-tested, 2+ years in production), hosted on reliable infra
@@ -201,7 +201,7 @@ It's like having a $49/mo assistant who never sleeps.
 3. Connect to WhatsApp/Telegram/Slack
 4. Start delegating
 
-Free tier is 200 messages/month. Pro is $49/mo unlimited.
+Free tier is 100 messages/month. Pro is $49/mo unlimited.
 
 Full disclosure: I built this because I needed it. It's built on OpenClaw (open-source, 300K users). You can self-host if you're technical, or use Clawer if you want the "just works" version.
 

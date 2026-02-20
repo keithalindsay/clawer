@@ -43,7 +43,7 @@ We're basically the "Squarespace of AI assistants" - all the power of OpenClaw, 
 - While you're making coffee, it's done
 
 **Pricing:**
-- Free tier: 200 messages/month (test it risk-free)
+- Free tier: 100 messages/month (test it risk-free)
 - Pro: $49/mo unlimited messages
 
 All AI models included (Claude Opus, Claude Sonnet, GPT-4) - no BYOK, no extra costs.

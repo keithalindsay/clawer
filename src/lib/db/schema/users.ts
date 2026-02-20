@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, pgEnum, integer } from 'drizzle-orm/pg-core';
 
 /**
  * User subscription tier enum
- * - free: Qwen3 only, 200 total messages
+ * - free: Qwen3 only, 100 total messages
  * - basic: Kimi access, 500 messages/day
  * - pro: Sonnet access, 2000 messages/day
  * - enterprise: Opus access, unlimited
@@ -79,7 +79,7 @@ export const users = pgTable('users', {
   /** Whether onboarding has been completed */
   onboardingCompleted: integer('onboarding_completed').notNull().default(0),
 
-  /** Free trial messages used (out of 200, no credit card required) */
+  /** Free trial messages used (out of 100, no credit card required) */
   freeMessagesUsed: integer('free_messages_used').notNull().default(0),
   
   /** Monthly message count */
