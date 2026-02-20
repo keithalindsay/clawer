@@ -347,7 +347,7 @@ export default function SettingsPage() {
         <header className="bg-white border-b border-gray-200">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center">
             <Link href="/dashboard" className="text-xl font-bold text-gray-900">
-              🦞 CLAWER<span className="text-blue-600">.AI</span>
+              🦞 Clawer.ai
             </Link>
           </div>
         </header>
@@ -383,7 +383,7 @@ export default function SettingsPage() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
+            🦞 Clawer.ai
           </Link>
           <Link
             href="/dashboard"

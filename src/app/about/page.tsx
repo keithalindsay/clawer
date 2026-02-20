@@ -15,7 +15,7 @@ export default function AboutPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
+            🦞 Clawer.ai
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/about" className="text-gray-900 font-medium">About</Link>
@@ -162,7 +162,7 @@ export default function AboutPage() {
       {/* Footer */}
       <footer className="py-12 px-6 bg-gray-900 text-gray-400">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-white font-bold text-lg">🦞 CLAWER.AI</div>
+          <div className="text-white font-bold text-lg">🦞 Clawer.ai</div>
           <div className="flex gap-8 text-sm">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>

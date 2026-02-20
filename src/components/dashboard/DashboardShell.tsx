@@ -158,7 +158,7 @@ export function DashboardShell({
         {/* Sidebar header */}
         <div className="h-14 px-4 flex items-center justify-between border-b" style={{ borderColor: '#e2e8f0' }}>
           <Link href="/dashboard" className="text-base font-bold" style={{ color: '#0f172a' }}>
-            🦞 CLAWER<span style={{ color: '#2563eb' }}>.AI</span>
+            🦞 Clawer.ai
           </Link>
           <button
             className="lg:hidden p-1 rounded"

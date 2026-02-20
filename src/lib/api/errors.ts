@@ -1,5 +1,5 @@
 /**
- * Custom error types for CLAWER.AI API
+ * Custom error types for Clawer.ai API
  */
 
 export class ApiError extends Error {

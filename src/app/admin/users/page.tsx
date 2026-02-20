@@ -27,7 +27,7 @@ export default async function AdminUsersPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="text-xl font-bold">
-              🦞 CLAWER<span className="text-blue-400">.AI</span>
+              🦞 Clawer.ai
             </Link>
             <span className="text-xs bg-red-600 px-2 py-1 rounded font-medium">
               ADMIN

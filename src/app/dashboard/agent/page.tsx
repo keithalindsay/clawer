@@ -196,7 +196,7 @@ export default function AgentPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="text-lg font-bold" style={{ color: '#0f172a' }}>
-              🦞 CLAWER<span style={{ color: '#2563eb' }}>.AI</span>
+              🦞 Clawer.ai
             </Link>
             <nav className="hidden sm:flex items-center gap-4 text-sm">
               <Link href="/dashboard" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Dashboard</Link>

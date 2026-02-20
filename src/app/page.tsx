@@ -1,5 +1,5 @@
 /**
- * CLAWER.AI Landing Page
+ * Clawer.ai Landing Page
  * 
  * Version 2.0 — The Definitive Brand (Feb 2026)
  * - Light theme, warm coral accents
@@ -33,9 +33,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">🦞</span>
-            <span className="text-xl font-bold text-gray-900">
-              CLAWER<span className="text-orange-500">.AI</span>
-            </span>
+            <span className="text-xl font-bold text-gray-900">Clawer.ai</span>
           </Link>
           
           {/* Desktop Navigation */}
@@ -134,9 +132,7 @@ export default function Home() {
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-2xl">🦞</span>
-                <span className="text-lg font-bold text-gray-900">
-                  CLAWER<span className="text-orange-500">.AI</span>
-                </span>
+                <span className="text-lg font-bold text-gray-900">Clawer.ai</span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed">
                 Deploy AI teams across any channel in seconds. Your agents, always on duty.

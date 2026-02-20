@@ -1,5 +1,5 @@
 /**
- * Email sending utility for CLAWER.AI
+ * Email sending utility for Clawer.ai
  * 
  * Uses Resend API if RESEND_API_KEY is set, otherwise logs to console.
  * All functions are safe to call without configuration — they degrade gracefully.

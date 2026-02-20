@@ -1,5 +1,5 @@
 /**
- * Standard API response helpers for CLAWER.AI
+ * Standard API response helpers for Clawer.ai
  * Follows the spec format: { success, data, error, meta }
  */
 

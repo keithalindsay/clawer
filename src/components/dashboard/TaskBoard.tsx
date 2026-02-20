@@ -461,7 +461,7 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-lg font-bold text-gray-900">
-              🦞 CLAWER
+              🦞 Clawer.ai
             </Link>
             <nav className="flex items-center gap-4 text-sm">
               <Link href="/dashboard" className="text-gray-500 hover:text-gray-900">Dashboard</Link>

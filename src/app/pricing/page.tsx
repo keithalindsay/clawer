@@ -1,12 +1,10 @@
 "use client";
 /**
- * CLAWER.AI Pricing Page
+ * Clawer.ai Pricing Page
  *
  * Three tiers: Free, Pro ($49/mo), Enterprise (custom)
  * Comparison table + FAQ section
  */
-
-"use client";
 
 import Link from "next/link";
 
@@ -52,10 +50,10 @@ export default function PricingPage() {
         "Smart model routing",
         "Priority email support",
       ],
-      cta: "Get Pro →",
+      cta: "Get Pro",
       ctaHref: "/api/stripe/checkout?plan=monthly",
       highlighted: true,
-      ctaStyle: "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25",
+      ctaStyle: "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/25",
     },
   ] as const;
 
@@ -132,7 +130,7 @@ export default function PricingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
+            🦞 Clawer.ai
           </Link>
           <div className="hidden md:flex items-center gap-4">
             <Link href="/#features" className="text-gray-600 hover:text-gray-900 transition-colors">
@@ -141,7 +139,7 @@ export default function PricingPage() {
             <Link href="/#teams" className="text-gray-600 hover:text-gray-900 transition-colors">
               AI Teams
             </Link>
-            <Link href="/pricing" className="text-blue-600 font-medium">
+            <Link href="/pricing" className="text-orange-500 font-medium">
               Pricing
             </Link>
             <Link href="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">
@@ -155,7 +153,7 @@ export default function PricingPage() {
             </Link>
             <Link
               href="/sign-up"
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-medium hover:bg-blue-700 transition-colors"
+              className="bg-orange-500 text-white px-5 py-2.5 rounded-full font-medium hover:bg-orange-600 transition-colors"
             >
               Start Free
             </Link>
@@ -184,14 +182,14 @@ export default function PricingPage() {
               key={tier.name}
               className={`relative bg-white rounded-2xl p-8 border ${
                 tier.highlighted
-                  ? "border-blue-600 shadow-xl shadow-blue-600/10 ring-2 ring-blue-600"
+                  ? "border-orange-500 shadow-xl shadow-orange-500/10 ring-2 ring-orange-500"
                   : "border-gray-200 shadow-sm"
               }`}
             >
               {tier.badge && (
                 <span
                   className={`absolute -top-3 left-6 px-3 py-1 rounded-full text-xs font-semibold ${
-                    tier.highlighted ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
+                    tier.highlighted ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600"
                   }`}
                 >
                   {tier.badge}
@@ -251,7 +249,7 @@ export default function PricingPage() {
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-4 pr-4 text-gray-900 font-semibold">Feature</th>
                   <th className="text-center py-4 px-4 text-gray-900 font-semibold">Free</th>
-                  <th className="text-center py-4 px-4 text-blue-600 font-semibold">Pro</th>
+                  <th className="text-center py-4 px-4 text-orange-500 font-semibold">Pro</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,20 +288,20 @@ export default function PricingPage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-20 px-6 bg-blue-600">
+      <section className="py-20 px-6 bg-orange-500">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white">
             Ready to build with AI Teams?
           </h2>
-          <p className="mt-4 text-blue-100 text-lg">
+          <p className="mt-4 text-orange-100 text-lg">
             100 free messages to start. No credit card. Upgrade whenever.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/sign-up"
-              className="inline-block bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-medium hover:bg-blue-50 transition-colors"
+              className="inline-block bg-white text-orange-600 px-8 py-4 rounded-full text-lg font-medium hover:bg-orange-50 transition-colors"
             >
-              Start Free →
+              Start Free
             </Link>
             <a
               href="mailto:hello@clawer.ai"
@@ -318,7 +316,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="py-12 px-6 bg-gray-900 text-gray-400">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-white font-bold text-lg">🦞 CLAWER.AI</div>
+          <div className="text-white font-bold text-lg">🦞 Clawer.ai</div>
           <div className="flex gap-8 text-sm">
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>

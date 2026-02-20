@@ -1,5 +1,5 @@
 /**
- * Sign-up page for CLAWER.AI
+ * Sign-up page for Clawer.ai
  */
 
 import { SignUp } from '@clerk/nextjs';

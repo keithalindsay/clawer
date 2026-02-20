@@ -1,5 +1,5 @@
 /**
- * Core TypeScript interfaces for CLAWER.AI
+ * Core TypeScript interfaces for Clawer.ai
  * Based on DATA-MODELS.md specification
  */
 

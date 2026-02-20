@@ -67,7 +67,7 @@ export default function ManagedOpenClawHostingPage() {
             ← Back to Blog
           </Link>
           <Link href="/" className="text-lg font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
+            🦞 Clawer.ai
           </Link>
         </div>
       </header>
@@ -321,7 +321,7 @@ export default function ManagedOpenClawHostingPage() {
       {/* Footer */}
       <footer className="py-12 px-6 bg-gray-900 text-gray-400">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <Link href="/" className="text-white font-bold text-lg">🦞 CLAWER.AI</Link>
+          <Link href="/" className="text-white font-bold text-lg">🦞 Clawer.ai</Link>
           <div className="flex gap-8 text-sm">
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>

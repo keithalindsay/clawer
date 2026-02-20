@@ -86,7 +86,7 @@ export default function PricingSection() {
               href="/sign-up"
               className="block w-full py-3 rounded-full font-semibold text-center bg-orange-500 text-white hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/25 transition-all"
             >
-              Get Started Free
+              Start Free
             </Link>
 
             <p className="text-center text-xs text-gray-500 mt-3">

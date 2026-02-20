@@ -19,14 +19,6 @@ const TESTIMONIALS = [
     quote: 'After deploying OpenClaw to 50 people, I learned: The hard part isn\'t the AI. It\'s the hosting.',
     context: 'On why managed hosting matters',
   },
-  {
-    name: 'Marcus Chen',
-    role: 'Founder, StartupXYZ',
-    handle: '@marcusc',
-    avatar: '👨‍🔬',
-    quote: 'Set it up in 5 minutes. Been running 3 months without a single issue. Worth every penny.',
-    context: 'Customer support automation',
-  },
 ];
 
 const STATS = [

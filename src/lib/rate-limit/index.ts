@@ -1,5 +1,5 @@
 /**
- * Redis-based rate limiter for CLAWER.AI
+ * Redis-based rate limiter for Clawer.ai
  */
 
 import Redis from 'ioredis';

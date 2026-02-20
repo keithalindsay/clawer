@@ -49,7 +49,7 @@ export function DashboardHome({
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-lg font-bold text-gray-900">
-              🦞 CLAWER
+              🦞 Clawer.ai
             </Link>
             <nav className="flex items-center gap-4 text-sm">
               <Link href="/dashboard" className="text-blue-600 font-medium">Dashboard</Link>

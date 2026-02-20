@@ -100,7 +100,7 @@ export default function UseCasesPage() {
                 href="/sign-up"
                 className="inline-block bg-orange-500 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-orange-600 transition-all hover:shadow-lg hover:shadow-orange-500/25 text-sm"
               >
-                Get Started Free →
+                Start Free
               </Link>
             </div>
           ))}
@@ -121,7 +121,7 @@ export default function UseCasesPage() {
             href="/sign-up"
             className="inline-block bg-orange-500 text-white px-8 py-3.5 rounded-full font-semibold text-lg hover:bg-orange-600 transition-all hover:shadow-lg hover:shadow-orange-500/25"
           >
-            Get Started Free →
+            Start Free
           </Link>
         </div>
       </section>

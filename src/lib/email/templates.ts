@@ -1,10 +1,10 @@
 /**
- * Email HTML templates for CLAWER.AI
+ * Email HTML templates for Clawer.ai
  * 
  * Professional email templates with:
- * - Blue-600 header with Clawer.ai branding
+ * - Orange header with Clawer.ai branding
  * - Clean white body
- * - Blue CTA button
+ * - Orange CTA button
  * - Gray footer with unsubscribe link
  */
 
@@ -29,7 +29,7 @@ function layout(content: string, preheader: string = ''): string {
           <!-- Header -->
           <tr>
             <td style="background-color:${BRAND_COLOR};padding:28px 32px;text-align:center;">
-              <span style="font-size:28px;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">🦞 CLAWER<span style="color:#bfdbfe;">.AI</span></span>
+              <span style="font-size:28px;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">🦞 Clawer.ai</span>
             </td>
           </tr>
           <!-- Body -->

@@ -42,7 +42,7 @@ export default async function UsagePage() {
             </h1>
           </div>
           <Link href="/dashboard" className="text-xl font-bold text-gray-900">
-            🦞 CLAWER<span className="text-blue-600">.AI</span>
+            🦞 Clawer.ai
           </Link>
         </div>
       </header>
