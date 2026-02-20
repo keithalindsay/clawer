@@ -267,10 +267,14 @@ export async function POST(req: NextRequest) {
       messageLength: sanitizedMessage.length,
     });
 
+    // Generate a stable session key per user+agent so OpenClaw maintains conversation history.
+    // Without this, each message creates a new session and the agent has no memory of prior messages.
+    const stableSessionKey = context || `user-${userId}-agent-${agentId || 'default'}`;
+
     const result = await containerApi.chat(
       targetPort,
       sanitizedMessage,
-      context,
+      stableSessionKey,
       {
         ...botSettings,
         model: routing.model,
