@@ -64,10 +64,11 @@ if [ -n "$OPENAI_KEY" ]; then
 elif [ -n "$GEMINI_KEY" ]; then
   MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"gemini\",\"remote\":{\"apiKey\":\"${GEMINI_KEY}\"}}"
   echo "Memory search configured with provider: gemini"
+elif [ -n "$OLLAMA_BASE_URL" ]; then
+  # Use Ollama nomic-embed-text via OpenAI-compatible API
+  MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"openai\",\"model\":\"nomic-embed-text\",\"remote\":{\"baseUrl\":\"${OLLAMA_BASE_URL}/v1\",\"apiKey\":\"not-needed\"}}"
+  echo "Memory search configured with provider: ollama (via OpenAI-compatible API)"
 else
-  # Note: Ollama-based embeddings are not yet supported in this version of OpenClaw
-  # When supported, this will use nomic-embed-text via Ollama
-  # FUTURE: elif [ -n "$OLLAMA_BASE_URL" ]; then ...
   echo "WARNING: No embedding provider available — memory_search will be disabled"
 fi
 
@@ -90,26 +91,29 @@ unset OPENAI_API_KEY GEMINI_API_KEY MINIMAX_API_KEY
 
 # Install default workspace files (copy-on-missing — never overwrites existing user files)
 # Runs every boot; safe because we check before copying each file.
-# AGENTS.md is skipped here — team-specific version is installed below.
+# AGENTS.md is now installed from defaults (stock OpenClaw instructions with memory management).
+# Team-specific content goes in team/AGENTS.md — see below.
 DEFAULTS_DIR="/opt/defaults"
 if [ -d "$DEFAULTS_DIR" ]; then
   for f in "$DEFAULTS_DIR"/*; do
     fname=$(basename "$f")
     dest="/home/user/clawd/$fname"
-    [ "$fname" = "AGENTS.md" ] && continue   # handled by team template below
     if [ ! -f "$dest" ]; then
       cp "$f" "$dest" && echo "Installed default: $fname"
     fi
   done
 fi
 
-# Install team-specific AGENTS.md (first boot only — preserves user customizations)
+# Install team-specific content to team/AGENTS.md (NOT the root AGENTS.md)
+# Root AGENTS.md stays as stock OpenClaw with memory/session instructions.
+# The stock AGENTS.md references team/AGENTS.md automatically.
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
-TEAM_DIR="/opt/teams/${TEAM_TEMPLATE}"
-if [ -d "$TEAM_DIR" ] && [ ! -f /home/user/clawd/AGENTS.md ]; then
-  cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md 2>/dev/null && echo "Team template installed: ${TEAM_TEMPLATE}"
+TEAM_DIR="/opt/clawer-docker/teams/${TEAM_TEMPLATE}"
+mkdir -p /home/user/clawd/team
+if [ -d "$TEAM_DIR" ] && [ ! -f /home/user/clawd/team/AGENTS.md ]; then
+  cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/team/AGENTS.md 2>/dev/null && echo "Team template installed to team/AGENTS.md: ${TEAM_TEMPLATE}"
 else
-  echo "AGENTS.md already exists, skipping template install"
+  echo "team/AGENTS.md already exists, skipping template install"
 fi
 
 # Ensure memory directory exists
