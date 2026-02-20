@@ -1,988 +1,697 @@
-# Clawer.ai - Operations Runbook
+# Clawer.ai Operations Runbook
 
-**Version:** 2.0  
-**Last Updated:** 2026-02-08  
-**Audience:** DevOps, SRE, On-call Engineers
+**Purpose:** Quick-reference troubleshooting guide for agents and operators. When something breaks, start here.
 
----
-
-## Quick Reference
-
-| Task | Command |
-|------|---------|
-| Check app status | `pm2 status` |
-| View app logs | `pm2 logs clawer-web` |
-| Restart app | `pm2 restart clawer-web` |
-| List user containers | `docker ps --filter "name=clawer_user_"` |
-| Restart user container | `docker restart clawer_user_{userId}` |
-| View container logs | `docker logs -f clawer_user_{userId}` |
-| Check database | `psql -U clawer -d clawer -c "SELECT COUNT(*) FROM users;"` |
-| Deploy updates | See [Deployment](#deployment) |
+**Last updated:** 2026-02-20
 
 ---
 
-## Server Access
+## Architecture Overview
 
-### SSH Connection
-
-```bash
-ssh root@YOUR_DOCKER_HOST
+```
+User Browser → Caddy (HTTPS) → Next.js (PM2, port 3000) → Container API (ports 4000-4012)
+                                      ↓
+                                 PostgreSQL (5432)
+                                      
+Each container:
+  OpenClaw gateway (port 8080) ← api-server (port 8081) → MiniMax M2.5 API
+                                                         → Ollama (heartbeats/embeddings)
+                                                         → GPT-4o Mini (fallback)
 ```
 
-**Alternate:** If you have a dedicated user account:
-```bash
-ssh deploy@YOUR_DOCKER_HOST
+- **Server:** `root@YOUR_DOCKER_HOST`
+- **App:** PM2 process `clawer`, Next.js 16, port 3000
+- **DB:** PostgreSQL `clawer:YOUR_DB_PASSWORD@localhost:5432/clawer`
+- **Containers:** Docker, image `clawer-openclaw:v2026.2.19`
+- **Shared services:** Ollama, SearXNG, SearXNG proxy — all on `clawer_shared` Docker network
+- **DNS/SSL:** Caddy reverse proxy, certs auto-managed
+- **Auth:** Clerk
+- **Payments:** Stripe, price ID `price_1SxtZMKtZGLqQJF6DYKV6Cup`
+
+---
+
+## Common Issues
+
+### 1. "Failed to connect. Please try again." in Chat
+
+**Symptom:** User sends message, gets "Failed to connect" response.
+
+**Diagnosis flowchart:**
+```
+1. Check PM2 logs for the actual error:
+   ssh root@YOUR_DOCKER_HOST 'pm2 logs clawer --lines 50 --nostream 2>&1 | grep -v "Server Action" | grep -i error'
+
+2. If "Container request failed" + "other side closed" or "fetch failed":
+   → Container is rejecting/dropping the connection. Go to step 3.
+
+3. Check container logs:
+   ssh root@YOUR_DOCKER_HOST 'docker logs <container_name> --tail 30 2>&1'
+
+4. If "Gateway request timeout":
+   → The container's OpenClaw gateway can't get an LLM response. Go to "LLM API Issues"
+
+5. If "Unauthorized":
+   → Gateway token mismatch. Go to "Gateway Token Mismatch"
+
+6. If container not running:
+   ssh root@YOUR_DOCKER_HOST 'docker ps | grep clawer_'
+   → If missing, check: docker ps -a | grep clawer_  (stopped vs removed)
 ```
 
-### Key Locations
+### 2. LLM API Issues (MiniMax)
 
-- **App directory:** `/opt/clawer` (assumed, verify with PM2)
-- **Logs:** `/opt/clawer/logs/` (if PM2 configured) or `~/.pm2/logs/`
-- **Docker images:** Check with `docker images | grep clawer`
-- **Environment:** `/opt/clawer/.env.local` or environment variables in PM2 config
+**Symptom:** Container logs show `Gateway request timeout` or `chat error`.
+
+**Test MiniMax directly from inside container:**
+```bash
+ssh root@YOUR_DOCKER_HOST 'docker exec <container> node -e "
+fetch(\"https://api.minimax.io/anthropic/v1/messages\", {
+  method: \"POST\",
+  headers: {\"Content-Type\":\"application/json\", \"x-api-key\":\"<KEY>\"},
+  body: JSON.stringify({model:\"MiniMax-M2.5\",max_tokens:10,messages:[{role:\"user\",content:\"hi\"}]})
+}).then(r=>r.json()).then(console.log).catch(console.error)
+"'
+```
+
+**Common errors:**
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `insufficient balance (1008)` | MiniMax credits exhausted | Top up at minimax.io dashboard, then rotate key on all containers |
+| `invalid api key` | Key revoked or wrong | Get new key, rotate on all containers |
+| Timeout (no response) | MiniMax API down | Check status page; containers should fall back to GPT-4o Mini but may not |
+
+### 3. Gateway Token Mismatch
+
+**Symptom:** PM2 logs show container returns 401. Container logs show "Unauthorized request to /api/chat/send".
+
+**Cause:** The gateway token in the PostgreSQL `users` table doesn't match the token in the container's `openclaw.json`. This happens when containers are recreated (entrypoint generates a new random token).
+
+**Fix:**
+```bash
+# Get the container's actual token
+TOKEN=$(ssh root@YOUR_DOCKER_HOST "docker exec <container> cat /home/user/.openclaw/openclaw.json | python3 -c \"import json,sys; c=json.load(sys.stdin); print(c['gateway']['auth']['token'])\"")
+
+# Update DB
+ssh root@YOUR_DOCKER_HOST "PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c \"UPDATE users SET gateway_token = '$TOKEN' WHERE container_port = <PORT>;\""
+```
+
+**Prevention:** When recreating containers, ALWAYS sync tokens to DB afterward. Use the update-containers.sh script which handles this.
+
+### 4. Rotating API Keys on All Containers
+
+**⚠️ CRITICAL: You cannot just `sed` the config file — the entrypoint regenerates it on restart from the `MINIMAX_API_KEY` env var.**
+
+**Correct procedure:**
+```bash
+NEW_KEY="sk-..."
+
+# For each container: must RECREATE (not just restart)
+for c in <container_names>; do
+  PORT=$(docker inspect $c --format '{{range $k,$v := .NetworkSettings.Ports}}{{range $v}}{{.HostPort}}{{end}}{{end}}' | grep -o '[0-9]*' | head -1)
+  
+  docker stop $c && docker rm $c
+  
+  docker run -d \
+    --name $c \
+    --restart unless-stopped \
+    -p 127.0.0.1:${PORT}:8081 \
+    -e MINIMAX_API_KEY=$NEW_KEY \
+    -v /opt/clawer/userdata/${c}/.openclaw:/home/user/.openclaw \
+    -v /opt/clawer/userdata/${c}/clawd:/home/user/clawd \
+    --network clawer_shared \
+    --health-cmd 'node -e "fetch(\"http://localhost:8081/health\").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"' \
+    --health-interval 30s \
+    --health-timeout 10s \
+    --health-retries 3 \
+    clawer-openclaw:v2026.2.19
+done
+
+# THEN sync gateway tokens to DB (see "Gateway Token Mismatch" above)
+```
+
+**Also update:**
+- `/opt/clawer-docker/entrypoint.sh` on server (template for new containers)
+- `~/projects/clawer/docker/openclaw-user/entrypoint.sh` locally (commit + push)
+
+### 5. Container Won't Start / Unhealthy
+
+**Check status:**
+```bash
+docker ps -a | grep clawer_
+docker logs <container> --tail 50
+```
+
+**Common causes:**
+- Port conflict: another container already on that port
+- Volume mount missing: `/opt/clawer/userdata/<name>/` doesn't exist
+- Network missing: `docker network ls | grep clawer_shared`
+- Image missing: `docker images | grep clawer-openclaw`
+
+### 6. "Failed to find Server Action" Errors
+
+**Symptom:** PM2 error logs full of `Failed to find Server Action "x"`.
+
+**Cause:** User's browser has cached JS from a previous deployment. The server action IDs changed.
+
+**Fix:** User needs to hard-refresh (Ctrl+Shift+R) or clear cache. This is cosmetic — doesn't affect API routes.
+
+### 7. Database Connection Issues
+
+**Test connection:**
+```bash
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "SELECT count(*) FROM users;"'
+```
+
+**If Next.js can't connect:** Check `.env.local` on server has correct `DATABASE_URL`:
+```
+DATABASE_URL=postgresql://clawer:YOUR_DB_PASSWORD@localhost:5432/clawer
+```
+
+---
+
+## Container Inventory
+
+| Container | Port | Users | Purpose |
+|-----------|------|-------|---------|
+| `clawer_free_tier` | 4000 | All free users | Shared free tier |
+| `clawer_user_39PgWfJYYrb2T36BqfnRgtwlsfM` | 4010 | Keith + 2 others | Paid shared |
+| `clawer_user_user_39oXEIzIlIMnVYEMXqfCHxypJWx` | 4012 | 1 user | Paid |
+
+**Container model routing (all containers):**
+- Primary: `minimax/MiniMax-M2.5`
+- Fallback: `openai/gpt-4o-mini`
+- Heartbeats: `ollama/qwen2.5:3b` (via shared Ollama)
+- Embeddings: `nomic-embed-text` (via shared Ollama at `http://ollama:11434/v1`)
+
+**Shared services (on `clawer_shared` network):**
+- `ollama` — qwen2.5:3b + nomic-embed-text
+- `searxng` — web search
+- `searxng-proxy` — containerized proxy (port 127.0.0.1:8889)
 
 ---
 
 ## Deployment
 
-### Pre-Deployment Checklist
+**Pipeline:** Push to `main` → GitHub Actions → rsync to server → `pnpm install && pnpm build` → PM2 restart
 
-- [ ] Code reviewed and merged to `main`
-- [ ] Tests passing locally (`npm run build`)
-- [ ] Database migrations tested locally
-- [ ] Backup database (see [Backup](#backup-procedures))
-- [ ] Check current container count: `docker ps --filter "name=clawer_user_" | wc -l`
-- [ ] Notify users if expecting downtime (for DB migrations)
-
-### Deploy Application Code
-
+**Manual deploy:**
 ```bash
-# On local machine
-cd /home/keith/projects/clawer
-git checkout main
-git pull
-
-# Build locally to verify
-npm run build
-
-# Deploy to server
-rsync -avz --delete \
-  --exclude 'node_modules' \
-  --exclude '.next' \
-  --exclude '.git' \
-  --exclude '.env*' \
-  --exclude 'docker/' \
-  ./ root@YOUR_DOCKER_HOST:/opt/clawer/
-
-# SSH to server
-ssh root@YOUR_DOCKER_HOST
-
-cd /opt/clawer
-npm install --production
-npm run build
-
-# Apply database migrations (if any)
-npm run db:push
-
-# Restart application
-pm2 restart clawer-web
-
-# Monitor logs for errors
-pm2 logs clawer-web --lines 50
+cd ~/projects/clawer && git push  # triggers CI
 ```
 
-**Expected output:**
-```
-[PM2] Restarting clawer-web
-[PM2] Process successfully restarted
-```
-
-**Rollback:** If deploy fails, restore previous code and restart.
-
-### Deploy Docker Container Image
-
-When `docker/openclaw-user/` changes:
-
+**Check deploy status:**
 ```bash
-# On local machine
-cd /home/keith/projects/clawer/docker/openclaw-user
-
-# Build image
-docker build -t clawer-openclaw:latest .
-
-# Save to file
-docker save clawer-openclaw:latest | gzip > /tmp/clawer-openclaw.tar.gz
-
-# Transfer to server
-scp /tmp/clawer-openclaw.tar.gz root@YOUR_DOCKER_HOST:/tmp/
-
-# SSH to server
-ssh root@YOUR_DOCKER_HOST
-
-# Load image
-docker load < /tmp/clawer-openclaw.tar.gz
-
-# Verify image loaded
-docker images | grep clawer-openclaw
-
-# Optional: Restart existing containers to use new image
-# WARNING: This will disconnect users temporarily
-docker ps --filter "name=clawer_user_" --format "{{.Names}}" | \
-  xargs -I {} docker restart {}
+ssh root@YOUR_DOCKER_HOST 'pm2 status clawer'
+ssh root@YOUR_DOCKER_HOST 'pm2 logs clawer --lines 10 --nostream'
 ```
 
-**Note:** Existing containers continue using old image until restarted. New containers use new image.
-
-### Zero-Downtime Deployment (PM2 Cluster Mode)
-
-If using PM2 cluster mode (multiple instances):
-
+**Rebuild Docker image:**
 ```bash
-pm2 reload clawer-web  # Graceful reload, no downtime
+ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer-docker && docker build -t clawer-openclaw:v2026.2.19 -f Dockerfile .'
 ```
 
 ---
 
-## Provisioning a New User Container
+## File Paths (Server)
 
-### Automatic Provisioning
+| What | Path |
+|------|------|
+| Next.js app | `/opt/clawer/` |
+| PM2 config | PM2 process `clawer` |
+| Docker image source | `/opt/clawer-docker/` |
+| Entrypoint template | `/opt/clawer-docker/entrypoint.sh` |
+| Team templates | `/opt/clawer-docker/teams/{template}/AGENTS.md` |
+| Default workspace files | `/opt/defaults/` |
+| User data volumes | `/opt/clawer/userdata/{containerName}/` |
+| Caddy config | `/etc/caddy/Caddyfile` |
+| Umami analytics | Docker port 3033, `https://analytics.clawer.ai` |
 
-Containers are automatically provisioned when a user subscribes via Stripe. The webhook at `/api/webhooks/stripe` handles this.
+---
 
-**Verify webhook is working:**
-```bash
-# Check Stripe webhook logs
-curl -H "Authorization: Bearer $STRIPE_SECRET_KEY" \
-  https://api.stripe.com/v1/webhook_endpoints
-
-# Check app logs for provisioning events
-pm2 logs clawer-web | grep "provisionContainer"
-```
-
-### Manual Provisioning
-
-If automatic provisioning fails or you need to manually create a container:
+## Useful Commands
 
 ```bash
-# SSH to server
-ssh root@YOUR_DOCKER_HOST
+# Container health check
+ssh root@YOUR_DOCKER_HOST 'docker ps --format "{{.Names}} {{.Status}}" | grep clawer_'
 
-# Get userId from database
-psql -U clawer -d clawer -c "SELECT id, email FROM users WHERE email='user@example.com';"
+# Test chat end-to-end (replace TOKEN and PORT)
+ssh root@YOUR_DOCKER_HOST 'curl -s -X POST http://localhost:PORT/api/chat -H "Content-Type: application/json" -H "Authorization: Bearer TOKEN" -d "{\"message\":\"hello\"}" --max-time 30'
 
-# Note the userId (Clerk ID, looks like: user_2abc123xyz)
+# Check all gateway tokens match DB
+ssh root@YOUR_DOCKER_HOST 'for c in $(docker ps --format "{{.Names}}" | grep clawer_); do echo "$c: $(docker exec $c python3 -c "import json; print(json.load(open(\"/home/user/.openclaw/openclaw.json\"))[\"gateway\"][\"auth\"][\"token\"])" 2>/dev/null || echo "FAILED")"; done'
 
-# Manually provision via API (requires admin auth)
-# Or use Node REPL:
-cd /opt/clawer
-node
+# Check MiniMax balance (from any container)
+ssh root@YOUR_DOCKER_HOST 'docker exec clawer_free_tier node -e "fetch(\"https://api.minimax.io/anthropic/v1/messages\",{method:\"POST\",headers:{\"Content-Type\":\"application/json\",\"x-api-key\":\"KEY\"},body:JSON.stringify({model:\"MiniMax-M2.5\",max_tokens:5,messages:[{role:\"user\",content:\"hi\"}]})}).then(r=>r.json()).then(console.log)"'
 
-> const { provisionContainer } = require('./dist/lib/orchestrator.js');
-> provisionContainer('user_2abc123xyz').then(console.log);
+# Restart PM2
+ssh root@YOUR_DOCKER_HOST 'pm2 restart clawer'
 
-# Expected output:
-# {
-#   success: true,
-#   containerId: 'abc123...',
-#   port: 4001
-# }
-```
-
-**Verify container is running:**
-```bash
-docker ps --filter "name=clawer_user_user_2abc123xyz"
-```
-
-**Check health:**
-```bash
-# Get port from database
-PORT=$(psql -U clawer -d clawer -t -c "SELECT container_port FROM users WHERE id='user_2abc123xyz';")
-
-# Health check
-curl http://localhost:$PORT/health
-
-# Expected: {"status":"ok","uptime":123}
+# DB quick query
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "QUERY"'
 ```
 
 ---
 
-## Debugging Container Issues
+## Incident Log
 
-### Symptom: User Reports "Chat Not Working"
+### 2026-02-20: MiniMax "insufficient balance" → all chat broken
+- **Impact:** All users got "Failed to connect" for every message
+- **Root cause:** MiniMax API key ran out of credits. Container returns 500, gateway times out, Next.js gets socket closed.
+- **Detection:** PM2 logs showed `Container request failed: fetch failed` + `other side closed`. Container logs showed `Gateway request timeout`. Direct MiniMax API test returned `insufficient balance (1008)`.
+- **Fix:** Keith upgraded MiniMax plan, got new API key. Had to RECREATE all containers (not just restart) because env vars are baked at container creation. Then synced new gateway tokens to DB.
+- **Lesson:** Config edits inside running containers are lost on restart — entrypoint regenerates from env vars. Must recreate containers for env var changes.
+- **Prevention:** Add MiniMax balance monitoring to War Machine cron. Consider a `/health` endpoint that tests LLM connectivity.
 
-**Step 1: Check container status**
+---
+
+*This is a living document. Update it every time you fix something non-obvious.*
+
+---
+
+## Provisioner Flow (`src/lib/provisioner.ts`)
+
+### How a new paid container is created
+
+Triggered automatically by the Stripe webhook (`checkout.session.completed` → `provisionContainer(userId, teamTemplate)`).
+
+**Step-by-step:**
+
+1. **Validate userId** — must match `/^user_[a-zA-Z0-9]+$/` (Clerk format). Invalid IDs throw immediately.
+2. **Check if container already exists** — `docker ps -a --filter name=^clawer_user_${userId}$`. If yes: start it, update DB status to `running`, return existing port/token.
+3. **Allocate port** — queries `MAX(containerPort)` from DB, adds 2. Starts at `4010`, max `5000`. Ports are always even-spaced by 2.
+4. **Generate gateway token** — 32 random bytes as hex (`crypto.randomBytes(32).toString('hex')`). This is written to DB and baked into the container as `GATEWAY_TOKEN` env var.
+5. **Read API keys** — SSH-executes `cat /opt/clawer/.env.local` on the server and parses `MINIMAX_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`.
+6. **Create host directories** — `mkdir -p /opt/clawer/userdata/${containerName}/.openclaw /opt/clawer/userdata/${containerName}/clawd`. These survive container recreation.
+7. **`docker run`** — Creates the container with:
+   - `--memory=2g --cpus=1 --pids-limit=256`
+   - `--cap-drop=ALL --cap-add=CHOWN,SETUID,SETGID,DAC_OVERRIDE`
+   - `--security-opt=no-new-privileges`
+   - Port binding: `-p 127.0.0.1:${apiPort}:8081` (only localhost, never public)
+   - Volume mounts for `.openclaw` and `clawd` (persistent)
+   - Env: `USER_ID`, `TEAM_TEMPLATE`, `MINIMAX_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GATEWAY_TOKEN`
+   - `--restart=unless-stopped`
+   - Image: `clawer-openclaw:v2026.2.19`
+8. **Wait 2 seconds** for container init.
+9. **Safety patch check** — scans api-server.js for old nonce bug; patches if found (shouldn't happen with v2026.2.19).
+10. **`docker restart`** — Forces entrypoint to run again and write correct `openclaw.json` with `dangerouslyDisableDeviceAuth`.
+11. **Update DB** — sets `containerId`, `containerPort`, `containerStatus='running'`, `gatewayToken`, `containerCreatedAt`, `updatedAt`.
+
+**On any failure:** DB is updated to `containerStatus='error'`. Container provisioning does **not** block the user's subscription — billing succeeds even if provisioning fails (container can be manually provisioned later).
+
+### What DB fields are set
+
+| Field | Value | When |
+|-------|-------|------|
+| `containerId` | Docker short ID | After `docker run` |
+| `containerPort` | e.g. `4012` | After port allocation |
+| `containerStatus` | `'running'` / `'error'` / `'stopped'` | Throughout |
+| `gatewayToken` | 64-char hex string | At provision time |
+| `containerCreatedAt` | timestamp | After successful creation |
+
+### What can go wrong
+
+| Error | Symptom | Fix |
+|-------|---------|-----|
+| SSH failure | `Could not retrieve API keys from server` in PM2 logs | Check SSH key auth to server; check `sshExec` config |
+| Port conflict | Container starts but port already in use | Check `docker ps` for conflict; manually set correct port in DB |
+| `docker run` fails | `containerStatus='error'` in DB | Check SSH access; check Docker daemon on server |
+| Gateway token mismatch after provision | 401 Unauthorized on first chat | Run token sync (see Section 3 "Gateway Token Mismatch") |
+| entrypoint didn't write config | Chat fails with "device auth" error | `docker restart <container>` — entrypoint re-runs and rewrites `openclaw.json` |
+
+**Manual re-provision if webhook provision failed:**
 ```bash
-# Get userId (from user email or dashboard)
-USER_ID="user_2abc123xyz"
+# Check DB state
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "SELECT id, container_port, container_status, gateway_token FROM users WHERE id = '"'"'user_XXXXX'"'"';"'
 
-# Check if container exists
-docker ps -a --filter "name=clawer_user_$USER_ID" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
-
-**Possible states:**
-- **Not found:** Container never provisioned → Check DB, re-provision
-- **Exited:** Container crashed → Check logs, restart
-- **Restarting:** Boot loop → Check logs for errors
-- **Up:** Running but not responding → Check health endpoint
-
-**Step 2: Check container logs**
-```bash
-docker logs --tail 100 clawer_user_$USER_ID
-
-# Look for:
-# - "ERROR" messages
-# - "OPENAI_API_KEY" missing
-# - Port binding errors
-# - Config validation failures
-```
-
-**Common errors:**
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `OPENAI_API_KEY environment variable not set` | Missing env var | Re-create container with key |
-| `Cannot bind to port` | Port already in use | Check port allocation in DB |
-| `Config invalid` | Bad config template | Check config-template.json |
-| `429 Too Many Requests` | OpenAI rate limit | Wait 2-3 minutes |
-| `401 Unauthorized` | Invalid API key | Update OPENAI_API_KEY |
-
-**Step 3: Check health endpoint**
-```bash
-PORT=$(psql -U clawer -d clawer -t -c "SELECT container_port FROM users WHERE id='$USER_ID';")
-curl http://localhost:$PORT/health
-```
-
-**Expected:** `{"status":"ok","uptime":...}`  
-**If timeout:** Container API server not responding → Restart container
-
-**Step 4: Test chat endpoint**
-```bash
-curl -X POST http://localhost:$((PORT+1))/api/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"test"}'
-```
-
-**Expected:** `{"content":"..."}`  
-**If error:** Check logs, verify OpenAI key
-
-**Step 5: Restart container**
-```bash
-docker restart clawer_user_$USER_ID
-
-# Wait 10 seconds
-sleep 10
-
-# Verify it started
-docker ps --filter "name=clawer_user_$USER_ID"
-
-# Check logs
-docker logs --tail 50 clawer_user_$USER_ID
-```
-
-### Symptom: Container Stuck in "Restarting" Loop
-
-**Diagnose:**
-```bash
-# Check restart count
-docker inspect clawer_user_$USER_ID --format '{{.RestartCount}}'
-
-# If > 3, there's a persistent issue
-```
-
-**Common causes:**
-1. **Config error** - Check logs for validation errors
-2. **Missing dependencies** - OpenClaw installation failed
-3. **Port conflict** - Another process using the port
-
-**Fix:**
-```bash
-# Stop the container
-docker stop clawer_user_$USER_ID
-
-# Remove it
-docker rm clawer_user_$USER_ID
-
-# Re-provision via API or manually
-# (See "Provisioning a New User Container")
-```
-
-### Symptom: WhatsApp/Telegram Not Connecting
-
-**WhatsApp:**
-```bash
-# Get QR code status
-PORT=$(psql -U clawer -d clawer -t -c "SELECT container_port FROM users WHERE id='$USER_ID';")
-curl http://localhost:$((PORT+1))/whatsapp/qr
-
-# Expected: Base64 QR code image
-# If error: Check OpenClaw logs in container
-docker logs clawer_user_$USER_ID | grep -i whatsapp
-```
-
-**Telegram:**
-```bash
-# Check Telegram status
-curl http://localhost:$((PORT+1))/telegram/status
-
-# Expected: {"connected":true,"username":"..."}
-# If false: User needs to reconnect bot token
-```
-
-**Reset WhatsApp connection:**
-```bash
-docker exec clawer_user_$USER_ID rm -rf /home/user/.openclaw/sessions/whatsapp
-docker restart clawer_user_$USER_ID
+# If container exists but DB is wrong, sync token:
+TOKEN=$(ssh root@YOUR_DOCKER_HOST "docker exec clawer_user_user_XXXXX python3 -c \"import json; print(json.load(open('/home/user/.openclaw/openclaw.json'))['gateway']['auth']['token'])\"")
+ssh root@YOUR_DOCKER_HOST "PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c \"UPDATE users SET gateway_token='$TOKEN', container_status='running' WHERE id='user_XXXXX';\""
 ```
 
 ---
 
-## Restarting Services
+## Stripe & Billing
 
-### Restart Application (Next.js)
+### Webhook flow (`src/app/api/webhooks/stripe/route.ts`)
 
+**Endpoint:** `POST /api/webhooks/stripe`
+
+**Security:** Signature verified via `STRIPE_WEBHOOK_SECRET`. If the secret isn't configured, the endpoint returns 500 and blocks all requests. **Never disable signature verification.**
+
+### Events handled
+
+#### `checkout.session.completed` → User subscribes
+1. Sets `tier = 'pro'`, saves `stripeCustomerId` and `stripeSubscriptionId` in DB.
+2. Sends welcome email (non-blocking; logged if it fails).
+3. Calls `provisionContainer(userId, teamTemplate)` — non-blocking; logged if it fails.
+
+#### `customer.subscription.deleted` → Subscription canceled
+1. Sets `tier = 'free'`, clears `stripeSubscriptionId`.
+2. Calls `stopContainer(userId)` — container is **stopped but not removed** (data preserved for re-subscription).
+
+#### `customer.subscription.updated` → Subscription status changed
+- If `status === 'past_due'`: calls `alertPaymentFailure()`. ⚠️ **No email template exists yet** — see TODO in code. Subscription remains active during Stripe's retry window.
+
+#### `invoice.payment_failed` → Payment declined
+- Calls `alertPaymentFailure(customerId, 'Invoice payment failed')`.
+- Container stays running during Stripe's retry window. Only stopped on `subscription.deleted`.
+
+### Common billing issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| User paid but has no container | Provision failed silently after checkout | Check PM2 logs for `[PROVISION] ❌`; manually call provisioner or SSH and create container |
+| User paid but `tier` still `'free'` | Webhook didn't fire or signature check failed | Check Stripe Dashboard → Webhooks → recent events; verify `STRIPE_WEBHOOK_SECRET` in `.env.local` |
+| User canceled but container still running | `subscription.deleted` event missed | Manually `stopContainer()` or `docker stop clawer_user_XXXXX` |
+| Past-due user still has access | Expected — Stripe retries for several days before canceling | Monitor Stripe Dashboard; container stops only on `subscription.deleted` |
+
+**Check webhook delivery:**
 ```bash
-pm2 restart clawer-web
+# On server, test webhook endpoint is reachable
+curl -s -o /dev/null -w "%{http_code}" https://clawer.ai/api/webhooks/stripe
+# Should return 400 (missing signature) — not 404
 
-# Or if using custom ecosystem file
-pm2 restart ecosystem.config.js
-
-# Monitor logs
-pm2 logs clawer-web --lines 50
+# Check PM2 logs for webhook events
+ssh root@YOUR_DOCKER_HOST 'pm2 logs clawer --lines 100 --nostream 2>&1 | grep -i "stripe\|webhook\|subscri\|checkout"'
 ```
 
-**Expected downtime:** <5 seconds
+**Price IDs:**
+- Monthly: `price_1SxtZMKtZGLqQJF6DYKV6Cup`
+- Annual: same as monthly (fallback — annual not fully configured yet)
 
-### Restart User Container
+**Customer portal** (for users to manage/cancel): Stripe Customer Portal via `createPortalSession()`. User must have `stripeCustomerId` in DB.
+
+---
+
+## Container Update Procedure (`scripts/update-containers.sh`)
+
+### Full update flow
+
+**Run from:** Locally (`~/projects/clawer/`) or on server. Script SSHes as needed.
+**Requires:** `docker`, `jq`, `npm` on the machine running it.
 
 ```bash
-docker restart clawer_user_{userId}
+# Standard update to a new version
+~/projects/clawer/scripts/update-containers.sh v2026.2.20
 
-# Verify it restarted
-docker ps --filter "name=clawer_user_{userId}"
+# Dry run first (always recommended)
+~/projects/clawer/scripts/update-containers.sh v2026.2.20 --dry-run
+
+# Rollback if something breaks
+~/projects/clawer/scripts/update-containers.sh --rollback v2026.2.19
 ```
 
-**Expected downtime:** 10-30 seconds (container startup time)
+**Steps the script takes:**
 
-### Restart All User Containers
+1. **Acquire tgz** — Looks for `docker/openclaw-user/openclaw-<version>.tgz`. If missing, runs `npm pack openclaw@<version>` to download from npm registry.
+2. **Update Dockerfile** — Patches `COPY` and `npm install -g` lines to reference the new tgz filename.
+3. **Build Docker image** — `docker build -t clawer-openclaw:v<version> docker/openclaw-user/`. Build log saved to `/tmp/docker-build-*.log`.
+4. **For each running `clawer_` container:**
+   - `docker inspect` → saves full config to temp JSON
+   - Saves all env vars to temp file
+   - `docker stop` + `docker rm`
+   - Reconstructs `docker run` command from inspect JSON (preserves all ports, volumes, caps, resource limits, restart policy)
+   - Creates new container with new image
+   - Waits up to 120s (12 × 10s) for health check to pass
+   - If health check fails → **auto-rollback to old image**
+5. **Summary** — Reports success/failure per container.
 
-⚠️ **WARNING:** This will disconnect ALL users. Only do during maintenance window.
+### ⚠️ Known issue: AGENTS.md overwrite bug
 
+The entrypoint.sh unconditionally copies the team template `AGENTS.md` on every start, overwriting user customizations. Before running updates in production:
+
+**Fix in `/opt/clawer-docker/entrypoint.sh`:**
 ```bash
-# List all containers first
-docker ps --filter "name=clawer_user_" --format "{{.Names}}"
+# Change this:
+cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md
 
-# Restart all
-docker ps --filter "name=clawer_user_" --format "{{.Names}}" | \
-  xargs -I {} docker restart {}
+# To this:
+[ -f /home/user/clawd/AGENTS.md ] || cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/AGENTS.md
+```
+Also fix in `~/projects/clawer/docker/openclaw-user/entrypoint.sh` and commit.
 
-# Verify they restarted
-docker ps --filter "name=clawer_user_" | wc -l
+### Gateway token sync after update
+
+Container recreation preserves env vars (including `GATEWAY_TOKEN`) from the temp env file, so tokens should survive updates. **Verify after any update:**
+```bash
+ssh root@YOUR_DOCKER_HOST 'for c in $(docker ps --format "{{.Names}}" | grep clawer_user_); do
+  DB_TOKEN=$(PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -tAc "SELECT gateway_token FROM users WHERE container_port = $(docker port $c 8081 | cut -d: -f2);" 2>/dev/null)
+  CTR_TOKEN=$(docker exec $c python3 -c "import json; print(json.load(open(\"/home/user/.openclaw/openclaw.json\"))[\"gateway\"][\"auth\"][\"token\"])" 2>/dev/null)
+  [ "$DB_TOKEN" = "$CTR_TOKEN" ] && echo "$c: OK" || echo "$c: TOKEN MISMATCH"
+done'
 ```
 
-### Restart Database
+### OpenClaw version check
 
-⚠️ **WARNING:** App will be unavailable during restart.
+Weekly cron (Mondays 09:00): `scripts/check-openclaw-version.sh`
 
 ```bash
-sudo systemctl restart postgresql
+# Manual check
+~/projects/clawer/scripts/check-openclaw-version.sh
 
-# Verify
-sudo systemctl status postgresql
+# JSON output (for scripts)
+~/projects/clawer/scripts/check-openclaw-version.sh --json
+
+# Logs
+cat ~/projects/clawer/logs/version-check.log
+cat ~/projects/clawer/logs/version-check-status.json
 ```
 
-**Expected downtime:** 10-30 seconds
+Checks: npm registry latest → local moltbot install → Docker image version (reads tag from Dockerfile or running image). Exit code 1 = updates available.
 
-### Restart Redis (If Used)
+---
+
+## Caddy / SSL / Reverse Proxy
+
+**Config file:** `/etc/caddy/Caddyfile` on server
+**Service:** `systemd caddy.service` — running continuously, certs auto-renewed via Let's Encrypt
+
+### Current routing rules
+
+```
+clawer.ai
+  /umami/script.js  →  rewrite to /script.js  →  localhost:3033 (Umami analytics)
+  /umami/api/*      →  strip /umami prefix    →  localhost:3033 (Umami API/events)
+  /*                →  localhost:3000         (Next.js app)
+
+www.clawer.ai       →  301 redirect to https://clawer.ai
+
+analytics.clawer.ai →  localhost:3033         (Umami dashboard — needs DNS A record pointed to YOUR_DOCKER_HOST)
+```
+
+### Common Caddy operations
 
 ```bash
-sudo systemctl restart redis
+# Check Caddy status
+ssh root@YOUR_DOCKER_HOST 'systemctl status caddy --no-pager'
 
-# Verify
-redis-cli ping
-# Expected: PONG
+# Reload after config change (no downtime)
+ssh root@YOUR_DOCKER_HOST 'caddy reload --config /etc/caddy/Caddyfile --force'
+
+# Validate config before applying
+ssh root@YOUR_DOCKER_HOST 'caddy validate --config /etc/caddy/Caddyfile'
+
+# View Caddy logs
+ssh root@YOUR_DOCKER_HOST 'journalctl -u caddy --since "1 hour ago" -n 50 --no-pager'
+
+# Check cert status
+ssh root@YOUR_DOCKER_HOST 'caddy list-installed-packages 2>/dev/null; ls /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/'
+
+# Restart Caddy (only if reload fails)
+ssh root@YOUR_DOCKER_HOST 'systemctl restart caddy'
+```
+
+### SSL cert issues
+
+Caddy handles certs automatically. If HTTPS stops working:
+- Check domain DNS points to `YOUR_DOCKER_HOST`
+- Check port 80 and 443 are open: `ss -tlnp | grep -E '80|443'`
+- Check Caddy logs for ACME errors: `journalctl -u caddy | grep -i acme`
+- Caddy stores certs in `/var/lib/caddy/.local/share/caddy/`
+
+---
+
+## Free Tier Routing (`src/app/api/chat/route.ts`)
+
+### How routing decisions are made
+
+The chat API checks `users.stripeSubscriptionId` to decide routing:
+
+```
+stripeSubscriptionId = NULL  →  Free tier (shared container)
+stripeSubscriptionId = set   →  Paid tier (dedicated container)
+```
+
+### Free tier limits
+
+| Constant | Value | Env Override |
+|----------|-------|-------------|
+| `FREE_TIER_PORT` | `4000` | `FREE_TIER_PORT` |
+| `FREE_TIER_TOKEN` | `free_tier_shared_2026_clawer` | `FREE_TIER_TOKEN` |
+| `FREE_MESSAGE_LIMIT` | `100` total lifetime | — |
+| `FREE_DAILY_LIMIT` | `25` per day | — |
+| `MAX_MESSAGE_LENGTH` | `32,768` chars (32KB) | — |
+| Per-minute rate limit | `20` req/min | — |
+| Per-hour rate limit | `200` req/hour | — |
+
+**`FREE_TIER_TOKEN`** is the static auth token for the `clawer_free_tier` container (port 4000). It's a hardcoded default (`free_tier_shared_2026_clawer`) unless `FREE_TIER_TOKEN` env var is set. **This must match the gateway token in the free tier container's `openclaw.json`.** If the container is recreated and generates a new token, update the env var and redeploy.
+
+### Free tier error responses
+
+| `error` field | HTTP Status | Meaning |
+|---------------|------------|---------|
+| `free_trial_exceeded` | 403 | User hit 100-message lifetime cap |
+| `daily_limit_exceeded` | 429 | User hit 25/day limit |
+| `rate_limited` | 429 | Too many requests per minute |
+
+### Paid tier failure modes
+
+| Response | HTTP Status | Meaning |
+|----------|------------|---------|
+| `"Container not provisioned"` | 503 | `containerPort` is null in DB |
+| `"Container is stopped"` | 503 | `containerStatus` ≠ `'running'` |
+
+### Check free message usage
+
+```bash
+# How many free messages a user has used
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "SELECT id, email, free_messages_used, tier, stripe_subscription_id IS NOT NULL AS paid FROM users ORDER BY free_messages_used DESC LIMIT 20;"'
+
+# Reset free message counter for a user (manual override)
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "UPDATE users SET free_messages_used = 0 WHERE id = '"'"'user_XXXXX'"'"';"'
+```
+
+### Smart request router
+
+The chat route also classifies every message via `routeRequest()` to pick the LLM model:
+- **Orchestrator model:** `google/gemini-3-flash` (complex reasoning)
+- **Worker model:** `google/gemini-2.0-flash-lite` (bulk/cheap tasks)
+
+This is independent of free/paid routing — both tiers get smart model selection.
+
+---
+
+## Clerk Auth
+
+### How it works
+
+- **Middleware:** `src/middleware.ts` — uses `clerkMiddleware` + `createRouteMatcher`
+- **Protected routes:** `/dashboard/*`, `/chat/*`, `/api/chat/*`, `/api/bots/*`, `/api/conversations/*`, `/api/admin/*`, and others (see middleware for full list)
+- **Unprotected:** `/api/webhooks/stripe`, `/api/webhooks/clerk`, `/api/slack/events`, public pages, static assets
+- **Auth in API routes:** `const { userId } = await auth()` — returns `null` if unauthenticated
+
+### Common Clerk failures
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| All API routes return 401 | `CLERK_SECRET_KEY` missing or wrong in `.env.local` | Verify env var on server: `grep CLERK_SECRET_KEY /opt/clawer/.env.local` |
+| Middleware loop / infinite redirect | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` wrong | Check both Clerk keys match your Clerk dashboard environment |
+| Clerk webhook failures | `CLERK_WEBHOOK_SECRET` wrong | Check Clerk Dashboard → Webhooks → signing secret |
+| Users can't log in after deploy | Clerk domain mismatch | Ensure `clawer.ai` is in Clerk's allowed origins |
+| `auth()` returns null inside API route | Route not matched by middleware | Add route to `isProtectedRoute` in `middleware.ts` |
+
+### Debug Clerk auth
+
+```bash
+# Check Clerk env vars are set on server
+ssh root@YOUR_DOCKER_HOST 'grep -E "CLERK" /opt/clawer/.env.local | sed "s/=.*/=<YOUR_SECRET>/"'
+
+# Check PM2 logs for auth errors
+ssh root@YOUR_DOCKER_HOST 'pm2 logs clawer --lines 100 --nostream 2>&1 | grep -i "clerk\|unauthorized\|401"'
+
+# Test a protected route (should get 401 without token, not 500)
+curl -s -o /dev/null -w "%{http_code}" https://clawer.ai/api/chat -X POST -H "Content-Type: application/json" -d '{"message":"test"}'
+# Expected: 401
+```
+
+### Clerk webhook events
+
+`/api/webhooks/clerk` handles user lifecycle events (not Stripe). Route is excluded from auth middleware so Clerk can POST to it. Verify its signing secret is configured.
+
+---
+
+## Umami Analytics
+
+### Setup
+
+- **Container:** `ghcr.io/umami-software/umami:postgresql-latest` running as `umami-umami-1`
+- **Port:** `127.0.0.1:3033` (not exposed publicly — Caddy proxies it)
+- **DB:** Separate Postgres instance `umami-umami-db-1` (postgres:15-alpine)
+- **Dashboard:** `https://analytics.clawer.ai` (requires DNS A record → `YOUR_DOCKER_HOST`)
+- **Script embed:** `https://clawer.ai/umami/script.js` (served via Caddy rewrite)
+- **Event collection:** `https://clawer.ai/umami/api/send` (Caddy strips `/umami` prefix)
+
+### Check if Umami is working
+
+```bash
+# 1. Container running?
+ssh root@YOUR_DOCKER_HOST 'docker ps | grep umami'
+
+# 2. Script endpoint reachable?
+curl -s -o /dev/null -w "%{http_code}" https://clawer.ai/umami/script.js
+# Expected: 200
+
+# 3. Event collection endpoint reachable?
+curl -s -o /dev/null -w "%{http_code}" -X POST https://clawer.ai/umami/api/send \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"website":"test"},"type":"event"}'
+# Expected: 400 (bad payload) or 200 — NOT 404
+
+# 4. Dashboard accessible?
+curl -s -o /dev/null -w "%{http_code}" https://analytics.clawer.ai
+# Expected: 200
+
+# 5. Check Umami logs
+ssh root@YOUR_DOCKER_HOST 'docker logs umami-umami-1 --tail 20 2>&1'
+
+# 6. If Umami is down, restart
+ssh root@YOUR_DOCKER_HOST 'cd /opt/umami && docker compose restart'
+# (or wherever the compose file is)
+```
+
+### Umami not tracking hits
+
+**Check browser:** Open DevTools → Network → filter for `/umami/script.js` — should be 200. If it's blocked by an ad blocker, that's expected for logged-out users.
+
+**Check script tag in HTML:** The `NEXT_PUBLIC_UMAMI_WEBSITE_ID` env var must be set and the script tag must be in the `<head>` of the page.
+
+```bash
+# Verify env var is set
+ssh root@YOUR_DOCKER_HOST 'grep UMAMI /opt/clawer/.env.local'
 ```
 
 ---
 
-## Checking Logs
-
-### Application Logs (PM2)
+## Useful Commands (Expanded)
 
 ```bash
-# View all logs
-pm2 logs clawer-web
+# Check all user container states vs DB
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "SELECT id, tier, container_port, container_status, stripe_subscription_id IS NOT NULL AS paid FROM users WHERE container_port IS NOT NULL ORDER BY container_port;"'
 
-# View only errors
-pm2 logs clawer-web --err
+# List containers with their ports and status
+ssh root@YOUR_DOCKER_HOST 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep clawer_'
 
-# View last N lines
-pm2 logs clawer-web --lines 100
+# Check free tier token matches container
+ssh root@YOUR_DOCKER_HOST 'docker exec clawer_free_tier python3 -c "import json; print(json.load(open(\"/home/user/.openclaw/openclaw.json\"))[\"gateway\"][\"auth\"][\"token\"])"'
 
-# Follow logs in real-time
-pm2 logs clawer-web --lines 0
+# Test free tier directly (use actual FREE_TIER_TOKEN value)
+ssh root@YOUR_DOCKER_HOST 'curl -s -X POST http://localhost:4000/api/chat -H "Content-Type: application/json" -H "Authorization: Bearer free_tier_shared_2026_clawer" -d "{\"message\":\"hello\"}" --max-time 30'
 
-# Clear logs
-pm2 flush
+# Count users by tier
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "SELECT tier, count(*) FROM users GROUP BY tier;"'
+
+# Find users with payment issues (paid subscription but no container)
+ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U clawer -d clawer -c "SELECT id, email, tier, container_status FROM users WHERE stripe_subscription_id IS NOT NULL AND (container_port IS NULL OR container_status != '"'"'running'"'"');"'
+
+# Check Caddy is routing correctly
+ssh root@YOUR_DOCKER_HOST 'curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health'
+
+# Verify Stripe webhook secret is set
+ssh root@YOUR_DOCKER_HOST 'grep STRIPE_WEBHOOK_SECRET /opt/clawer/.env.local | sed "s/=.*/=<YOUR_SECRET>/"'
+
+# Check update-containers.sh version check log
+cat ~/projects/clawer/logs/version-check.log | tail -30
+
+# Full container update dry run
+~/projects/clawer/scripts/update-containers.sh v2026.2.19 --dry-run
 ```
-
-### Container Logs
-
-```bash
-# View logs for specific user
-docker logs clawer_user_{userId}
-
-# Follow logs
-docker logs -f clawer_user_{userId}
-
-# Last 100 lines
-docker logs --tail 100 clawer_user_{userId}
-
-# Logs since timestamp
-docker logs --since 2026-02-08T10:00:00 clawer_user_{userId}
-
-# All user containers
-for container in $(docker ps --filter "name=clawer_user_" --format "{{.Names}}"); do
-  echo "=== $container ==="
-  docker logs --tail 10 $container
-done
-```
-
-### Database Logs
-
-```bash
-# PostgreSQL logs location
-tail -f /var/log/postgresql/postgresql-14-main.log
-
-# Or via journalctl
-sudo journalctl -u postgresql -f
-```
-
-### System Logs
-
-```bash
-# System messages
-sudo journalctl -f
-
-# Docker daemon logs
-sudo journalctl -u docker -f
-
-# Disk space issues
-df -h
-
-# Memory usage
-free -h
-
-# CPU usage
-top
-```
-
----
-
-## Common Issues and Fixes
-
-### Issue: "Database connection failed"
-
-**Symptoms:**
-- App fails to start
-- 500 errors on all requests
-- PM2 logs show: `Error: connect ECONNREFUSED`
-
-**Diagnosis:**
-```bash
-# Check if PostgreSQL is running
-sudo systemctl status postgresql
-
-# Check if database exists
-psql -U clawer -d clawer -c "SELECT 1;"
-
-# Check connection string
-echo $DATABASE_URL
-# or check .env.local
-```
-
-**Fix:**
-```bash
-# Start PostgreSQL if stopped
-sudo systemctl start postgresql
-
-# Verify credentials
-psql -U clawer -d clawer
-
-# If wrong password, reset:
-sudo -u postgres psql
-postgres=# ALTER USER clawer WITH PASSWORD 'new_password';
-postgres=# \q
-
-# Update .env.local with correct DATABASE_URL
-# Restart app
-pm2 restart clawer-web
-```
-
-### Issue: "Port already in use"
-
-**Symptoms:**
-- Container fails to start
-- Logs show: `Error: bind: address already in use`
-
-**Diagnosis:**
-```bash
-# Check what's using the port
-lsof -i :4001
-
-# Check database for port conflicts
-psql -U clawer -d clawer -c "SELECT id, email, container_port FROM users WHERE container_port IS NOT NULL ORDER BY container_port;"
-```
-
-**Fix:**
-```bash
-# Kill process using port (if not another container)
-sudo kill -9 $(lsof -t -i :4001)
-
-# Or update database to use different port
-psql -U clawer -d clawer -c "UPDATE users SET container_port = NULL WHERE container_port = 4001;"
-
-# Re-provision container (will allocate new port)
-```
-
-### Issue: "Out of disk space"
-
-**Symptoms:**
-- Containers fail to start
-- Docker commands fail
-- App can't write logs
-
-**Diagnosis:**
-```bash
-df -h
-
-# Check Docker disk usage
-docker system df
-
-# Check largest directories
-du -sh /* | sort -h | tail -10
-```
-
-**Fix:**
-```bash
-# Remove unused Docker images
-docker image prune -a
-
-# Remove stopped containers
-docker container prune
-
-# Remove unused volumes
-docker volume prune
-
-# Clean up logs
-pm2 flush
-sudo journalctl --vacuum-time=7d
-
-# If still full, expand disk or delete old files
-```
-
-### Issue: "Too many open files"
-
-**Symptoms:**
-- Containers fail to start
-- Error: `EMFILE: too many open files`
-
-**Diagnosis:**
-```bash
-# Check current limit
-ulimit -n
-
-# Check number of open files
-lsof | wc -l
-```
-
-**Fix:**
-```bash
-# Increase limit temporarily
-ulimit -n 65536
-
-# Increase permanently (add to /etc/security/limits.conf)
-echo "* soft nofile 65536" | sudo tee -a /etc/security/limits.conf
-echo "* hard nofile 65536" | sudo tee -a /etc/security/limits.conf
-
-# Restart services
-pm2 restart clawer-web
-```
-
-### Issue: "OpenAI rate limit exceeded"
-
-**Symptoms:**
-- User reports slow responses or errors
-- Container logs show: `429 Too Many Requests`
-
-**Diagnosis:**
-```bash
-# Check OpenAI usage
-curl https://api.openai.com/v1/usage \
-  -H "Authorization: Bearer $OPENAI_API_KEY"
-
-# Check how many containers are running
-docker ps --filter "name=clawer_user_" | wc -l
-```
-
-**Fix:**
-- **Short term:** Wait 2-3 minutes, rate limit will reset
-- **Long term:** Upgrade OpenAI plan or implement request queuing
-
-### Issue: "Stripe webhook not working"
-
-**Symptoms:**
-- Users subscribe but container not provisioned
-- Stripe dashboard shows webhook failures
-
-**Diagnosis:**
-```bash
-# Check webhook endpoint in Stripe dashboard
-# https://dashboard.stripe.com/webhooks
-
-# Check app logs for webhook events
-pm2 logs clawer-web | grep "webhook"
-
-# Verify STRIPE_WEBHOOK_SECRET is set
-echo $STRIPE_WEBHOOK_SECRET
-```
-
-**Fix:**
-```bash
-# Test webhook locally
-stripe trigger checkout.session.completed
-
-# Check app logs
-pm2 logs clawer-web --lines 50
-
-# If signature verification fails, regenerate secret in Stripe dashboard
-# Update .env.local with new secret
-# Restart app
-pm2 restart clawer-web
-```
-
----
-
-## Backup Procedures
-
-### Database Backup
-
-```bash
-# Create backup
-pg_dump -U clawer -d clawer -F c -f /tmp/clawer_backup_$(date +%Y%m%d).dump
-
-# Verify backup
-pg_restore --list /tmp/clawer_backup_*.dump
-
-# Copy to safe location
-scp /tmp/clawer_backup_*.dump backup-server:/backups/
-
-# Automate with cron (daily at 2 AM)
-0 2 * * * pg_dump -U clawer -d clawer -F c -f /backups/clawer_$(date +\%Y\%m\%d).dump
-```
-
-### Restore Database
-
-⚠️ **WARNING:** This will overwrite current data.
-
-```bash
-# Stop app
-pm2 stop clawer-web
-
-# Drop and recreate database
-sudo -u postgres psql -c "DROP DATABASE clawer;"
-sudo -u postgres psql -c "CREATE DATABASE clawer OWNER clawer;"
-
-# Restore from backup
-pg_restore -U clawer -d clawer /tmp/clawer_backup_20260208.dump
-
-# Restart app
-pm2 restart clawer-web
-```
-
-### Container State Backup (Not Recommended)
-
-Containers should be stateless. If a user loses WhatsApp connection, they can reconnect. Don't back up container filesystems.
-
-### Environment Variables Backup
-
-```bash
-# Backup .env.local
-cp /opt/clawer/.env.local /opt/clawer/.env.local.backup.$(date +%Y%m%d)
-
-# Store securely (don't commit to git!)
-```
-
----
-
-## Monitoring
-
-### Health Checks
-
-**Application:**
-```bash
-# Check if app is responding
-curl http://localhost:3002/
-
-# Check API health (if endpoint exists)
-curl http://localhost:3002/api/health
-```
-
-**Database:**
-```bash
-psql -U clawer -d clawer -c "SELECT COUNT(*) FROM users;"
-```
-
-**Containers:**
-```bash
-# Check all containers are healthy
-docker ps --filter "name=clawer_user_" --filter "health=healthy"
-
-# Count unhealthy containers
-docker ps --filter "name=clawer_user_" --filter "health=unhealthy" | wc -l
-```
-
-### Metrics to Monitor
-
-**Application:**
-- Request count per endpoint
-- Response time (p50, p95, p99)
-- Error rate (5xx responses)
-- Active user sessions
-
-**Containers:**
-- Total running containers
-- Container CPU usage
-- Container memory usage
-- Container restart count
-
-**Database:**
-- Connection count
-- Query latency
-- Disk usage
-
-**System:**
-- CPU usage
-- Memory usage
-- Disk usage
-- Network throughput
-
-### Alerting (Recommended Setup)
-
-**Tools:**
-- **Uptime monitoring:** UptimeRobot, Pingdom
-- **Error tracking:** Sentry
-- **Metrics:** Prometheus + Grafana
-- **Logs:** ELK stack or Loki
-
-**Alerts to configure:**
-1. App down for >5 minutes
-2. Database connection errors
-3. Disk usage >80%
-4. Memory usage >90%
-5. >10% of containers unhealthy
-6. Stripe webhook failures
-
----
-
-## Scaling Operations
-
-### Add Capacity (Vertical Scaling)
-
-**Increase server resources:**
-1. Upgrade server RAM/CPU via hosting provider
-2. Restart server
-3. Verify containers restart successfully
-
-### Add Servers (Horizontal Scaling)
-
-**Not currently supported.** Architecture is single-server. To add servers:
-
-1. **Set up second server** with same environment
-2. **Deploy app** to second server
-3. **Set up Redis** for distributed port allocation
-4. **Set up load balancer** to route users to correct server
-5. **Update database schema** to track user → server mapping
-
-**This requires architecture changes. See ARCHITECTURE.md for details.**
-
----
-
-## Security Incident Response
-
-### Compromised API Key
-
-**If OpenAI, Stripe, or other API key leaked:**
-
-1. **Rotate immediately** via provider dashboard
-2. **Update environment variable** on server
-   ```bash
-   # Update .env.local
-   nano /opt/clawer/.env.local
-   
-   # Restart app
-   pm2 restart clawer-web
-   
-   # Restart all containers (they cache the old key)
-   docker ps --filter "name=clawer_user_" --format "{{.Names}}" | \
-     xargs -I {} docker restart {}
-   ```
-3. **Review logs** for unauthorized usage
-4. **Notify affected users** if needed
-
-### Suspicious Container Activity
-
-**If container shows unusual behavior (high CPU, network traffic):**
-
-```bash
-# Stop container immediately
-docker stop clawer_user_{userId}
-
-# Inspect container
-docker logs clawer_user_{userId} > /tmp/suspicious_container.log
-
-# Check network connections
-docker exec clawer_user_{userId} netstat -an
-
-# Remove container
-docker rm clawer_user_{userId}
-
-# Review logs for indicators of compromise
-# Notify user and re-provision clean container
-```
-
-### Database Breach
-
-**If database access suspected:**
-
-1. **Change database password** immediately
-2. **Rotate all API keys** in admin_settings table
-3. **Review audit logs** (if available)
-4. **Notify affected users** per data breach regulations
-5. **File incident report**
-
----
-
-## Maintenance Windows
-
-### Planned Maintenance Procedure
-
-1. **Schedule maintenance** (notify users 48 hours in advance)
-2. **Backup database** (see [Backup Procedures](#backup-procedures))
-3. **Set app to maintenance mode** (optional: serve static "Under Maintenance" page)
-4. **Perform maintenance** (deploy code, run migrations, etc.)
-5. **Verify functionality** (test critical paths)
-6. **Restore service**
-7. **Monitor for issues** (watch logs for 1 hour)
-
-### Emergency Maintenance
-
-If critical issue requires immediate maintenance:
-
-1. **Assess severity** (security issue vs. degraded performance)
-2. **Notify users** via status page or social media
-3. **Fix issue** (deploy patch, restart services, etc.)
-4. **Verify fix** (test affected functionality)
-5. **Post-mortem** (document what went wrong and how to prevent)
-
----
-
-## Appendix: Useful Commands
-
-### Docker
-
-```bash
-# List all containers
-docker ps -a
-
-# List user containers only
-docker ps --filter "name=clawer_user_"
-
-# Remove stopped containers
-docker container prune
-
-# Remove unused images
-docker image prune -a
-
-# Check disk usage
-docker system df
-
-# View container resource usage
-docker stats --filter "name=clawer_user_"
-
-# Execute command in container
-docker exec -it clawer_user_{userId} bash
-
-# Copy file from container
-docker cp clawer_user_{userId}:/path/to/file /tmp/file
-```
-
-### PM2
-
-```bash
-# Start app
-pm2 start npm --name clawer-web -- start
-
-# Stop app
-pm2 stop clawer-web
-
-# Restart app
-pm2 restart clawer-web
-
-# Delete app from PM2
-pm2 delete clawer-web
-
-# List all apps
-pm2 list
-
-# Monitor resources
-pm2 monit
-
-# Save current PM2 config
-pm2 save
-
-# Resurrect saved config (after reboot)
-pm2 resurrect
-```
-
-### PostgreSQL
-
-```bash
-# Connect to database
-psql -U clawer -d clawer
-
-# List tables
-\dt
-
-# Describe table
-\d users
-
-# Count users
-SELECT COUNT(*) FROM users;
-
-# Find user by email
-SELECT * FROM users WHERE email = 'user@example.com';
-
-# Check container ports
-SELECT id, email, container_port, container_status FROM users WHERE container_port IS NOT NULL;
-
-# Vacuum database (reclaim space)
-VACUUM FULL;
-```
-
----
-
-## Emergency Contacts
-
-**On-Call Engineer:** [Your contact info]  
-**Hosting Provider:** [Provider support link]  
-**Stripe Support:** https://support.stripe.com/  
-**OpenAI Support:** https://help.openai.com/  
-
----
-
-## Change Log
-
-| Date | Change | Author |
-|------|--------|--------|
-| 2026-02-08 | Initial runbook | AI Assistant |
-
