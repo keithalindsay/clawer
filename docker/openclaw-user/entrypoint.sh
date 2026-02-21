@@ -93,6 +93,7 @@ unset OPENAI_API_KEY GEMINI_API_KEY MINIMAX_API_KEY
 # Install default workspace files (copy-on-missing — never overwrites existing user files)
 # Runs every boot; safe because we check before copying each file.
 # AGENTS.md is now installed from defaults (stock OpenClaw instructions with memory management).
+# BRAIN.md is installed from defaults (active state dashboard — agent reads every session).
 # Team-specific content goes in team/AGENTS.md — see below.
 DEFAULTS_DIR="/opt/defaults"
 if [ -d "$DEFAULTS_DIR" ]; then
