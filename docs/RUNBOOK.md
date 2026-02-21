@@ -97,6 +97,23 @@ ssh root@YOUR_DOCKER_HOST "PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U claw
 
 **Prevention:** When recreating containers, ALWAYS sync tokens to DB afterward. Use the update-containers.sh script which handles this.
 
+### Gateway Token Auto-Sync
+
+A server-side cron runs every 5 minutes to sync container gateway tokens to the DB. This prevents "Unauthorized" errors after container restarts/recreations.
+
+**Script:** `/opt/clawer/scripts/sync-gateway-tokens.sh`
+**Log:** `/var/log/token-sync.log`
+**Cron:** `*/5 * * * * /opt/clawer/scripts/sync-gateway-tokens.sh >> /var/log/token-sync.log 2>&1`
+
+This is a pure bash script — no AI tokens, no API calls. It runs `docker exec` to read each container's config and `psql` to update the DB. Cost: zero.
+
+**If tokens are still mismatched:** Check `/var/log/token-sync.log` for errors. Common causes:
+- Container not running (docker exec fails)
+- DB connection issue (psql fails)
+- Script not executable (`chmod +x /opt/clawer/scripts/sync-gateway-tokens.sh`)
+
+**To manually sync immediately:** `bash /opt/clawer/scripts/sync-gateway-tokens.sh`
+
 ### 4. Rotating API Keys on All Containers
 
 **⚠️ CRITICAL: You cannot just `sed` the config file — the entrypoint regenerates it on restart from the `MINIMAX_API_KEY` env var.**
@@ -312,6 +329,7 @@ ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U claw
   3. Deleted stale `openclaw.json` configs from userdata volumes
   4. Recreated containers with `-v /opt/clawer-docker/entrypoint.sh:/entrypoint.sh:ro` so the fixed host entrypoint takes effect without rebuilding the image
   5. Updated gateway tokens in DB after fresh config generation
+- **Permanent fix:** Installed the `sync-gateway-tokens.sh` cron (runs every 5 minutes) to automatically keep container gateway tokens in sync with the DB. This prevents token mismatch from causing future "Unauthorized" errors after any container restart or recreation. See "Gateway Token Auto-Sync" section above.
 - **Lesson:** Always volume-mount `entrypoint.sh` into containers (`-v /opt/clawer-docker/entrypoint.sh:/entrypoint.sh:ro`) so host edits take effect without image rebuild. The image's copy is frozen at build time.
 - **Prevention:** When upgrading OpenClaw image version, verify `entrypoint.sh` config schema against the new version's changelog before deploying.
 
