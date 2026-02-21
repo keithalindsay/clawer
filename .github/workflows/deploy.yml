@@ -1,5 +1,7 @@
 name: Deploy to Production
 
+# Production deploys ONLY happen by promoting staging → main
+# Workflow: push to staging → auto-deploy staging → test → merge staging into main → auto-deploy prod
 on:
   push:
     branches: [main]
@@ -28,6 +30,7 @@ jobs:
             --delete \
             --exclude '.env.local' \
             --exclude '.env' \
+            --exclude '.env.staging' \
             --exclude 'node_modules' \
             --exclude '.git' \
             --exclude '.next' \
@@ -36,10 +39,14 @@ jobs:
       - name: Build & restart on server
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ secrets.DEPLOY_HOST }} << 'SCRIPT'
+            export NVM_DIR="/root/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            
             cd /opt/clawer
-            export NODE_ENV=production
-            npm install --production=false
-            npx next build
+            
+            pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+            pnpm build
+            
             pm2 restart clawer
           SCRIPT
 
