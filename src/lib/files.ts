@@ -79,8 +79,8 @@ export async function resolveUserFilesDir(userId: string): Promise<string> {
     throw new Error('USER_NOT_FOUND');
   }
 
-  // Container name convention (mirrors provisioner.ts)
-  const containerName = `clawer_user_${userId}`;
+  // Use actual container_id from DB (not constructed name — they can differ)
+  const containerName = user.containerId || `clawer_user_${userId}`;
   return `/opt/clawer/userdata/${containerName}/clawd/files`;
 }
 
