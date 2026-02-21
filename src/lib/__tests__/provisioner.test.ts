@@ -757,4 +757,287 @@ describe('provisioner', () => {
       expect(status).toBe('error');
     });
   });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // env-var configuration — staging overrides
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * These tests verify that module-level constants read from env vars are
+   * picked up correctly. Since the constants are evaluated at module load time,
+   * each test:
+   *   1. Sets the env var
+   *   2. Resets the module cache (vi.resetModules)
+   *   3. Dynamically imports a fresh provisioner instance
+   *   4. Asserts the new behaviour
+   */
+  describe('env-var configuration / staging overrides', () => {
+    afterEach(() => {
+      delete process.env.CONTAINER_PREFIX;
+      delete process.env.PORT_RANGE_START;
+      delete process.env.PORT_RANGE_END;
+      delete process.env.USERDATA_PATH;
+      delete process.env.DOCKER_NETWORK;
+      delete process.env.CONTAINER_IMAGE;
+      vi.resetModules();
+    });
+
+    /**
+     * Load a fresh provisioner + its mocked dependencies after setting env vars.
+     * vi.mock() factories still apply after resetModules — new vi.fn() instances
+     * are created for each import cycle.
+     */
+    async function freshProvisioner(envVars: Record<string, string> = {}) {
+      for (const [k, v] of Object.entries(envVars)) {
+        process.env[k] = v;
+      }
+      vi.resetModules();
+
+      // Import mocked deps first so mock factory runs for this cycle
+      const sshMod = await import('@/lib/ssh') as unknown as { sshExec: ReturnType<typeof vi.fn> };
+      const dbMod = await import('@/lib/db') as any;
+      const provMod = await import('@/lib/provisioner') as any;
+
+      const freshSsh = sshMod.sshExec;
+      const freshDbUpdate = dbMod.db.update as ReturnType<typeof vi.fn>;
+      const freshFindFirst = dbMod.db.query.users.findFirst as ReturnType<typeof vi.fn>;
+
+      // Set up db.update().set().where() chain on the fresh mock
+      freshDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+      });
+
+      return {
+        sshExec: freshSsh,
+        findFirst: freshFindFirst,
+        stopContainer: provMod.stopContainer,
+        restartContainer: provMod.restartContainer,
+        getContainerStatus: provMod.getContainerStatus,
+        provisionContainer: provMod.provisionContainer,
+      };
+    }
+
+    /** Set up the SSH mock sequence for a new container provision on a fresh sshExec mock. */
+    function setupProvisionSshMocks(
+      freshSsh: ReturnType<typeof vi.fn>,
+      containerId = 'stg-container-abc',
+    ) {
+      const envContent =
+        'MINIMAX_API_KEY=m\nOPENAI_API_KEY=o\nGEMINI_API_KEY=g\n';
+      freshSsh
+        .mockResolvedValueOnce({ stdout: '', stderr: '' })        // 1. containerExists → not found
+        .mockResolvedValueOnce({ stdout: envContent, stderr: '' }) // 2. cat .env.local
+        .mockResolvedValueOnce({ stdout: '', stderr: '' })        // 3. mkdir -p
+        .mockResolvedValueOnce({ stdout: `${containerId}\n`, stderr: '' }) // 4. docker run
+        .mockResolvedValueOnce({ stdout: '', stderr: '' })        // 5. patchCheck → no nonce
+        .mockResolvedValueOnce({ stdout: '', stderr: '' });       // 6. docker restart
+    }
+
+    // ── CONTAINER_PREFIX ────────────────────────────────────────────────────
+
+    it('stopContainer uses CONTAINER_PREFIX env var in docker stop command', async () => {
+      const { sshExec, stopContainer: stop } = await freshProvisioner({
+        CONTAINER_PREFIX: 'clawer_stg_',
+      });
+      sshExec.mockResolvedValue({ stdout: '', stderr: '' });
+
+      await stop('user_abc123');
+
+      expect(sshExec).toHaveBeenCalledWith('docker stop clawer_stg_user_abc123');
+    });
+
+    it('restartContainer uses CONTAINER_PREFIX env var in docker restart command', async () => {
+      const { sshExec, restartContainer: restart } = await freshProvisioner({
+        CONTAINER_PREFIX: 'clawer_stg_',
+      });
+      sshExec.mockResolvedValue({ stdout: '', stderr: '' });
+
+      await restart('user_abc123');
+
+      expect(sshExec).toHaveBeenCalledWith('docker restart clawer_stg_user_abc123');
+    });
+
+    it('getContainerStatus uses CONTAINER_PREFIX in docker ps filter', async () => {
+      const { sshExec, getContainerStatus: status } = await freshProvisioner({
+        CONTAINER_PREFIX: 'clawer_stg_',
+      });
+      sshExec.mockResolvedValue({ stdout: 'running', stderr: '' });
+
+      await status('user_abc123');
+
+      expect(sshExec).toHaveBeenCalledWith(
+        expect.stringContaining('clawer_stg_user_abc123'),
+      );
+    });
+
+    it('provisionContainer names container with staging prefix when CONTAINER_PREFIX is set', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner({
+        CONTAINER_PREFIX: 'clawer_stg_',
+      });
+      findFirst.mockResolvedValue(null);
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      await promise;
+      vi.useRealTimers();
+
+      // docker run should include the staging container name
+      const dockerRunCall = sshExec.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'string' && call[0].startsWith('docker run -d'),
+      );
+      expect(dockerRunCall![0]).toContain('--name clawer_stg_user_abc123');
+    });
+
+    // ── PORT_RANGE_START ────────────────────────────────────────────────────
+
+    it('allocates PORT_RANGE_START when no existing containers', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner({
+        PORT_RANGE_START: '5010',
+        PORT_RANGE_END: '6000',
+      });
+      findFirst.mockResolvedValue(null); // allocatePort → no existing port
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      const result = await promise;
+      vi.useRealTimers();
+
+      expect(result.success).toBe(true);
+      expect(result.port).toBe(5010);
+    });
+
+    it('allocates maxPort + 2 when existing container is at PORT_RANGE_START', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner({
+        PORT_RANGE_START: '5010',
+        PORT_RANGE_END: '6000', // must be > 5012 so the +2 allocation isn't rejected
+      });
+      findFirst.mockResolvedValue({ containerPort: 5010 }); // allocatePort → max is 5010
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      const result = await promise;
+      vi.useRealTimers();
+
+      expect(result.success).toBe(true);
+      expect(result.port).toBe(5012);
+    });
+
+    // ── DOCKER_NETWORK ──────────────────────────────────────────────────────
+
+    it('adds --network flag to docker run when DOCKER_NETWORK is set', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner({
+        DOCKER_NETWORK: 'staging_net',
+      });
+      findFirst.mockResolvedValue(null);
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      await promise;
+      vi.useRealTimers();
+
+      const dockerRunCall = sshExec.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'string' && call[0].startsWith('docker run -d'),
+      );
+      expect(dockerRunCall![0]).toContain('--network staging_net');
+    });
+
+    it('omits --network flag from docker run when DOCKER_NETWORK is not set', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner();
+      findFirst.mockResolvedValue(null);
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      await promise;
+      vi.useRealTimers();
+
+      const dockerRunCall = sshExec.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'string' && call[0].startsWith('docker run -d'),
+      );
+      expect(dockerRunCall![0]).not.toContain('--network');
+    });
+
+    // ── USERDATA_PATH ───────────────────────────────────────────────────────
+
+    it('uses USERDATA_PATH in volume mount and mkdir commands', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner({
+        USERDATA_PATH: '/data/staging',
+      });
+      findFirst.mockResolvedValue(null);
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      await promise;
+      vi.useRealTimers();
+
+      // mkdir should use the custom path
+      const mkdirCall = sshExec.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'string' && call[0].startsWith('mkdir -p'),
+      );
+      expect(mkdirCall![0]).toContain('/data/staging/');
+
+      // docker run volume mount should use the custom path
+      const dockerRunCall = sshExec.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'string' && call[0].startsWith('docker run -d'),
+      );
+      expect(dockerRunCall![0]).toContain('-v /data/staging/');
+    });
+
+    // ── CONTAINER_IMAGE ─────────────────────────────────────────────────────
+
+    it('uses CONTAINER_IMAGE env var as the docker image in docker run', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner({
+        CONTAINER_IMAGE: 'clawer-staging:v9.9.9',
+      });
+      findFirst.mockResolvedValue(null);
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      await promise;
+      vi.useRealTimers();
+
+      const dockerRunCall = sshExec.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'string' && call[0].startsWith('docker run -d'),
+      );
+      expect(dockerRunCall![0]).toContain('clawer-staging:v9.9.9');
+    });
+
+    // ── Regression: default env vars still work ─────────────────────────────
+
+    it('regression: default container prefix (clawer_user_) when CONTAINER_PREFIX is unset', async () => {
+      const { sshExec, stopContainer: stop } = await freshProvisioner();
+      sshExec.mockResolvedValue({ stdout: '', stderr: '' });
+
+      await stop('user_abc123');
+
+      expect(sshExec).toHaveBeenCalledWith('docker stop clawer_user_user_abc123');
+    });
+
+    it('regression: default BASE_PORT (4010) when PORT_RANGE_START is unset', async () => {
+      const { sshExec, findFirst, provisionContainer: provision } = await freshProvisioner();
+      findFirst.mockResolvedValue(null);
+      setupProvisionSshMocks(sshExec);
+
+      vi.useFakeTimers();
+      const promise = provision('user_abc123');
+      await vi.runAllTimersAsync();
+      const result = await promise;
+      vi.useRealTimers();
+
+      expect(result.port).toBe(4010);
+    });
+  });
 });
