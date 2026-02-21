@@ -138,11 +138,11 @@ export function FeedbackWidget() {
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
+          <div className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Send Feedback</h2>
             <button
               onClick={handleClose}
-              className="hover:bg-blue-700 rounded p-1 transition-colors"
+              className="hover:bg-orange-600 rounded p-1 transition-colors"
               aria-label="Close feedback form"
             >
               <svg
@@ -185,7 +185,7 @@ export function FeedbackWidget() {
                     id="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                     required
                   >
                     {FEEDBACK_CATEGORIES.map((cat) => (
@@ -209,7 +209,7 @@ export function FeedbackWidget() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
                     placeholder="Tell us what you think..."
                     required
                     maxLength={2000}
@@ -233,7 +233,7 @@ export function FeedbackWidget() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                       placeholder="your@email.com"
                       required
                     />
@@ -251,7 +251,7 @@ export function FeedbackWidget() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !message.trim()}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
