@@ -206,4 +206,40 @@ export const containerApi = {
       body: JSON.stringify(keys),
     }, token || undefined);
   },
+
+  // ── Command Center endpoints ────────────────────────────────────────────
+
+  /**
+   * GET /api/activity
+   * Returns recent agent events from the container's local event store.
+   * Response: { events: ContainerEvent[] }
+   */
+  activity: async (port: number, params?: { since?: string; limit?: number }) => {
+    const token = await getGatewayToken(port);
+    const qs = new URLSearchParams();
+    if (params?.since) qs.set('since', params.since);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const path = `/api/activity${qs.toString() ? `?${qs.toString()}` : ''}`;
+    return containerRequest<{ events: unknown[] }>(port, path, {}, token || undefined);
+  },
+
+  /**
+   * GET /api/cron-status
+   * Returns cron job health from the container.
+   * Response: { jobs: CronJob[] }
+   */
+  cronStatus: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ jobs: unknown[] }>(port, '/api/cron-status', {}, token || undefined);
+  },
+
+  /**
+   * GET /api/team-status
+   * Returns team member status from the container (reads AGENTS.md / team config).
+   * Response: { members: TeamMember[] }
+   */
+  teamStatus: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{ members: unknown[] }>(port, '/api/team-status', {}, token || undefined);
+  },
 };
