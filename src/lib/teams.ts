@@ -35,8 +35,8 @@ export interface TeamConfig {
 export const TEAM_CONFIGS: Record<string, TeamConfig> = {
   lifeos: {
     industry: 'default',
-    name: 'Life OS',
-    description: 'Your personal operating system — not a chatbot. Max delivers morning briefings before you ask. Scout researches overnight while you sleep. Dash executes tasks on autopilot. Discipline without willpower.',
+    name: 'Personal Assistant',
+    description: 'Stop managing your life manually. Max delivers your morning briefing before you ask. Scout researches overnight while you sleep. Dash handles tasks on autopilot. Get more done without thinking about it.',
     isDefault: true,
     members: [
       {
@@ -95,7 +95,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
 
   solopreneur: {
     industry: 'solopreneur',
-    name: 'Solopreneur Team',
+    name: 'Solopreneur',
     description: 'Run your business like you have a full team. Hunter monitors competitors daily and alerts you to changes. Shield tracks your SEO rankings overnight. Harper auto-follows up on cold outreach. Not assistants — operators.',
     isDefault: false,
     members: [
@@ -158,8 +158,8 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
 
   ecommerce: {
     industry: 'ecommerce',
-    name: 'E-Commerce Team',
-    description: 'Your always-on e-commerce ops team. Sam monitors competitor pricing daily and alerts you to undercuts. Alex drafts support responses automatically. Maya tracks campaign ROI and adjusts strategy — not just a chatbot, a back office.',
+    name: 'Business Ops',
+    description: 'Your always-on back office. Sam monitors competitor pricing daily and alerts you before you get undercut. Alex auto-drafts support responses. Maya tracks campaign ROI overnight. Run a tight operation without the overhead.',
     members: [
       {
         id: 'support',
@@ -211,7 +211,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
 
   'content-creator': {
     industry: 'content',
-    name: 'Content Creator Team',
+    name: 'Content Creator',
     description: 'Your content machine that runs while you create. Mia scans trends daily and surfaces ideas before they peak. Jordan auto-repurposes every video into threads, reels, and posts. Blake drafts your newsletter overnight. You create — they multiply.',
     isDefault: false,
     members: [
@@ -310,7 +310,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
 
   fitness: {
     industry: 'fitness',
-    name: 'Fitness Team',
+    name: 'Fitness',
     description: 'A training team that works around your life. Noah adjusts your program based on logged performance and available time. Ethan sends check-ins if you miss a session and tracks your streaks. Nina builds meal plans that hit your macros with food you actually like.',
     isDefault: false,
     members: [
@@ -347,7 +347,7 @@ export const TEAM_CONFIGS: Record<string, TeamConfig> = {
 
   finance: {
     industry: 'finance',
-    name: 'Finance Team',
+    name: 'Finance',
     description: 'Your back office runs on autopilot. Sophia auto-follows up on overdue invoices so you don\'t chase payments. Nora sends deadline alerts weeks in advance so tax season is never a scramble. Liam flags unusual expenses before they become problems.',
     isDefault: false,
     members: [

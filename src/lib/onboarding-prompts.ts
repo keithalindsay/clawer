@@ -27,7 +27,7 @@ export interface OnboardingTemplate {
 export const ONBOARDING_TEMPLATES: OnboardingTemplate[] = [
   {
     id: 'lifeos',
-    name: 'Life OS',
+    name: 'Personal Assistant',
     emoji: '🗂',
     tagline: 'Personal productivity assistant',
     firstDeliverable: 'morning briefing ready in 3min',
@@ -123,7 +123,7 @@ export const ONBOARDING_TEMPLATES: OnboardingTemplate[] = [
   },
   {
     id: 'ecommerce',
-    name: 'E-Commerce',
+    name: 'Business Ops',
     emoji: '🛍',
     tagline: 'Business intelligence & operations',
     firstDeliverable: 'competitor analysis',

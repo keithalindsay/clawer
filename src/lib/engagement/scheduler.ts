@@ -112,10 +112,10 @@ Want to try it? Just say the word.`;
 
 function getTemplateName(templateId: string): string {
   const names: Record<string, string> = {
-    lifeos: 'Life OS',
+    lifeos: 'Personal Assistant',
     solopreneur: 'Solopreneur',
     'content-creator': 'Content Creator',
-    ecommerce: 'E-Commerce',
+    ecommerce: 'Business Ops',
     'growth-ops': 'Growth Ops',
     fitness: 'Fitness',
     parent: 'Parent',

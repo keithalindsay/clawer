@@ -115,7 +115,7 @@ export default async function MemoryPage() {
       date: user.createdAt.toISOString(),
       label: 'Onboarding completed',
       icon: '✅',
-      detail: `Template: ${user.teamTemplate || 'Life OS'}`,
+      detail: `Template: ${user.teamTemplate || 'Personal Assistant'}`,
     });
   }
 

@@ -1,6 +1,6 @@
 {
   "industry": "ecommerce",
-  "name": "E-Commerce Team",
+  "name": "Business Ops",
   "members": [
     {"id": "support", "name": "Alex", "role": "Customer Support Lead", "expertise": ["customer service", "refund policies", "FAQ"]},
     {"id": "marketing", "name": "Maya", "role": "Marketing Strategist", "expertise": ["social media", "email campaigns", "SEO"]},

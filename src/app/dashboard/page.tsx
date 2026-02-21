@@ -124,7 +124,7 @@ export default async function DashboardPage() {
     <DashboardHome
       userName={user?.name || clerkUser?.firstName || undefined}
       userEmail={userEmail}
-      teamName={teamConfig?.name || 'Life OS'}
+      teamName={teamConfig?.name || 'Personal Assistant'}
       teamDescription={teamConfig?.description}
       teamMembers={teamMembers}
       isSubscribed={isSubscribed}

@@ -59,7 +59,7 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
     <DashboardWorkspace
       userName={user?.name || clerkUser?.firstName || undefined}
       userEmail={userEmail}
-      teamName={teamConfig?.name || 'Life OS'}
+      teamName={teamConfig?.name || 'Personal Assistant'}
       teamDescription={teamConfig?.description}
       teamMembers={teamMembers}
       whatsappConnected={!!(user as any)?.whatsappConnected}

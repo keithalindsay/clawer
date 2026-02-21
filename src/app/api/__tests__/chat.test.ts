@@ -399,7 +399,7 @@ describe('POST /api/chat', () => {
       description: 'Research agent',
       triggers: [],
     };
-    const mockTeamConfig = { id: 'lifeos', name: 'Life OS', agents: [mockAgent] };
+    const mockTeamConfig = { id: 'lifeos', name: 'Personal Assistant', agents: [mockAgent] };
 
     it('18. returns 404 when team template not found', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });

@@ -16,7 +16,7 @@ describe('Agent System Prompt Builder', () => {
     };
     
     const team = {
-      name: 'Life OS',
+      name: 'Personal Assistant',
       description: 'Your personal operating system',
       members: [
         agent,
@@ -28,7 +28,7 @@ describe('Agent System Prompt Builder', () => {
     
     expect(prompt).toContain('You are Scout');
     expect(prompt).toContain('Research & Knowledge Manager');
-    expect(prompt).toContain("Keith's Life OS team");
+    expect(prompt).toContain("Keith's Personal Assistant team");
     expect(prompt).toContain('Dash (Task Runner)');
     expect(prompt).not.toContain('Scout ('); // Should not list self in team members
   });
@@ -41,7 +41,7 @@ describe('Agent System Prompt Builder', () => {
     };
     
     const team = {
-      name: 'Life OS',
+      name: 'Personal Assistant',
       members: [agent],
     };
     

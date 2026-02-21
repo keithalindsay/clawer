@@ -38,7 +38,7 @@ export const BRIEFING_TEMPLATES: Record<BriefingTemplateId, BriefingTemplate> = 
   /* ── LifeOS ──────────────────────────────────────────────────── */
   lifeos: {
     id: 'lifeos',
-    name: 'Life OS',
+    name: 'Personal Assistant',
     messageTemplate: `☀️ Good morning, {name}!
 
 📋 TODAY'S PRIORITIES
@@ -145,7 +145,7 @@ Be specific to their niche. Reference their best content as a style guide.`,
   /* ── E-Commerce ──────────────────────────────────────────────── */
   ecommerce: {
     id: 'ecommerce',
-    name: 'E-Commerce',
+    name: 'Business Ops',
     messageTemplate: `🛍️ Good morning, {name}!
 
 📊 TODAY'S METRICS

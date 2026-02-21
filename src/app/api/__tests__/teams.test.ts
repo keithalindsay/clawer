@@ -55,7 +55,7 @@ describe('Team Configs', () => {
   it('should get team config by name', () => {
     const lifeos = getTeamConfig('lifeos');
     expect(lifeos).toBeDefined();
-    expect(lifeos?.name).toBe('Life OS');
+    expect(lifeos?.name).toBe('Personal Assistant');
     expect(lifeos?.members.length).toBeGreaterThan(0);
   });
 

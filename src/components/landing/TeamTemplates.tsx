@@ -5,18 +5,18 @@ import Link from 'next/link';
 
 const TEMPLATES = [
   {
-    name: 'Life OS',
-    description: 'Personal productivity assistant. Email summaries, calendar management, task tracking.',
+    name: 'Personal Assistant',
+    description: 'Your life on autopilot. Morning briefings, goal tracking, overnight research — all before you ask.',
     icon: '🧠',
     gradient: 'from-violet-500 to-purple-600',
-    features: ['Email drafts', 'Calendar sync', 'Daily briefings'],
+    features: ['Daily briefings', 'Goal tracking', 'Overnight research'],
   },
   {
-    name: 'E-commerce Agent',
-    description: 'Customer support bot. Order tracking, FAQ handling, returns processing.',
+    name: 'Business Ops',
+    description: 'Your always-on back office. Competitor monitoring, auto-drafted support responses, and campaign tracking.',
     icon: '🛍️',
     gradient: 'from-orange-500 to-amber-500',
-    features: ['Order status', 'Product search', '24/7 support'],
+    features: ['Competitor alerts', 'Support drafts', 'Campaign ROI'],
   },
   {
     name: "Parent Central",

@@ -72,7 +72,7 @@ export default function PricingPage() {
     },
     {
       q: "What are AI Teams?",
-      a: "AI Teams are multiple specialized agents that work together. Pick a template — Life OS, Solopreneur, Content Creator, and more — each with agents built for that workflow.",
+      a: "AI Teams are multiple specialized agents that work together. Pick a template — Personal Assistant, Solopreneur, Content Creator, and more — each with agents built for that workflow.",
     },
     {
       q: "Can I switch plans anytime?",
