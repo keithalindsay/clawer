@@ -4,11 +4,11 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "10 OpenClaw Mistakes That Waste Money | Clawer",
   description:
-    "These OpenClaw configuration mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and exactly how to fix it.",
+    "These OpenClaw mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and how to fix it.",
   openGraph: {
     title: "10 OpenClaw Mistakes That Waste Money",
     description:
-      "These OpenClaw configuration mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and exactly how to fix it.",
+      "These OpenClaw mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and how to fix it.",
     type: "article",
     publishedTime: "2026-02-21T00:00:00.000Z",
     authors: ["Clawer Team"],
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "10 OpenClaw Mistakes That Waste Money",
     description:
-      "These OpenClaw configuration mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and exactly how to fix it.",
+      "These OpenClaw mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and how to fix it.",
   },
   alternates: {
     canonical: "https://clawer.ai/blog/openclaw-mistakes-cost-money",
@@ -114,7 +114,7 @@ export default function BlogPost() {
         </p>
 
         <img
-          src="/blog/openclaw-mistakes-hero.png"
+          src="/blog/openclaw-self-hosted-vs-managed-hero.png"
           alt="OpenClaw cost optimization dashboard showing token usage and common configuration mistakes"
           className="rounded-xl w-full"
         />
@@ -569,6 +569,10 @@ DEFAULT_MODEL=claude-haiku-3-5`}
               <td>$20-35</td>
             </tr>
             <tr>
+              <td>Not monitoring token usage</td>
+              <td>$20-50</td>
+            </tr>
+            <tr>
               <td>Mixing dev/prod keys</td>
               <td>$15-40</td>
             </tr>
@@ -591,7 +595,7 @@ DEFAULT_MODEL=claude-haiku-3-5`}
                 <strong>Total waste per month:</strong>
               </td>
               <td>
-                <strong>$250-495</strong>
+                <strong>$270-545</strong>
               </td>
             </tr>
           </tfoot>
