@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Dns-Prefetch-Control', value: 'on' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://infird.com https://*.infird.com https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.clawer.ai; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.clawer.ai wss:; frame-src https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.clawer.ai; font-src 'self' data:;" },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://infird.com https://*.infird.com https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.clawer.ai https://www.googletagmanager.com https://analytics.clawer.ai; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.clawer.ai https://www.google-analytics.com https://*.google-analytics.com https://analytics.clawer.ai wss:; frame-src https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.clawer.ai; font-src 'self' data:;" },
         ],
       },
       {
