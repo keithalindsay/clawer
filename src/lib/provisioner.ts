@@ -13,9 +13,12 @@ import { sshExec } from '@/lib/ssh';
 
 // v2026.2.16 image: correct api-server.js (Ed25519 auth), correct entrypoint.sh
 // DO NOT use 'ecommerce' — it has the old nonce-based api-server (breaks with v2026.2.16 gateway)
-const CONTAINER_IMAGE = 'clawer-openclaw:v2026.2.19';
-const BASE_PORT = 4010;
-const MAX_PORT = 5000;
+const CONTAINER_IMAGE = process.env.CONTAINER_IMAGE || 'clawer-openclaw:v2026.2.19';
+const CONTAINER_PREFIX = process.env.CONTAINER_PREFIX || 'clawer_user_';
+const BASE_PORT = parseInt(process.env.PORT_RANGE_START || '4010');
+const MAX_PORT = parseInt(process.env.PORT_RANGE_END || '5000');
+const USERDATA_PATH = process.env.USERDATA_PATH || '/opt/clawer/userdata';
+const DOCKER_NETWORK = process.env.DOCKER_NETWORK || '';
 
 interface ProvisionResult {
   success: boolean;
@@ -200,7 +203,7 @@ export async function provisionContainer(
     throw new Error('Invalid userId format');
   }
   
-  const containerName = `clawer_user_${userId}`;
+  const containerName = `${CONTAINER_PREFIX}${userId}`;
   
   console.log(`[PROVISION] Starting provisioning for user ${userId}`);
   
@@ -252,7 +255,7 @@ export async function provisionContainer(
     console.log(`[PROVISION] Retrieved API keys from server`);
     
     // Create host directories for persistent user data (volume mounts survive container recreation)
-    await sshExec(`mkdir -p /opt/clawer/userdata/${containerName}/.openclaw /opt/clawer/userdata/${containerName}/clawd`);
+    await sshExec(`mkdir -p ${USERDATA_PATH}/${containerName}/.openclaw ${USERDATA_PATH}/${containerName}/clawd`);
     console.log(`[PROVISION] Created userdata directories for ${containerName}`);
 
     // Create container with proper configuration
@@ -277,8 +280,8 @@ export async function provisionContainer(
       // Network + port
       `-p 127.0.0.1:${apiPort}:8081`,
       // Volume mounts — persistent user data survives container recreation
-      `-v /opt/clawer/userdata/${containerName}/.openclaw:/home/user/.openclaw`,
-      `-v /opt/clawer/userdata/${containerName}/clawd:/home/user/clawd`,
+      `-v ${USERDATA_PATH}/${containerName}/.openclaw:/home/user/.openclaw`,
+      `-v ${USERDATA_PATH}/${containerName}/clawd:/home/user/clawd`,
       // Environment
       `-e USER_ID=${userId}`,
       `-e TEAM_TEMPLATE=${teamTemplate}`,
@@ -287,6 +290,7 @@ export async function provisionContainer(
       `-e 'GEMINI_API_KEY=${geminiKey}'`,
       `-e 'GATEWAY_TOKEN=${gatewayToken}'`,
       '--restart=unless-stopped',
+      ...(DOCKER_NETWORK ? [`--network ${DOCKER_NETWORK}`] : []),
       CONTAINER_IMAGE,
     ].join(' \\\n  ');
     
@@ -366,7 +370,7 @@ export async function stopContainer(userId: string): Promise<boolean> {
     throw new Error('Invalid userId format');
   }
   
-  const containerName = `clawer_user_${userId}`;
+  const containerName = `${CONTAINER_PREFIX}${userId}`;
   
   try {
     console.log(`[STOP] Stopping container ${containerName}`);
@@ -397,7 +401,7 @@ export async function restartContainer(userId: string): Promise<boolean> {
     throw new Error('Invalid userId format');
   }
   
-  const containerName = `clawer_user_${userId}`;
+  const containerName = `${CONTAINER_PREFIX}${userId}`;
   
   try {
     console.log(`[RESTART] Restarting container ${containerName}`);
@@ -428,7 +432,7 @@ export async function getContainerStatus(userId: string): Promise<'running' | 's
     throw new Error('Invalid userId format');
   }
   
-  const containerName = `clawer_user_${userId}`;
+  const containerName = `${CONTAINER_PREFIX}${userId}`;
   
   try {
     const { stdout } = await sshExec(`docker ps -a --filter name=^${containerName}$ --format "{{.State}}"`);

@@ -2,8 +2,7 @@ node_modules/
 .next/
 .env
 .env.local
+.env.staging
 *.log
 .DS_Store
 dist/
-.env.local
-.env

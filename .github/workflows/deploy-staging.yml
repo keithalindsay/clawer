@@ -1,0 +1,54 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to staging
+        run: |
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude '.next' \
+            --exclude '.env' \
+            --exclude '.env.local' \
+            --exclude '.env.staging' \
+            ./ root@${{ secrets.DEPLOY_HOST }}:/opt/clawer-staging/
+
+      - name: Build and restart
+        run: |
+          ssh root@${{ secrets.DEPLOY_HOST }} << 'EOF'
+            export NVM_DIR="/root/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            
+            cd /opt/clawer-staging
+            
+            # Install dependencies
+            pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+            
+            # Build
+            pnpm build
+            
+            # Run DB migrations
+            pnpm drizzle-kit migrate 2>/dev/null || true
+            
+            # Start or restart PM2 process
+            if pm2 describe clawer-staging > /dev/null 2>&1; then
+              pm2 restart clawer-staging
+            else
+              PORT=3001 pm2 start "pnpm start -- -p 3001" --name clawer-staging
+            fi
+          EOF
