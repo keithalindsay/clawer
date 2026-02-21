@@ -100,36 +100,38 @@ export function FeedbackWidget() {
   };
 
   return (
-    <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[70]">
-      {/* Feedback Tab */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
-        aria-label="Open feedback form"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+    <>
+      {/* Feedback Tab — fixed to right edge */}
+      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[70]">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
+          aria-label="Open feedback form"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-          />
-        </svg>
-        <span className="[writing-mode:vertical-rl]">Feedback</span>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+            />
+          </svg>
+          <span className="[writing-mode:vertical-rl]">Feedback</span>
+        </button>
+      </div>
 
       {/* Backdrop */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/20 z-[60]" onClick={handleClose} />
       )}
 
-      {/* Feedback Panel */}
+      {/* Feedback Panel — must be outside the translated tab div */}
       <div
         ref={panelRef}
         className={`fixed right-0 top-0 h-full w-[400px] max-w-[90vw] bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[70] ${
@@ -286,6 +288,6 @@ export function FeedbackWidget() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
