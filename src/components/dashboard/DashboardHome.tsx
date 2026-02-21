@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { LogoutButton } from '@/components/LogoutButton';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
+import { MemoryCard, type MemoryStats } from '@/components/dashboard/MemoryCard';
 import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT, FREE_TEAM_MEMBER_LIMIT, PAID_TEAM_MEMBER_LIMIT } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 
@@ -24,6 +25,7 @@ interface DashboardHomeProps {
   freeMessagesUsed: number;
   whatsappConnected?: boolean;
   telegramConnected?: boolean;
+  memoryStats?: MemoryStats;
 }
 
 export function DashboardHome({
@@ -36,6 +38,7 @@ export function DashboardHome({
   freeMessagesUsed,
   whatsappConnected,
   telegramConnected,
+  memoryStats,
 }: DashboardHomeProps) {
   const plan = isSubscribed ? 'Pro' : 'Free';
   const dailyLimit = isSubscribed ? PAID_DAILY_LIMIT : FREE_DAILY_LIMIT;
@@ -52,11 +55,12 @@ export function DashboardHome({
               🦞 Clawer.ai
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="text-blue-600 font-medium">Dashboard</Link>
+              <Link href="/dashboard" className="text-orange-600 font-medium">Dashboard</Link>
               <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900">Tasks</Link>
               <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
               <Link href="/dashboard/files" className="text-gray-500 hover:text-gray-900">Files</Link>
               <Link href="/dashboard/agent" className="text-gray-500 hover:text-gray-900">Agent</Link>
+              <Link href="/dashboard/memory" className="text-gray-500 hover:text-gray-900">Memory</Link>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
               {/* <Link href="/dashboard/api-keys" className="text-gray-500 hover:text-gray-900">API Keys</Link> */}
             </nav>
@@ -79,7 +83,8 @@ export function DashboardHome({
 
         <UpgradeBanner isSubscribed={isSubscribed} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Memory card — full width on mobile, 1-of-3 on desktop alongside Plan + Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Plan Status */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -124,6 +129,20 @@ export function DashboardHome({
               </Link>
             )}
           </div>
+
+          {/* Memory Card */}
+          {memoryStats ? (
+            <MemoryCard stats={memoryStats} />
+          ) : (
+            <div className="bg-gradient-to-br from-orange-50 to-white rounded-xl border border-orange-100 p-6 flex flex-col items-center justify-center gap-3 text-center">
+              <span className="text-3xl">🧠</span>
+              <p className="text-sm font-medium text-gray-700">Your Agent's Memory</p>
+              <p className="text-xs text-gray-500">Start chatting to build context</p>
+              <Link href="/dashboard/memory" className="text-xs text-orange-600 font-medium hover:text-orange-700">
+                View details →
+              </Link>
+            </div>
+          )}
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">

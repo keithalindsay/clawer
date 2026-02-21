@@ -2,10 +2,14 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
+import { conversations } from '@/lib/db/schema/conversations';
 import { botSettings } from '@/lib/db/schema/bot-settings';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
+import { resolveUserFilesDir, listFiles } from '@/lib/files';
+import type { MemoryStats } from '@/components/dashboard/MemoryCard';
+import fs from 'fs/promises';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -59,6 +63,63 @@ export default async function DashboardPage() {
     }
   }
 
+  // ── Memory stats ──────────────────────────────────────────────────────────
+  let memoryStats: MemoryStats | undefined;
+  try {
+    const daysSinceSignup = Math.max(
+      0,
+      Math.floor((Date.now() - new Date(user!.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+    );
+
+    // Conversation count
+    const allConvs = await db.query.conversations.findMany({
+      where: and(eq(conversations.userId, userId), isNull(conversations.deletedAt)),
+      columns: { id: true },
+    });
+
+    // File count
+    let fileCount = 0;
+    let containerAvailable = false;
+    try {
+      const baseDir = await resolveUserFilesDir(userId);
+      const tree = await listFiles(baseDir);
+      fileCount = tree.totalFiles;
+      containerAvailable = true;
+    } catch {
+      // Container not provisioned yet
+    }
+
+    // MEMORY.md facts
+    let memoryFacts = 0;
+    let memoryTopics: string[] = [];
+    try {
+      const containerName = `clawer_user_${userId}`;
+      const memPath = `/opt/clawer/userdata/${containerName}/clawd/MEMORY.md`;
+      const memContent = await fs.readFile(memPath, 'utf-8');
+      const lines = memContent.split('\n');
+      const nonBlank = lines.filter((l) => l.trim().length > 0);
+      memoryFacts = nonBlank.length;
+      memoryTopics = nonBlank
+        .filter((l) => l.trimStart().startsWith('#'))
+        .map((l) => l.replace(/^#+\s*/, '').trim())
+        .filter(Boolean)
+        .slice(0, 10);
+    } catch {
+      // MEMORY.md doesn't exist yet
+    }
+
+    memoryStats = {
+      daysSinceSignup,
+      conversationCount: allConvs.length,
+      fileCount,
+      memoryFacts,
+      memoryTopics,
+      containerAvailable,
+    };
+  } catch {
+    // Non-fatal — dashboard still works without memory stats
+  }
+
   return (
     <DashboardHome
       userName={user?.name || clerkUser?.firstName || undefined}
@@ -70,6 +131,7 @@ export default async function DashboardPage() {
       freeMessagesUsed={freeMessagesUsed}
       whatsappConnected={!!(user as any)?.whatsappConnected}
       telegramConnected={!!(user as any)?.telegramConnected}
+      memoryStats={memoryStats}
     />
   );
 }
