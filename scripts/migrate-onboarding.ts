@@ -1,29 +1,16 @@
-/**
- * Migration script: Add onboarding context columns  
- * Run: cd ~/projects/clawer && pnpm tsx scripts/migrate-onboarding.ts
- */
-
-// Must load env FIRST before any other imports
 import dotenv from 'dotenv';
 import path from 'path';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { sql } from 'drizzle-orm';
+
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error('❌ DATABASE_URL not found in .env.local');
+  console.error('❌ DATABASE_URL not found');
   process.exit(1);
 }
-
-console.log('🔌 Connecting to DB:', DATABASE_URL.substring(0, 45) + '...');
-
-// Dynamic imports AFTER env is loaded
-const { drizzle } = await import('drizzle-orm/postgres-js');
-const postgresModule = await import('postgres');
-const postgres = postgresModule.default;
-const { sql } = await import('drizzle-orm');
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client);
 
 const statements = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "preferred_channel" text DEFAULT 'web'`,
@@ -51,34 +38,66 @@ const statements = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_finance_goal" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_money_stress" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_income_range" text`,
-  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "morning_briefing_enabled" integer DEFAULT 0`,
-  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "morning_briefing_time" text DEFAULT '07:30'`,
-  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "morning_briefing_channel" text DEFAULT 'whatsapp'`,
-  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "morning_briefing_timezone" text DEFAULT 'America/Chicago'`,
+  // Morning Briefing fields (Phase 2)
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_enabled" integer NOT NULL DEFAULT 0`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_time" text DEFAULT '07:30'`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_channel" text DEFAULT 'whatsapp'`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_timezone" text DEFAULT 'America/New_York'`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_include_summary" integer NOT NULL DEFAULT 1`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_include_working" integer NOT NULL DEFAULT 1`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_include_reminders" integer NOT NULL DEFAULT 0`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "briefing_include_news" integer NOT NULL DEFAULT 0`,
+
+  // Engagement messages table (Phase 3)
+  `CREATE TABLE IF NOT EXISTS "engagement_messages" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+    "message_type" text NOT NULL,
+    "scheduled_for" timestamptz NOT NULL,
+    "sent_at" timestamptz,
+    "status" text NOT NULL DEFAULT 'pending',
+    "skip_reason" text,
+    "content" text,
+    "channel" text NOT NULL DEFAULT 'web',
+    "metadata" jsonb,
+    "created_at" timestamptz NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS "idx_engagement_messages_user_id" ON "engagement_messages"("user_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_engagement_messages_status_scheduled" ON "engagement_messages"("status", "scheduled_for") WHERE "status" = 'pending'`,
 ];
 
-console.log('🏃 Running migration...\n');
-let success = 0, skip = 0, errors = 0;
-
-for (const stmt of statements) {
+async function main() {
+  const client = postgres(DATABASE_URL!, { max: 1, onnotice: () => {} });
+  
+  // Test connection first  
   try {
-    await db.execute(sql.raw(stmt));
-    const colMatch = stmt.match(/ADD COLUMN IF NOT EXISTS "([^"]+)"/);
-    const col = colMatch?.[1] || 'unknown';
-    console.log(`  ✓ ${col}`);
-    success++;
+    const result = await client`SELECT 1 as ok`;
+    console.log('✅ Connected!', result);
   } catch (e: any) {
-    if (e.message?.includes('already exists')) {
-      console.log(`  ↷ (already exists)`);
-      skip++;
-    } else {
-      console.error(`  ✗ Error: ${e.message}`);
+    console.error('❌ Connection failed:', e.message, e.code);
+    await client.end();
+    process.exit(1);
+  }
+  
+  const db = drizzle(client);
+  let success = 0, errors = 0;
+
+  for (const stmt of statements) {
+    try {
+      await db.execute(sql.raw(stmt));
+      const colMatch = stmt.match(/ADD COLUMN IF NOT EXISTS "([^"]+)"/);
+      console.log(`  ✓ ${colMatch?.[1]}`);
+      success++;
+    } catch (e: any) {
+      const cause = e.cause || e;
+      console.error(`  ✗ ${cause.message || e.message}`);
       errors++;
     }
   }
+
+  await client.end();
+  console.log(`\nDone: ${success} added, ${errors} errors`);
+  if (errors > 0) process.exit(1);
 }
 
-await client.end();
-
-console.log(`\n✅ Done: ${success} added, ${skip} skipped, ${errors} errors`);
-if (errors > 0) process.exit(1);
+main().catch(e => { console.error(e); process.exit(1); });

@@ -4,6 +4,253 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { TEAM_CONFIGS } from "@/lib/teams";
 
+/* ── Morning Briefing types ─────────────────────────────────────── */
+
+interface MorningBriefingData {
+  enabled: boolean;
+  time: string;
+  channel: "whatsapp" | "telegram" | "web";
+  timezone: string;
+  includeSummary: boolean;
+  includeWorking: boolean;
+  includeReminders: boolean;
+  includeNews: boolean;
+}
+
+const BRIEFING_CHANNELS: { value: MorningBriefingData["channel"]; label: string; emoji: string }[] = [
+  { value: "whatsapp", label: "WhatsApp", emoji: "📱" },
+  { value: "telegram", label: "Telegram", emoji: "✈️" },
+  { value: "web",      label: "Web only",  emoji: "🌐" },
+];
+
+const BRIEFING_CONTENT_OPTIONS: { key: keyof MorningBriefingData; label: string }[] = [
+  { key: "includeSummary",   label: "Quick summary of what you need to know today" },
+  { key: "includeWorking",   label: "One thing you're working on" },
+  { key: "includeReminders", label: "Reminders for upcoming events" },
+  { key: "includeNews",      label: "Industry news relevant to you" },
+];
+
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const h = i.toString().padStart(2, "0");
+  return { value: `${h}:00`, label: `${h}:00` };
+});
+
+/* ── MorningBriefingSection component ──────────────────────────── */
+
+function MorningBriefingSection() {
+  const [briefing, setBriefing] = useState<MorningBriefingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/briefing/settings");
+        const json = await res.json();
+        if (json.success) {
+          setBriefing(json.data as MorningBriefingData);
+        } else {
+          setError("Could not load briefing settings");
+        }
+      } catch {
+        setError("Could not load briefing settings");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (!briefing) return;
+    setSaving(true);
+    setSaved(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/briefing/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enabled: briefing.enabled,
+          time: briefing.time,
+          channel: briefing.channel,
+          timezone: briefing.timezone,
+          includeSummary: briefing.includeSummary,
+          includeWorking: briefing.includeWorking,
+          includeReminders: briefing.includeReminders,
+          includeNews: briefing.includeNews,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError("Failed to save briefing settings");
+      }
+    } catch {
+      setError("Failed to save briefing settings");
+    } finally {
+      setSaving(false);
+    }
+  }, [briefing]);
+
+  const update = <K extends keyof MorningBriefingData>(
+    key: K,
+    value: MorningBriefingData[K]
+  ) => {
+    setBriefing((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  if (loading) {
+    return (
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Morning Briefing</h2>
+        <div className="animate-pulse space-y-3">
+          <div className="h-5 bg-gray-100 rounded w-2/3" />
+          <div className="h-5 bg-gray-100 rounded w-1/2" />
+          <div className="h-5 bg-gray-100 rounded w-3/4" />
+        </div>
+      </section>
+    );
+  }
+
+  if (!briefing) {
+    return (
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Morning Briefing</h2>
+        <p className="text-sm text-red-600">{error || "Could not load settings"}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="bg-white rounded-2xl border border-gray-200 p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Morning Briefing</h2>
+
+      {/* Enable toggle */}
+      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+        <div>
+          <p className="font-medium text-gray-900">Receive daily morning briefing</p>
+          <p className="text-sm text-gray-500">Your agent sends you a personalised update each morning</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={briefing.enabled}
+          onClick={() => update("enabled", !briefing.enabled)}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+            briefing.enabled ? "bg-orange-500" : "bg-gray-200"
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              briefing.enabled ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+
+      {briefing.enabled && (
+        <div className="space-y-6 mt-6">
+          {/* Time picker */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              What time?{" "}
+              <span className="text-gray-400 font-normal">(your local time)</span>
+            </label>
+            <select
+              value={briefing.time}
+              onChange={(e) => update("time", e.target.value)}
+              className="w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            >
+              {HOUR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+              <option value="07:30">07:30 (default)</option>
+            </select>
+          </div>
+
+          {/* Channel selector */}
+          <div className="space-y-3">
+            <span className="block text-sm font-medium text-gray-700">
+              Preferred channel
+            </span>
+            <div className="flex flex-wrap gap-3">
+              {BRIEFING_CHANNELS.map((ch) => (
+                <button
+                  key={ch.value}
+                  type="button"
+                  onClick={() => update("channel", ch.value)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                    briefing.channel === ch.value
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <span>{ch.emoji}</span>
+                  <span>{ch.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content preferences */}
+          <div className="space-y-3">
+            <span className="block text-sm font-medium text-gray-700">
+              What should I always include?
+            </span>
+            <div className="space-y-2">
+              {BRIEFING_CONTENT_OPTIONS.map((item) => {
+                const checked = briefing[item.key] as boolean;
+                return (
+                  <label
+                    key={item.key}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) =>
+                        update(item.key as keyof MorningBriefingData, e.target.checked as MorningBriefingData[keyof MorningBriefingData])
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                    />
+                    <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+                      {item.label}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Save button */}
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? "Saving…" : "Save Briefing Settings"}
+            </button>
+            {saved && (
+              <span className="text-sm text-green-600">✓ Saved</span>
+            )}
+            {error && (
+              <span className="text-sm text-red-600">{error}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ── Constants ─────────────────────────────────────────────────── */
 
 const AVATAR_OPTIONS = ["🤖", "🧠", "✨", "🦊", "🐱", "🦉", "🌟", "💫", "🔮", "🎯", "💡", "🚀"];
@@ -642,6 +889,9 @@ export default function SettingsPage() {
             })}
           </div>
         </section>
+
+        {/* ── Morning Briefing ──────────────────────────────────── */}
+        <MorningBriefingSection />
 
         {/* ── AI Team Template ──────────────────────────────────── */}
         <TeamTemplateSection />
