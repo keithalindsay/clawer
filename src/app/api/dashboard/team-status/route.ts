@@ -66,25 +66,9 @@ export async function GET() {
   todayStart.setUTCHours(0, 0, 0, 0);
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
 
-  // Fetch last event for each team member
+  // Fetch last event per team member
   const statuses: TeamMemberStatus[] = await Promise.all(
     enrichedMembers.map(async (member) => {
-      const lastEvent = await db
-        .select({
-          summary: agentEvents.summary,
-          createdAt: agentEvents.createdAt,
-        })
-        .from(agentEvents)
-        .where(eq(agentEvents.userId, userId))
-        .orderBy(desc(agentEvents.createdAt))
-        .limit(1)
-        // Filter by agent name — we match on the name field
-        .then(rows =>
-          // Can't easily filter by agentName in the chain without extra where clause,
-          // so we do a separate targeted query below
-          rows
-        );
-
       // Targeted query per agent
       const agentLastEvent = await db
         .select({

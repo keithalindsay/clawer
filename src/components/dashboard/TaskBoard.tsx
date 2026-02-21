@@ -10,6 +10,7 @@ import type { TeamMember } from '@/lib/teams';
 
 type Status = 'backlog' | 'queued' | 'running' | 'done' | 'failed';
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
+type ViewMode = 'kanban' | 'list';
 
 interface TaskBoardProps {
   initialTasks: Task[];
@@ -63,32 +64,88 @@ function priorityBadge(priority: string) {
   );
 }
 
+function statusBadge(status: string) {
+  const col = COLUMNS.find(c => c.id === status);
+  return (
+    <span
+      className="text-xs font-medium px-2 py-0.5 rounded-full capitalize"
+      style={{ background: col?.bg ?? '#f9fafb', color: col?.color ?? '#6b7280' }}
+    >
+      {status}
+    </span>
+  );
+}
+
 function fmtDate(d: Date | string | null) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function fmtDateTime(d: Date | string | null) {
   if (!d) return null;
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-// ─── TaskCard ─────────────────────────────────────────────────────────────────
+// ─── Execute button ───────────────────────────────────────────────────────────
+
+function ExecuteButton({
+  task,
+  onExecute,
+  executing,
+}: {
+  task: Task;
+  onExecute: (id: string) => void;
+  executing: boolean;
+}) {
+  const canExecute = ['backlog', 'queued', 'failed'].includes(task.status) && !executing;
+  const isRunning = task.status === 'running' || executing;
+
+  if (isRunning) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-medium px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+        Running…
+      </span>
+    );
+  }
+
+  if (!canExecute) return null;
+
+  const label = task.status === 'failed' ? 'Retry' : 'Execute';
+  const emoji = task.status === 'failed' ? '🔄' : '▶️';
+
+  return (
+    <button
+      onClick={() => onExecute(task.id)}
+      title={`${label}: send to agent`}
+      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+    >
+      {emoji} {label}
+    </button>
+  );
+}
+
+// ─── TaskCard (Kanban) ────────────────────────────────────────────────────────
 
 function TaskCard({
   task,
   member,
   onDragStart,
-  onRun,
+  onExecute,
   onDelete,
-  onRetry,
   onMove,
+  executing,
 }: {
   task: Task;
   member?: TeamMember;
   onDragStart: (id: string) => void;
-  onRun: (id: string) => void;
+  onExecute: (id: string) => void;
   onDelete: (id: string) => void;
-  onRetry: (id: string) => void;
   onMove: (id: string, status: Status) => void;
+  executing: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const running = task.status === 'running';
+  const running = task.status === 'running' || executing;
 
   return (
     <div
@@ -97,40 +154,20 @@ function TaskCard({
       className="bg-white rounded-lg border border-gray-200 p-3 cursor-grab active:cursor-grabbing select-none hover:border-gray-300 hover:shadow-sm transition-all"
       style={running ? { borderColor: '#93c5fd', boxShadow: '0 0 0 2px #bfdbfe' } : {}}
     >
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-sm font-medium text-gray-900 leading-snug flex-1">{task.title}</p>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {task.status === 'queued' && (
-            <button
-              onClick={() => onRun(task.id)}
-              title="Execute task"
-              className="p-1 rounded hover:bg-blue-50 transition-colors"
-            >
-              ▶️
-            </button>
-          )}
-          {task.status === 'failed' && (
-            <button
-              onClick={() => onRetry(task.id)}
-              title="Retry task"
-              className="text-xs px-2 py-0.5 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-            >
-              Retry
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(task.id)}
-            title="Delete task"
-            className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-xs"
-          >
-            ✕
-          </button>
-        </div>
+        <button
+          onClick={() => onDelete(task.id)}
+          title="Delete task"
+          className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors text-xs flex-shrink-0"
+        >
+          ✕
+        </button>
       </div>
 
-      {/* Badges row */}
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Badges */}
+      <div className="flex items-center gap-2 flex-wrap mb-2">
         {priorityBadge(task.priority)}
         {member && (
           <span className="text-[11px] text-gray-500 flex items-center gap-1">
@@ -138,22 +175,16 @@ function TaskCard({
             <span>{member.name}</span>
           </span>
         )}
-        {running && (
-          <span className="flex items-center gap-1 text-[10px] text-blue-600 font-medium">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-            Running
-          </span>
-        )}
       </div>
 
       {/* Description */}
       {task.description && (
-        <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-2">{task.description}</p>
+        <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-2">{task.description}</p>
       )}
 
       {/* Result (done) */}
       {task.status === 'done' && task.result && (
-        <div className="mt-2">
+        <div className="mb-2">
           <p className={`text-xs text-gray-700 leading-relaxed ${!expanded ? 'line-clamp-3' : ''}`}>
             {task.result}
           </p>
@@ -170,16 +201,21 @@ function TaskCard({
 
       {/* Error (failed) */}
       {task.status === 'failed' && task.error && (
-        <p className="text-xs text-red-600 mt-2 leading-relaxed line-clamp-2">{task.error}</p>
+        <p className="text-xs text-red-600 leading-relaxed line-clamp-2 mb-2">{task.error}</p>
       )}
 
-      {/* Timestamps */}
-      <div className="mt-2 text-[10px] text-gray-400 space-y-0.5">
-        {task.createdAt && <div>Created {fmtDate(task.createdAt)}</div>}
-        {task.completedAt && <div>Completed {fmtDate(task.completedAt)}</div>}
+      {/* Execute button */}
+      <div className="mb-2">
+        <ExecuteButton task={task} onExecute={onExecute} executing={executing} />
       </div>
 
-      {/* Quick-move buttons (shown on hover via group) */}
+      {/* Timestamps */}
+      <div className="text-[10px] text-gray-400 space-y-0.5">
+        {task.createdAt && <div>Created {fmtDateTime(task.createdAt)}</div>}
+        {task.completedAt && <div>Completed {fmtDateTime(task.completedAt)}</div>}
+      </div>
+
+      {/* Quick-move buttons */}
       <div className="mt-2 flex gap-1 flex-wrap">
         {(['backlog', 'queued', 'running', 'done', 'failed'] as Status[]).map(s => {
           if (s === task.status) return null;
@@ -197,6 +233,108 @@ function TaskCard({
         })}
       </div>
     </div>
+  );
+}
+
+// ─── List View Row ────────────────────────────────────────────────────────────
+
+function ListRow({
+  task,
+  member,
+  onExecute,
+  onDelete,
+  onMove,
+  executing,
+}: {
+  task: Task;
+  member?: TeamMember;
+  onExecute: (id: string) => void;
+  onDelete: (id: string) => void;
+  onMove: (id: string, status: Status) => void;
+  executing: boolean;
+}) {
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
+
+  return (
+    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+      {/* Task title + description */}
+      <td className="px-4 py-3 max-w-xs">
+        <div className="text-sm font-medium text-gray-900 truncate">{task.title}</div>
+        {task.description && (
+          <div className="text-xs text-gray-400 truncate mt-0.5">{task.description}</div>
+        )}
+      </td>
+
+      {/* Agent */}
+      <td className="px-4 py-3 whitespace-nowrap">
+        {member ? (
+          <span className="text-sm text-gray-700 flex items-center gap-1.5">
+            <span>{member.emoji || '🤖'}</span>
+            {member.name}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400 italic">Unassigned</span>
+        )}
+      </td>
+
+      {/* Priority */}
+      <td className="px-4 py-3 whitespace-nowrap">
+        {priorityBadge(task.priority)}
+      </td>
+
+      {/* Status */}
+      <td className="px-4 py-3 whitespace-nowrap">
+        <div className="relative inline-block">
+          <button
+            onClick={() => setShowMoveMenu(v => !v)}
+            title="Change status"
+            className="focus:outline-none"
+          >
+            {statusBadge(task.status)}
+          </button>
+          {showMoveMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowMoveMenu(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-md py-1 min-w-[120px]">
+                {(['backlog', 'queued', 'running', 'done', 'failed'] as Status[]).map(s => {
+                  if (s === task.status) return null;
+                  const col = COLUMNS.find(c => c.id === s)!;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => { onMove(task.id, s); setShowMoveMenu(false); }}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 capitalize"
+                      style={{ color: col.color }}
+                    >
+                      → {col.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </td>
+
+      {/* Created */}
+      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-400">
+        {fmtDate(task.createdAt)}
+      </td>
+
+      {/* Actions */}
+      <td className="px-4 py-3 whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <ExecuteButton task={task} onExecute={onExecute} executing={executing} />
+          <button
+            onClick={() => onDelete(task.id)}
+            title="Delete"
+            className="text-gray-300 hover:text-red-500 transition-colors text-sm px-1.5 opacity-0 group-hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -251,19 +389,21 @@ function AddTaskModal({
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="What needs to be done?"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Instructions for agent
+            </label>
             <textarea
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Provide detailed instructions for the agent..."
+              placeholder="Describe what the agent should do in detail..."
               rows={3}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent resize-none"
             />
           </div>
 
@@ -273,7 +413,7 @@ function AddTaskModal({
               <select
                 value={form.priority}
                 onChange={e => setForm(f => ({ ...f, priority: e.target.value as Priority }))}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -287,7 +427,7 @@ function AddTaskModal({
               <select
                 value={form.assigned_to}
                 onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
               >
                 <option value="">Unassigned</option>
                 {teamMembers.map(m => (
@@ -312,7 +452,7 @@ function AddTaskModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="px-5 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-full transition-colors disabled:opacity-50"
             >
               {saving ? 'Creating…' : 'Create Task'}
             </button>
@@ -328,7 +468,8 @@ function AddTaskModal({
 export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
   const [taskList, setTaskList] = useState<Task[]>(initialTasks);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [runningIds, setRunningIds] = useState<Set<string>>(new Set());
+  const [executingIds, setExecutingIds] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<ViewMode>('kanban');
   const dragIdRef = useRef<string | null>(null);
 
   // ── Drag & Drop ──
@@ -344,13 +485,9 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
     const id = dragIdRef.current;
     if (!id) return;
     dragIdRef.current = null;
-
     const task = taskList.find(t => t.id === id);
     if (!task || task.status === targetStatus) return;
-
-    // Optimistic update
     setTaskList(prev => prev.map(t => t.id === id ? { ...t, status: targetStatus, updatedAt: new Date() } : t));
-
     try {
       await fetch(`/api/tasks/${id}`, {
         method: 'PATCH',
@@ -358,18 +495,15 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
         body: JSON.stringify({ status: targetStatus }),
       });
     } catch {
-      // Rollback
       setTaskList(prev => prev.map(t => t.id === id ? task : t));
     }
   }, [taskList]);
 
-  // ── Move task via quick-move buttons ──
+  // ── Move task ──
   const handleMove = useCallback(async (id: string, status: Status) => {
     const task = taskList.find(t => t.id === id);
     if (!task) return;
-
     setTaskList(prev => prev.map(t => t.id === id ? { ...t, status, updatedAt: new Date() } : t));
-
     try {
       await fetch(`/api/tasks/${id}`, {
         method: 'PATCH',
@@ -408,46 +542,81 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
     }
   }, [taskList]);
 
-  // ── Run task ──
-  const handleRun = useCallback(async (id: string) => {
-    if (runningIds.has(id)) return;
-    setRunningIds(prev => new Set([...prev, id]));
-    // Optimistic: mark as running
-    setTaskList(prev => prev.map(t => t.id === id ? { ...t, status: 'running' as Status, startedAt: new Date(), updatedAt: new Date() } : t));
+  // ── Execute task → /api/tasks/execute ──
+  const handleExecute = useCallback(async (id: string) => {
+    if (executingIds.has(id)) return;
+
+    const task = taskList.find(t => t.id === id);
+    if (!task) return;
+
+    if (!task.assignedTo) {
+      // Prompt user to assign first — move to queued so they notice
+      alert('Assign the task to an agent before executing it.');
+      return;
+    }
+
+    setExecutingIds(prev => new Set([...prev, id]));
+    // Optimistic: mark running
+    setTaskList(prev =>
+      prev.map(t =>
+        t.id === id
+          ? { ...t, status: 'running' as Status, startedAt: new Date(), updatedAt: new Date() }
+          : t
+      )
+    );
 
     try {
-      const res = await fetch(`/api/tasks/${id}/run`, { method: 'POST' });
+      const res = await fetch('/api/tasks/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: id }),
+      });
       const data = await res.json();
+
       if (res.ok && data.task) {
         setTaskList(prev => prev.map(t => t.id === id ? data.task : t));
       } else {
-        // Mark failed
-        setTaskList(prev => prev.map(t =>
-          t.id === id ? { ...t, status: 'failed' as Status, error: data.error || 'Execution failed', completedAt: new Date(), updatedAt: new Date() } : t
-        ));
+        setTaskList(prev =>
+          prev.map(t =>
+            t.id === id
+              ? {
+                  ...t,
+                  status: 'failed' as Status,
+                  error: data.error || 'Execution failed',
+                  completedAt: new Date(),
+                  updatedAt: new Date(),
+                }
+              : t
+          )
+        );
       }
     } catch {
-      setTaskList(prev => prev.map(t =>
-        t.id === id ? { ...t, status: 'failed' as Status, error: 'Network error', completedAt: new Date(), updatedAt: new Date() } : t
-      ));
+      setTaskList(prev =>
+        prev.map(t =>
+          t.id === id
+            ? {
+                ...t,
+                status: 'failed' as Status,
+                error: 'Network error — try again',
+                completedAt: new Date(),
+                updatedAt: new Date(),
+              }
+            : t
+        )
+      );
     } finally {
-      setRunningIds(prev => {
+      setExecutingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
     }
-  }, [runningIds]);
+  }, [executingIds, taskList]);
 
-  // ── Retry failed task ──
-  const handleRetry = useCallback(async (id: string) => {
-    // Move to queued first
-    await handleMove(id, 'queued');
-  }, [handleMove]);
-
-  // ── Lookup helper ──
   const getMember = (assignedTo: string | null) =>
     assignedTo ? teamMembers.find(m => m.id === assignedTo) : undefined;
+
+  const sortedAll = sortTasks(taskList);
 
   const columnCounts = COLUMNS.reduce<Record<string, number>>((acc, col) => {
     acc[col.id] = taskList.filter(t => t.status === col.id).length;
@@ -456,18 +625,19 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Nav */}
-      <header className="bg-white border-b border-gray-200">
+      {/* ── Top Nav ─────────────────────────────────────────────────── */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-lg font-bold text-gray-900">
               🦞 Clawer.ai
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="text-gray-500 hover:text-gray-900">Dashboard</Link>
-              <Link href="/dashboard/tasks" className="text-blue-600 font-medium">Tasks</Link>
-              <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
+              <Link href="/dashboard"       className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
+              <Link href="/dashboard/tasks" className="text-orange-600 font-semibold">Tasks</Link>
+              <Link href="/dashboard/chat"  className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
+              <Link href="/dashboard/files" className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
+              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -477,84 +647,165 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
       </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-6">
-        {/* Page header */}
-        <div className="flex items-center justify-between mb-6">
+        {/* ── Page header ─────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Task Board</h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {taskList.length} task{taskList.length !== 1 ? 's' : ''} total
+              {executingIds.size > 0 && (
+                <span className="ml-2 text-blue-600">
+                  · {executingIds.size} executing…
+                </span>
+              )}
             </p>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <span className="text-base leading-none">+</span>
-            Add Task
-          </button>
-        </div>
 
-        {/* Kanban columns */}
-        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: '70vh' }}>
-          {COLUMNS.map(col => {
-            const colTasks = sortTasks(taskList.filter(t => t.status === col.id));
-            return (
-              <div
-                key={col.id}
-                className="flex-shrink-0 w-64 flex flex-col rounded-xl border border-gray-200 overflow-hidden"
-                style={{ background: col.bg }}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(col.id)}
+          <div className="flex items-center gap-3">
+            {/* View toggle */}
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden text-sm">
+              <button
+                onClick={() => setView('kanban')}
+                className={`px-3 py-1.5 transition-colors ${
+                  view === 'kanban'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+                title="Kanban view"
               >
-                {/* Column header */}
-                <div
-                  className="px-4 py-3 flex items-center justify-between border-b border-gray-200"
-                  style={{ background: '#ffffff' }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: col.color }} />
-                    <span className="text-sm font-semibold text-gray-900">{col.label}</span>
-                  </div>
-                  <span
-                    className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ background: col.bg, color: col.color }}
-                  >
-                    {columnCounts[col.id] || 0}
-                  </span>
-                </div>
+                ▦ Kanban
+              </button>
+              <button
+                onClick={() => setView('list')}
+                className={`px-3 py-1.5 transition-colors border-l border-gray-200 ${
+                  view === 'list'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+                title="List view"
+              >
+                ≡ List
+              </button>
+            </div>
 
-                {/* Cards */}
-                <div className="flex-1 p-3 space-y-3 overflow-y-auto" style={{ maxHeight: '70vh' }}>
-                  {colTasks.length === 0 && (
-                    <div className="text-center py-8 text-xs text-gray-400">
-                      {col.id === 'backlog' ? 'Add tasks to get started' : 'No tasks here'}
-                    </div>
-                  )}
-                  {colTasks.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      member={getMember(task.assignedTo)}
-                      onDragStart={handleDragStart}
-                      onRun={handleRun}
-                      onDelete={handleDelete}
-                      onRetry={handleRetry}
-                      onMove={handleMove}
-                    />
-                  ))}
-
-                  {/* Drop zone hint */}
-                  <div
-                    className="h-12 border-2 border-dashed rounded-lg flex items-center justify-center text-xs text-gray-300 transition-colors"
-                    style={{ borderColor: col.color + '40' }}
-                  >
-                    Drop here
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-full transition-colors"
+            >
+              <span className="text-base leading-none">+</span>
+              Add Task
+            </button>
+          </div>
         </div>
+
+        {/* ── Kanban View ─────────────────────────────────────────────── */}
+        {view === 'kanban' && (
+          <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: '70vh' }}>
+            {COLUMNS.map(col => {
+              const colTasks = sortTasks(taskList.filter(t => t.status === col.id));
+              return (
+                <div
+                  key={col.id}
+                  className="flex-shrink-0 w-64 flex flex-col rounded-xl border border-gray-200 overflow-hidden"
+                  style={{ background: col.bg }}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleDrop(col.id)}
+                >
+                  {/* Column header */}
+                  <div
+                    className="px-4 py-3 flex items-center justify-between border-b border-gray-200 bg-white"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: col.color }} />
+                      <span className="text-sm font-semibold text-gray-900">{col.label}</span>
+                    </div>
+                    <span
+                      className="text-xs font-medium px-2 py-0.5 rounded-full"
+                      style={{ background: col.bg, color: col.color }}
+                    >
+                      {columnCounts[col.id] || 0}
+                    </span>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="flex-1 p-3 space-y-3 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+                    {colTasks.length === 0 && (
+                      <div className="text-center py-8 text-xs text-gray-400">
+                        {col.id === 'backlog' ? 'Add tasks to get started' : 'No tasks here'}
+                      </div>
+                    )}
+                    {colTasks.map(task => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        member={getMember(task.assignedTo)}
+                        onDragStart={handleDragStart}
+                        onExecute={handleExecute}
+                        onDelete={handleDelete}
+                        onMove={handleMove}
+                        executing={executingIds.has(task.id)}
+                      />
+                    ))}
+                    {/* Drop zone hint */}
+                    <div
+                      className="h-12 border-2 border-dashed rounded-lg flex items-center justify-center text-xs text-gray-300"
+                      style={{ borderColor: col.color + '40' }}
+                    >
+                      Drop here
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── List View ───────────────────────────────────────────────── */}
+        {view === 'list' && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            {sortedAll.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="text-3xl mb-3">📋</p>
+                <p className="text-sm font-medium text-gray-700">No tasks yet</p>
+                <p className="text-xs text-gray-500 mt-1">Create your first task to get started</p>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="mt-4 px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-full transition-colors"
+                >
+                  + Add Task
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Task</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Agent</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Created</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedAll.map(task => (
+                      <ListRow
+                        key={task.id}
+                        task={task}
+                        member={getMember(task.assignedTo)}
+                        onExecute={handleExecute}
+                        onDelete={handleDelete}
+                        onMove={handleMove}
+                        executing={executingIds.has(task.id)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Add Task Modal */}

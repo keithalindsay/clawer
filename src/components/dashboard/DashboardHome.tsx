@@ -1,11 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { LogoutButton } from '@/components/LogoutButton';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { MemoryCard, type MemoryStats } from '@/components/dashboard/MemoryCard';
-import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT, FREE_TEAM_MEMBER_LIMIT, PAID_TEAM_MEMBER_LIMIT } from '@/lib/constants';
+import { SystemHealthPill } from '@/components/dashboard/SystemHealthPill';
+import { TodayStatsBar } from '@/components/dashboard/TodayStatsBar';
+import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
+import { TeamStatusPanel } from '@/components/dashboard/TeamStatusPanel';
+import { MorningBriefingCard } from '@/components/dashboard/MorningBriefingCard';
+import { QuickActions } from '@/components/dashboard/QuickActions';
 import { trackEvent } from '@/lib/analytics';
+import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT } from '@/lib/constants';
 
 interface TeamMember {
   id: string;
@@ -28,6 +35,26 @@ interface DashboardHomeProps {
   memoryStats?: MemoryStats;
 }
 
+function Greeting({ userName }: { userName?: string }) {
+  const [greeting, setGreeting] = useState('Hello');
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    if (h < 12) setGreeting('Good morning');
+    else if (h < 18) setGreeting('Good afternoon');
+    else setGreeting('Good evening');
+  }, []);
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900">
+        {greeting}{userName ? `, ${userName}` : ''} 👋
+      </h1>
+      <p className="text-sm text-gray-500 mt-0.5">Here&apos;s what your team has been up to.</p>
+    </div>
+  );
+}
+
 export function DashboardHome({
   userName,
   userEmail,
@@ -36,207 +63,174 @@ export function DashboardHome({
   teamMembers,
   isSubscribed,
   freeMessagesUsed,
-  whatsappConnected,
-  telegramConnected,
   memoryStats,
 }: DashboardHomeProps) {
-  const plan = isSubscribed ? 'Pro' : 'Free';
   const dailyLimit = isSubscribed ? PAID_DAILY_LIMIT : FREE_DAILY_LIMIT;
-  const memberLimit = isSubscribed ? PAID_TEAM_MEMBER_LIMIT : FREE_TEAM_MEMBER_LIMIT;
   const usagePercent = Math.min((freeMessagesUsed / dailyLimit) * 100, 100);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Nav */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold text-gray-900">
+      {/* ── Top Nav ─────────────────────────────────────────────────── */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          {/* Logo + primary nav */}
+          <div className="flex items-center gap-5 min-w-0">
+            <Link href="/dashboard" className="text-lg font-bold text-gray-900 flex-shrink-0">
               🦞 Clawer.ai
             </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="text-orange-600 font-medium">Dashboard</Link>
-              <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900">Tasks</Link>
-              <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
-              <Link href="/dashboard/files" className="text-gray-500 hover:text-gray-900">Files</Link>
-              <Link href="/dashboard/agent" className="text-gray-500 hover:text-gray-900">Agent</Link>
-              <Link href="/dashboard/memory" className="text-gray-500 hover:text-gray-900">Memory</Link>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
-              {/* <Link href="/dashboard/api-keys" className="text-gray-500 hover:text-gray-900">API Keys</Link> */}
+            <nav className="hidden md:flex items-center gap-4 text-sm">
+              <Link href="/dashboard" className="text-orange-600 font-semibold">Dashboard</Link>
+              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
+              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
+              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
+              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
+              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
+              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">{userEmail}</span>
+
+          {/* Right side */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="hidden sm:block text-xs text-gray-400 truncate max-w-[160px]">{userEmail}</span>
             <LogoutButton />
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        {/* Welcome */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back{userName ? `, ${userName}` : ''} 👋
-          </h1>
-          <p className="text-gray-500 mt-1">Here's your team overview and usage summary.</p>
-        </div>
+      {/* ── Main content ─────────────────────────────────────────────── */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
 
+        {/* Upgrade banner */}
         <UpgradeBanner isSubscribed={isSubscribed} />
 
-        {/* Memory card — full width on mobile, 1-of-3 on desktop alongside Plan + Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Plan Status */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Plan Status</h2>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                isSubscribed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-              }`}>
-                {plan}
-              </span>
+        {/* Row 1: Greeting + System Health pill */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <Greeting userName={userName} />
+          <div className="sm:flex-shrink-0">
+            <SystemHealthPill />
+          </div>
+        </div>
+
+        {/* Row 2: Stats bar */}
+        <TodayStatsBar />
+
+        {/* Row 3: Two-column layout — Activity (60%) + Right panel (40%) */}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+
+          {/* LEFT — Activity feed (3/5 width on xl) */}
+          <div className="xl:col-span-3 bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <ActivityFeed />
+          </div>
+
+          {/* RIGHT — Team status + Morning briefing + Quick actions (2/5 width on xl) */}
+          <div className="xl:col-span-2 flex flex-col gap-5">
+
+            {/* Team status */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <TeamStatusPanel />
             </div>
-            <div className="space-y-3">
+
+            {/* Morning briefing (conditionally rendered by MorningBriefingCard itself) */}
+            <MorningBriefingCard />
+
+            {/* Quick actions */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <QuickActions />
+            </div>
+
+            {/* Plan status card — collapsed version, links to settings */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-900">Usage</h2>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  isSubscribed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {isSubscribed ? 'Pro' : 'Free'}
+                </span>
+              </div>
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Daily messages</span>
-                  <span className="text-gray-900 font-medium">{freeMessagesUsed} / {dailyLimit}</span>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-500">Daily messages</span>
+                  <span className="font-medium text-gray-900">{freeMessagesUsed} / {dailyLimit}</span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div
-                    className={`h-2 rounded-full transition-all ${usagePercent > 80 ? 'bg-orange-500' : 'bg-blue-500'}`}
+                    className={`h-1.5 rounded-full transition-all ${usagePercent > 80 ? 'bg-orange-500' : 'bg-blue-500'}`}
                     style={{ width: `${usagePercent}%` }}
                   />
                 </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Team members</span>
-                <span className="text-gray-900 font-medium">
-                  {Math.min(teamMembers.length, memberLimit)} / {memberLimit}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Model</span>
-                <span className="text-gray-900 font-medium">{isSubscribed ? 'Priority' : 'Basic'}</span>
-              </div>
+              {!isSubscribed && (
+                <Link
+                  href="/dashboard/settings"
+                  className="mt-3 block text-center text-xs font-medium text-orange-600 hover:text-orange-700 border border-orange-200 rounded-lg py-1.5 hover:bg-orange-50 transition-colors"
+                  onClick={() => trackEvent('funnel_upgrade_click', { source: 'command_center_usage_card' })}
+                >
+                  Upgrade to Pro →
+                </Link>
+              )}
             </div>
-            {!isSubscribed && (
-              <Link
-                href="/dashboard/settings"
-                className="mt-4 block text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
-                onClick={() => trackEvent('funnel_upgrade_click', { source: 'dashboard_plan_card' })}
-              >
-                Upgrade to Pro →
-              </Link>
-            )}
-          </div>
 
-          {/* Memory Card */}
-          {memoryStats ? (
-            <MemoryCard stats={memoryStats} />
-          ) : (
-            <div className="bg-gradient-to-br from-orange-50 to-white rounded-xl border border-orange-100 p-6 flex flex-col items-center justify-center gap-3 text-center">
-              <span className="text-3xl">🧠</span>
-              <p className="text-sm font-medium text-gray-700">Your Agent's Memory</p>
-              <p className="text-xs text-gray-500">Start chatting to build context</p>
-              <Link href="/dashboard/memory" className="text-xs text-orange-600 font-medium hover:text-orange-700">
-                View details →
-              </Link>
-            </div>
-          )}
+            {/* Memory card */}
+            {memoryStats ? (
+              <MemoryCard stats={memoryStats} />
+            ) : null}
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/dashboard/chat"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-              >
-                <span className="text-xl">💬</span>
-                <span className="text-sm font-medium text-gray-900">Chat with Team</span>
-              </Link>
-              <Link
-                href="/dashboard/tasks"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-              >
-                <span className="text-xl">📋</span>
-                <span className="text-sm font-medium text-gray-900">Task Board</span>
-              </Link>
-              <Link
-                href="/dashboard/agent"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-              >
-                <span className="text-xl">🤖</span>
-                <span className="text-sm font-medium text-gray-900">Agent Files</span>
-              </Link>
-              <Link
-                href="/dashboard/settings"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-              >
-                <span className="text-xl">⚙️</span>
-                <span className="text-sm font-medium text-gray-900">Settings</span>
-              </Link>
-              <Link
-                href="/dashboard/whatsapp"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-              >
-                <span className="text-xl">📱</span>
-                <div>
-                  <span className="text-sm font-medium text-gray-900">WhatsApp</span>
-                  {whatsappConnected && <span className="ml-1 text-xs text-green-600">✓</span>}
-                </div>
-              </Link>
-              <Link
-                href="/dashboard/telegram"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-              >
-                <span className="text-xl">✈️</span>
-                <div>
-                  <span className="text-sm font-medium text-gray-900">Telegram</span>
-                  {telegramConnected && <span className="ml-1 text-xs text-green-600">✓</span>}
-                </div>
-              </Link>
-            </div>
           </div>
         </div>
 
-        {/* Team Overview */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        {/* Row 4: Team overview — collapsed quick-access grid */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <div className="mb-4">
-            <h2 className="font-semibold text-gray-900">{teamName}</h2>
-            {teamDescription && <p className="text-sm text-gray-500 mt-1">{teamDescription}</p>}
+            <h2 className="text-sm font-semibold text-gray-900">{teamName}</h2>
+            {teamDescription && (
+              <p className="text-xs text-gray-500 mt-1 max-w-2xl">{teamDescription}</p>
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teamMembers.map((member) => (
-              <div
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {teamMembers.map(member => (
+              <Link
                 key={member.id}
-                className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                href={`/dashboard/chat?agent=${member.id}`}
+                className="flex items-center gap-2.5 p-3 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors group"
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl">{member.emoji || '🤖'}</span>
-                  <div>
-                    <div className="font-medium text-gray-900 text-sm">{member.name}</div>
-                    <div className="text-xs text-gray-500">{member.role}</div>
+                <span className="text-xl flex-shrink-0">{member.emoji || '🤖'}</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-gray-900 truncate group-hover:text-orange-700 transition-colors">
+                    {member.name}
                   </div>
+                  <div className="text-[11px] text-gray-400 truncate">{member.role}</div>
                 </div>
-                {member.quickPrompts && member.quickPrompts.length > 0 && (
-                  <div className="space-y-1.5">
-                    {member.quickPrompts.map((prompt, j) => (
-                      <Link
-                        key={j}
-                        href={`/dashboard/chat?agent=${member.id}&prompt=${encodeURIComponent(prompt)}`}
-                        className="block text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2.5 py-1.5 rounded-md transition-colors truncate"
-                      >
-                        → {prompt}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
+
       </main>
+
+      {/* ── Mobile bottom tab bar ─────────────────────────────────── */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex md:hidden z-30"
+        aria-label="Mobile navigation"
+      >
+        {[
+          { href: '/dashboard',       icon: '🏠', label: 'Home'  },
+          { href: '/dashboard/chat',  icon: '💬', label: 'Chat'  },
+          { href: '/dashboard/tasks', icon: '📋', label: 'Tasks' },
+          { href: '/dashboard/files', icon: '📁', label: 'Files' },
+        ].map(tab => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-gray-500 hover:text-orange-600 transition-colors"
+          >
+            <span className="text-xl">{tab.icon}</span>
+            <span className="text-[10px] font-medium">{tab.label}</span>
+          </Link>
+        ))}
+      </nav>
+      {/* Bottom padding for mobile tab bar */}
+      <div className="h-16 md:hidden" />
     </div>
   );
 }
