@@ -33,7 +33,7 @@
    - **Word count:** 2,500-3,500
    - **Priority:** 🔴 Channel guides drive massive long-tail traffic
 
-3b. [ ] `/blog/openclaw-mistakes-cost-money`
+3b. [x] `/blog/openclaw-mistakes-cost-money` — "10 OpenClaw Mistakes That Cost You Money (And How to Fix Them)" (Feb 21)
    - **Title:** "10 OpenClaw Mistakes That Cost You Money (And How to Fix Them)"
    - **Target keywords:** openclaw tips mistakes
    - **Angle:** Each tip covers a common costly mistake, then ends with how Clawer handles it automatically.
