@@ -45,6 +45,13 @@
    - **Target keywords:** openclaw agents.md tips
    - **Angle:** Community-proven rules that dramatically improve agent behavior — covering session start checklists, memory management, error recovery, subagent orchestration, and communication style. Real before/after examples. Why most AGENTS.md files are empty and what you're leaving on the table.
    - **Word count:** ~2,500
+
+3c. [x] `/blog/openclaw-wrappers-make-money` — "How to Make Money with OpenClaw Wrappers (Or Just Use Clawer.ai)" (Feb 21)
+   - **Title:** "How to Make Money with OpenClaw Wrappers (Or Just Use Clawer.ai)"
+   - **Target keywords:** openclaw wrapper, make money with openclaw, openclaw business ideas, openclaw setup, openclaw hosting
+   - **Angle:** Validate the wrapper thesis from @EXM7777's viral thread. Walk through 5 wrapper ideas with DIY cost breakdowns. Pivot to Clawer.ai as the managed solution. Map each wrapper to Clawer.ai team templates.
+   - **Word count:** ~3,500
+   - **Priority:** 🔴 Commercial intent, taps into trending conversation
    - **Priority:** 🔴 High — practical how-to with strong search + social share potential
 
 3c. [ ] `/blog/openclaw-content-engine`
