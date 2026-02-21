@@ -301,6 +301,20 @@ ssh root@YOUR_DOCKER_HOST 'PGPASSWORD=YOUR_DB_PASSWORD psql -h localhost -U claw
 - **Lesson:** **Qwen session pollution is a systemic risk.** Any Qwen cron that errors once will cascade into increasingly confused runs. All Qwen cron prompts must be brutally explicit and self-contained. Consider: (a) forcing fresh sessions per run, or (b) adding `set +o pipefail` or `trap '' SIGPIPE` to ALL scripts run by Qwen crons.
 - **Scripts to audit for SIGPIPE:** Any script using `sort | head`, `grep -q` in a pipeline, or similar patterns with `set -euo pipefail`.
 
+### 2026-02-20: Container restart loop from memorySearch config
+
+- **Impact:** All 3 user containers in continuous restart loop. All users unable to use chat.
+- **Root cause:** OpenClaw v2026.2.19 moved `memorySearch` from top-level to `agents.defaults.memorySearch`. The Docker image's `entrypoint.sh` still wrote the old format. On every startup, OpenClaw rejected the invalid config and exited (code 1), triggering Docker's restart policy — infinite loop.
+- **Detection:** `docker ps` showed all 3 containers as `Restarting (1)`. `docker logs` showed config validation errors on startup.
+- **Fix:**
+  1. Host `/opt/clawer-docker/entrypoint.sh` was already fixed (correct config format)
+  2. Stopped and removed all 3 containers
+  3. Deleted stale `openclaw.json` configs from userdata volumes
+  4. Recreated containers with `-v /opt/clawer-docker/entrypoint.sh:/entrypoint.sh:ro` so the fixed host entrypoint takes effect without rebuilding the image
+  5. Updated gateway tokens in DB after fresh config generation
+- **Lesson:** Always volume-mount `entrypoint.sh` into containers (`-v /opt/clawer-docker/entrypoint.sh:/entrypoint.sh:ro`) so host edits take effect without image rebuild. The image's copy is frozen at build time.
+- **Prevention:** When upgrading OpenClaw image version, verify `entrypoint.sh` config schema against the new version's changelog before deploying.
+
 ---
 
 *This is a living document. Update it every time you fix something non-obvious.*
