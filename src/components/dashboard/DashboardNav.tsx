@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/files', label: 'Files' },
   { href: '/dashboard/agent', label: 'Agent' },
   { href: '/dashboard/memory', label: 'Memory' },
+  { href: '/dashboard/crons', label: 'Crons' },
   { href: '/dashboard/settings', label: 'Settings' },
 ];
 
