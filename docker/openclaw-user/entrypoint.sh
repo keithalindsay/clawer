@@ -145,8 +145,12 @@ export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 # Initialize ClawSec skills if available
 [ -x /usr/local/bin/init_clawsec.sh ] && /usr/local/bin/init_clawsec.sh
 
-# Patch api-server to connect as control-ui (gets scopes via dangerouslyDisableDeviceAuth)
+# Patch api-server for OpenClaw v2026.2.21 compatibility
 sed -i "s/id: 'gateway-client'/id: 'openclaw-control-ui'/" /usr/local/bin/api-server.js 2>/dev/null
+# Add Origin header for control-ui auth
+sed -i "s|new WebSocket(GATEWAY_URL)|new WebSocket(GATEWAY_URL, { headers: { 'Origin': 'http://127.0.0.1:8080' } })|" /usr/local/bin/api-server.js 2>/dev/null
+# Remove model param from chat.send (OpenClaw rejects unexpected properties)
+sed -i '/Add model override if provided by smart router/,/chatParams.model = routingModel;/d' /usr/local/bin/api-server.js 2>/dev/null
 
 # Start API server in background
 node /usr/local/bin/api-server.js &
