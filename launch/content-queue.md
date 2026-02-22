@@ -54,7 +54,14 @@
    - **Priority:** 🔴 Commercial intent, taps into trending conversation
    - **Priority:** 🔴 High — practical how-to with strong search + social share potential
 
-3c. [ ] `/blog/openclaw-content-engine`
+3d. [ ] `/blog/openclaw-clawhub-malware-security`
+   - **Title:** "341 Malicious Skills Found on ClawHub: How to Protect Your Agent"
+   - **Target keywords:** openclaw skills security, clawhub malware, openclaw skill safety, is clawhub safe
+   - **Angle:** Real data — RedLine/Lumma infostealers targeting ~/.openclaw/, supply chain attacks via skill marketplace. What to check before installing skills. How Clawer.ai scans and verifies every skill. Position as the security-first alternative.
+   - **Word count:** 3,000-4,000
+   - **Priority:** 🔴 URGENT — leverages breaking security news, massive trust differentiator
+
+3e. [ ] `/blog/openclaw-content-engine`
    - **Title:** "How to Use OpenClaw as a Content Engine: The Creator's Playbook"
    - **Target keywords:** openclaw content creation, AI content automation, openclaw tweet writer, openclaw tiktok
    - **Angle:** Real examples from creators getting 820K impressions and millions of TikTok views using OpenClaw. Voice cloning, hook analysis, cross-platform repurposing, scheduling pipelines. Show exact workflows — not theory. Link to Clawer's Content Creator template.
