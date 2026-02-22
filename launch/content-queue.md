@@ -40,11 +40,11 @@
    - **Word count:** ~3,000
    - **Priority:** 🔴 High
 
-3c. [ ] `/blog/openclaw-agents-md-tips`
+3c. [x] `/blog/openclaw-agents-md-tips` — "5 AGENTS.md Rules That Make Your Agent 10x Better" (Feb 22)
    - **Title:** "5 AGENTS.md Rules That Make Your Agent 10x Better"
    - **Target keywords:** openclaw agents.md tips
    - **Angle:** Community-proven rules that dramatically improve agent behavior — covering session start checklists, memory management, error recovery, subagent orchestration, and communication style. Real before/after examples. Why most AGENTS.md files are empty and what you're leaving on the table.
-   - **Word count:** ~2,500
+   - **Word count:** ~3,500 (actual)
 
 3c. [x] `/blog/openclaw-wrappers-make-money` — "How to Make Money with OpenClaw Wrappers (Or Just Use Clawer.ai)" (Feb 21)
    - **Title:** "How to Make Money with OpenClaw Wrappers (Or Just Use Clawer.ai)"
