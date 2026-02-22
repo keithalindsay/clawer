@@ -10,6 +10,7 @@ import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { TeamStatusPanel } from '@/components/dashboard/TeamStatusPanel';
 import { MorningBriefingCard } from '@/components/dashboard/MorningBriefingCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { GettingStartedCard } from '@/components/dashboard/GettingStartedCard';
 import { trackEvent } from '@/lib/analytics';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT } from '@/lib/constants';
@@ -33,6 +34,10 @@ interface DashboardHomeProps {
   whatsappConnected?: boolean;
   telegramConnected?: boolean;
   memoryStats?: MemoryStats;
+  /** Show getting started card for new users (within first 7 days, no conversations yet) */
+  showGettingStarted?: boolean;
+  teamTemplate?: string;
+  morningBriefingEnabled?: boolean;
 }
 
 function Greeting({ userName }: { userName?: string }) {
@@ -63,7 +68,12 @@ export function DashboardHome({
   teamMembers,
   isSubscribed,
   freeMessagesUsed,
+  whatsappConnected,
+  telegramConnected,
   memoryStats,
+  showGettingStarted,
+  teamTemplate,
+  morningBriefingEnabled,
 }: DashboardHomeProps) {
   const dailyLimit = isSubscribed ? PAID_DAILY_LIMIT : FREE_DAILY_LIMIT;
   const usagePercent = Math.min((freeMessagesUsed / dailyLimit) * 100, 100);
@@ -75,6 +85,17 @@ export function DashboardHome({
 
         {/* Upgrade banner */}
         <UpgradeBanner isSubscribed={isSubscribed} />
+
+        {/* Getting started card — shown for new users within first 7 days */}
+        {showGettingStarted && (
+          <GettingStartedCard
+            teamTemplate={teamTemplate || 'lifeos'}
+            whatsappConnected={!!whatsappConnected}
+            telegramConnected={!!telegramConnected}
+            hasStartedChat={false}
+            morningBriefingEnabled={!!morningBriefingEnabled}
+          />
+        )}
 
         {/* Row 1: Greeting + System Health pill */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">

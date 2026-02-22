@@ -69,6 +69,7 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
       freeMessageLimit={FREE_MESSAGE_LIMIT}
       initialAgentId={initialAgentId}
       initialPrompt={initialPrompt}
+      teamTemplate={teamTemplate}
     />
   );
 }

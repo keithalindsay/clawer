@@ -120,6 +120,11 @@ export default async function DashboardPage() {
     // Non-fatal — dashboard still works without memory stats
   }
 
+  // Show getting started card for users in their first 7 days with no/few conversations
+  const daysSinceSignup = memoryStats?.daysSinceSignup ?? 0;
+  const conversationCount = memoryStats?.conversationCount ?? 0;
+  const showGettingStarted = daysSinceSignup <= 7 && conversationCount <= 3;
+
   return (
     <DashboardHome
       userName={user?.name || clerkUser?.firstName || undefined}
@@ -132,6 +137,9 @@ export default async function DashboardPage() {
       whatsappConnected={!!user?.whatsappConnected}
       telegramConnected={!!user?.telegramConnected}
       memoryStats={memoryStats}
+      showGettingStarted={showGettingStarted}
+      teamTemplate={teamTemplate}
+      morningBriefingEnabled={!!user?.morningBriefingEnabled}
     />
   );
 }

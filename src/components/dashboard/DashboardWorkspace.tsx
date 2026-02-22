@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { LogoutButton } from '@/components/LogoutButton';
+import { StarterPrompts } from '@/components/StarterPrompts';
 
 interface TeamMember {
   id: string;
@@ -19,6 +20,56 @@ interface Message {
   timestamp: Date;
 }
 
+/** Template-specific first prompts shown in the empty chat state */
+const TEMPLATE_WELCOME_PROMPTS: Record<string, string[]> = {
+  lifeos: [
+    "Give me my top 3 priorities for today",
+    "Set up a morning briefing for me",
+    "What's on my plate this week?",
+  ],
+  solopreneur: [
+    "Show me my content ideas for this week",
+    "Help me write my first LinkedIn post",
+    "Research 3 trending topics in my niche",
+  ],
+  'content-creator': [
+    "Show me my 4-week content calendar",
+    "Turn my best post into a content series",
+    "Find trending topics in my niche this week",
+  ],
+  ecommerce: [
+    "Show me my competitor analysis",
+    "Help me write a product description",
+    "What's my biggest growth opportunity right now?",
+  ],
+  'growth-ops': [
+    "Show me my growth experiment backlog",
+    "Help me prioritize this week's experiments",
+    "Write a hypothesis for my top growth idea",
+  ],
+  fitness: [
+    "Show me my workout plan for this week",
+    "Log my workout from today",
+    "How should I adjust my plan if I only have 30 minutes?",
+  ],
+  mom: [
+    "Give me my family overview for this week",
+    "Help me plan meals for the next 3 days",
+    "What should I prep this weekend to make the week easier?",
+  ],
+  finance: [
+    "Show me my financial clarity snapshot",
+    "What's one thing I should do this week for my finances?",
+    "Help me track my spending from this week",
+  ],
+};
+
+const DEFAULT_WELCOME_PROMPTS = [
+  "What can you help me with today?",
+  "Set up a morning briefing for me",
+  "Research something useful for me",
+];
+
 interface DashboardWorkspaceProps {
   userName?: string;
   userEmail?: string;
@@ -32,6 +83,7 @@ interface DashboardWorkspaceProps {
   freeMessageLimit: number;
   initialAgentId?: string;
   initialPrompt?: string;
+  teamTemplate?: string;
 }
 
 export function DashboardWorkspace({
@@ -47,6 +99,7 @@ export function DashboardWorkspace({
   freeMessageLimit,
   initialAgentId,
   initialPrompt,
+  teamTemplate,
 }: DashboardWorkspaceProps) {
   const initAgent = initialAgentId ? teamMembers.find(m => m.id === initialAgentId) || teamMembers[0] : teamMembers[0];
   const [selectedAgent, setSelectedAgent] = useState<TeamMember | null>(initAgent || null);
@@ -182,6 +235,56 @@ export function DashboardWorkspace({
     }
   };
 
+  const templatePrompts = teamTemplate
+    ? (TEMPLATE_WELCOME_PROMPTS[teamTemplate] ?? DEFAULT_WELCOME_PROMPTS)
+    : DEFAULT_WELCOME_PROMPTS;
+
+  /** Fills in a starter prompt then sends it immediately */
+  const handleSelectPrompt = (prompt: string) => {
+    if (!selectedAgent || loading) return;
+    setInput(prompt);
+    // Small timeout so input state settles before sending
+    setTimeout(async () => {
+      const text = prompt.trim();
+      if (!text) return;
+      setInput('');
+      const userMsg: Message = { role: 'user', content: text, timestamp: new Date() };
+      setChatHistory(prev => ({
+        ...prev,
+        [selectedAgent.id]: [...(prev[selectedAgent.id] || []), userMsg],
+      }));
+      setLoading(true);
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, agentId: selectedAgent.id }),
+        });
+        const data = await res.json();
+        setChatHistory(prev => ({
+          ...prev,
+          [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
+            role: 'assistant' as const,
+            content: data.content || data.error || 'No response',
+            timestamp: new Date(),
+          }],
+        }));
+      } catch {
+        setChatHistory(prev => ({
+          ...prev,
+          [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
+            role: 'assistant' as const,
+            content: 'Failed to connect. Please try again.',
+            timestamp: new Date(),
+          }],
+        }));
+      } finally {
+        setLoading(false);
+        inputRef.current?.focus();
+      }
+    }, 50);
+  };
+
   const isFreeTrial = !isSubscribed;
   const hasFreeTrial = isFreeTrial && freeMessagesUsed < freeMessageLimit;
 
@@ -283,10 +386,42 @@ export function DashboardWorkspace({
                     <p className="text-sm" style={{ color: '#94a3b8' }}>Loading history…</p>
                   </div>
                 ) : messages.length === 0 && (
-                  <div className="text-center mt-20">
-                    <div className="text-5xl mb-4">{selectedAgent.emoji || '🤖'}</div>
-                    <p className="text-lg font-medium" style={{ color: '#0f172a' }}>Start chatting with {selectedAgent.name}</p>
-                    <p className="text-sm mt-1" style={{ color: '#475569' }}>{selectedAgent.description || selectedAgent.role}</p>
+                  <div className="flex flex-col items-center mt-12 px-4">
+                    <div className="text-5xl mb-3">{selectedAgent.emoji || '🤖'}</div>
+                    <p className="text-lg font-semibold mb-1" style={{ color: '#0f172a' }}>
+                      {selectedAgent.name} is ready
+                    </p>
+                    <p className="text-sm mb-6 text-center max-w-xs" style={{ color: '#475569' }}>
+                      {selectedAgent.description || selectedAgent.role}
+                    </p>
+                    {/* Template-specific starter prompts */}
+                    <div className="w-full max-w-md space-y-2">
+                      <p className="text-xs font-medium text-center mb-3" style={{ color: '#94a3b8' }}>
+                        Try one of these to get started:
+                      </p>
+                      {templatePrompts.map((prompt) => (
+                        <button
+                          key={prompt}
+                          onClick={() => handleSelectPrompt(prompt)}
+                          className="w-full text-left px-4 py-3 rounded-xl border text-sm transition-colors"
+                          style={{
+                            background: '#ffffff',
+                            borderColor: '#e2e8f0',
+                            color: '#374151',
+                          }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#f97316';
+                            (e.currentTarget as HTMLButtonElement).style.background = '#fff7ed';
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#e2e8f0';
+                            (e.currentTarget as HTMLButtonElement).style.background = '#ffffff';
+                          }}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {messages.map((msg, i) => (
