@@ -2,7 +2,7 @@
  * API Keys table - Stores user-provided API keys for AI model providers
  * 
  * Users bring their own keys (BYOK) for models in their container.
- * Keys are stored encrypted (encryption to be implemented).
+ * Keys are stored as plaintext (encryption not yet implemented).
  * 
  * MIGRATION NEEDED:
  * Run: npx drizzle-kit generate && npx drizzle-kit migrate
@@ -47,7 +47,7 @@ export const apiKeys = pgTable('api_keys', {
   /** AI provider name */
   provider: apiKeyProviderEnum('provider').notNull(),
 
-  /** Encrypted API key (TODO: implement encryption) */
+  /** API key (plaintext — encryption not yet implemented) */
   encryptedKey: text('encrypted_key').notNull(),
 
   /** Last time the key was validated against the provider */
