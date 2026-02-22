@@ -80,22 +80,11 @@ cat > /home/user/.openclaw/openclaw.json << EOF
   "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}, "controlUi": {"allowInsecureAuth": true, "dangerouslyDisableDeviceAuth": true}},
   "plugins": {"entries": {"whatsapp": {"enabled": true}, "telegram": {"enabled": true}}},
   "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}},
-  "channels": {"whatsapp": {"dmPolicy": "open", "allowFrom": ["*"]}},
+  "channels": {"whatsapp": {"dmPolicy": "open", "allowFrom": ["*"], "dmScope": "per-channel-peer"}, "telegram": {"dmPolicy": "open", "allowFrom": ["*"], "dmScope": "per-channel-peer"}},
+  "dmScope": "per-channel-peer",
   "memorySearch": {"experimental": {"sessionMemory": true, "sources": ["memory", "sessions"]}}
 }
 EOF
-
-# Patch config: inject arrays that heredoc can't handle + security settings
-# Note: OpenClaw v2026.2.21 rejects 'scopes' and 'dmScope' as unrecognized keys,
-# so we skip them here and handle via api-server.js client ID instead.
-python3 << 'PYEOF'
-import json
-f = '/home/user/.openclaw/openclaw.json'
-c = json.load(open(f))
-c['gateway']['controlUi']['allowedOrigins'] = ['*']
-json.dump(c, open(f, 'w'), indent=2)
-print('Patched: allowedOrigins')
-PYEOF
 
 echo "OpenClaw config created. Primary model: ${PRIMARY}"
 
@@ -144,13 +133,6 @@ export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 
 # Initialize ClawSec skills if available
 [ -x /usr/local/bin/init_clawsec.sh ] && /usr/local/bin/init_clawsec.sh
-
-# Patch api-server for OpenClaw v2026.2.21 compatibility
-sed -i "s/id: 'gateway-client'/id: 'openclaw-control-ui'/" /usr/local/bin/api-server.js 2>/dev/null
-# Add Origin header for control-ui auth
-sed -i "s|new WebSocket(GATEWAY_URL)|new WebSocket(GATEWAY_URL, { headers: { 'Origin': 'http://127.0.0.1:8080' } })|" /usr/local/bin/api-server.js 2>/dev/null
-# Remove model param from chat.send (OpenClaw rejects unexpected properties)
-sed -i '/Add model override if provided by smart router/,/chatParams.model = routingModel;/d' /usr/local/bin/api-server.js 2>/dev/null
 
 # Start API server in background
 node /usr/local/bin/api-server.js &

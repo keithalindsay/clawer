@@ -14,6 +14,20 @@ const API_PORT = process.env.API_PORT || 8081;
 const GATEWAY_URL = process.env.GATEWAY_URL || 'ws://127.0.0.1:8080';
 const GATEWAY_TOKEN = process.env.GATEWAY_TOKEN || '';
 
+// ─── Event Store (for Command Center activity feed) ────────────────────────
+const eventStore = [];
+const MAX_EVENTS = 500; // circular buffer
+
+function storeEvent(type, data) {
+  eventStore.push({
+    id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36),
+    type,
+    data,
+    timestamp: new Date().toISOString(),
+  });
+  if (eventStore.length > MAX_EVENTS) eventStore.shift();
+}
+
 // Generate or load a persistent device identity for gateway auth
 const DEVICE_KEY_PATH = '/home/user/.openclaw/api-server-device.json';
 let deviceIdentity = null;
@@ -194,6 +208,9 @@ function connectGateway() {
         const runId = msg.payload?.runId;
         const stream = msg.payload?.stream;
         const data = msg.payload?.data;
+        
+        // Store event for Command Center activity feed
+        storeEvent(msg.event || 'unknown', msg.payload || {});
         
         // Log agent events for debugging
         if (stream === 'assistant' || stream === 'lifecycle') {
@@ -770,6 +787,46 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: e.message }));
       }
       
+    } else if (path === '/api/activity' && req.method === 'GET') {
+      // GET /api/activity?since=ISO&limit=N — Command Center activity feed
+      const urlObj = new URL(req.url, `http://localhost`);
+      const since = urlObj.searchParams.get('since');
+      const limit = parseInt(urlObj.searchParams.get('limit') || '50', 10);
+      
+      let events = eventStore;
+      if (since) {
+        const sinceDate = new Date(since);
+        events = events.filter(e => new Date(e.timestamp) > sinceDate);
+      }
+      events = events.slice(-limit);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ events }));
+
+    } else if (path === '/api/cron-status' && req.method === 'GET') {
+      // GET /api/cron-status — proxy to gateway HTTP API for cron job status
+      try {
+        const cronRes = await fetch(`http://localhost:8080/api/jobs`, {
+          headers: { 'Authorization': `Bearer ${GATEWAY_TOKEN}` }
+        });
+        if (cronRes.ok) {
+          const data = await cronRes.json();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ jobs: data.jobs || data || [] }));
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ jobs: [] }));
+        }
+      } catch (e) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ jobs: [], error: e.message }));
+      }
+
+    } else if (path === '/api/team-status' && req.method === 'GET') {
+      // GET /api/team-status — basic team status for Command Center
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ members: [], status: 'ok' }));
+
     } else if (path === '/ready') {
       res.writeHead(wsConnected ? 200 : 503);
       res.end(JSON.stringify({ ready: wsConnected }));
