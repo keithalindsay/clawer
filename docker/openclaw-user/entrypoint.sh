@@ -85,6 +85,18 @@ cat > /home/user/.openclaw/openclaw.json << EOF
 }
 EOF
 
+# Patch config: inject arrays that heredoc can't handle + security settings
+# Note: OpenClaw v2026.2.21 rejects 'scopes' and 'dmScope' as unrecognized keys,
+# so we skip them here and handle via api-server.js client ID instead.
+python3 << 'PYEOF'
+import json
+f = '/home/user/.openclaw/openclaw.json'
+c = json.load(open(f))
+c['gateway']['controlUi']['allowedOrigins'] = ['*']
+json.dump(c, open(f, 'w'), indent=2)
+print('Patched: allowedOrigins')
+PYEOF
+
 echo "OpenClaw config created. Primary model: ${PRIMARY}"
 
 # Clear sensitive env vars
@@ -132,6 +144,9 @@ export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 
 # Initialize ClawSec skills if available
 [ -x /usr/local/bin/init_clawsec.sh ] && /usr/local/bin/init_clawsec.sh
+
+# Patch api-server to connect as control-ui (gets scopes via dangerouslyDisableDeviceAuth)
+sed -i "s/id: 'gateway-client'/id: 'openclaw-control-ui'/" /usr/local/bin/api-server.js 2>/dev/null
 
 # Start API server in background
 node /usr/local/bin/api-server.js &
