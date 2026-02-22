@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { TEAM_CONFIGS } from "@/lib/teams";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import ConfigOverview from "@/components/dashboard/ConfigOverview";
 
 /* ── Morning Briefing types ─────────────────────────────────────── */
 
@@ -895,6 +896,9 @@ export default function SettingsPage() {
 
         {/* ── AI Team Template ──────────────────────────────────── */}
         <TeamTemplateSection />
+
+        {/* ── Config Overview: AI Models / Channels / Memory ───── */}
+        <ConfigOverview />
 
         {/* ── Security ─────────────────────────────────────────── */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
