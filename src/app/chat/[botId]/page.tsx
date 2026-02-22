@@ -191,7 +191,8 @@ export default function ChatPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [dismissedUpgradePrompts, setDismissedUpgradePrompts] = useState<Set<number>>(new Set());
-  const [isFreeTier, setIsFreeTier] = useState(true); // TODO: Get from user context
+  // Defaults true (conservative); updated from /api/user in fetchData below via setIsFreeTier(!userData.stripeSubscriptionId)
+  const [isFreeTier, setIsFreeTier] = useState(true);
   const [showResumeIndicator, setShowResumeIndicator] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { FolderTree } from './FolderTree';
 import { ContentViewer } from './ContentViewer';
 import type { FileInfo, Folder } from './FolderTree';
-import { LogoutButton } from '@/components/LogoutButton';
+// LogoutButton moved to shared DashboardNav
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -32,6 +32,13 @@ const isProtectedRoute = createRouteMatcher([
   '/api/agents(.*)',
   '/api/teams(.*)',
   '/api/slack/connect(.*)',
+  '/api/tasks(.*)',
+  '/api/files(.*)',
+  '/api/dashboard(.*)',
+  '/api/team(.*)',
+  '/api/agent(.*)',
+  '/api/memory(.*)',
+  '/api/briefing(.*)',
 ]);
 
 // Routes that must NOT have auth middleware (they verify signatures themselves)

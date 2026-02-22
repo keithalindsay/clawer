@@ -44,7 +44,7 @@ export default async function DashboardPage() {
   const isSubscribed = user?.stripeSubscriptionId !== null;
   const freeMessagesUsed = user?.freeMessagesUsed ?? 0;
 
-  const teamTemplate = (user as any)?.teamTemplate || 'lifeos';
+  const teamTemplate = user?.teamTemplate || 'lifeos';
   const teamConfig = getTeamConfig(teamTemplate);
   const teamMembers = [...(teamConfig?.members || [])];
 
@@ -129,8 +129,8 @@ export default async function DashboardPage() {
       teamMembers={teamMembers}
       isSubscribed={isSubscribed}
       freeMessagesUsed={freeMessagesUsed}
-      whatsappConnected={!!(user as any)?.whatsappConnected}
-      telegramConnected={!!(user as any)?.telegramConnected}
+      whatsappConnected={!!user?.whatsappConnected}
+      telegramConnected={!!user?.telegramConnected}
       memoryStats={memoryStats}
     />
   );

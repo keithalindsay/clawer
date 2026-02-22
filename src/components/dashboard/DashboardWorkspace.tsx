@@ -186,26 +186,7 @@ export function DashboardWorkspace({
   const hasFreeTrial = isFreeTrial && freeMessagesUsed < freeMessageLimit;
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: '#f8fafc' }}>
-      {/* Header */}
-      <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 sm:px-6" style={{ background: '#0f172a' }}>
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm hover:text-white transition-colors" style={{ color: '#94a3b8' }}>← Dashboard</Link>
-          <span className="text-base font-bold text-white">🦞 Clawer.ai</span>
-          <span className="hidden sm:inline text-sm" style={{ color: '#94a3b8' }}>Team: {teamName}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-sm" style={{ color: '#94a3b8' }}>{userEmail}</span>
-          <Link href="/dashboard/settings" className="p-1.5 rounded transition-colors hover:bg-white/10" style={{ color: '#94a3b8' }} title="Settings">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-            </svg>
-          </Link>
-          {/* API Keys hidden until post-launch */}
-          <LogoutButton />
-        </div>
-      </header>
-
+    <div className="flex flex-col flex-1 min-h-0" style={{ background: '#f8fafc' }}>
       {/* Free trial banner */}
       {isFreeTrial && (
         <div className="flex-shrink-0 px-4 py-2 text-center text-sm" style={{ background: '#eff6ff', color: '#1e40af', borderBottom: '1px solid #bfdbfe' }}>
@@ -247,24 +228,6 @@ export function DashboardWorkspace({
                 </button>
               );
             })}
-          </nav>
-
-          {/* Divider */}
-          <div className="mx-4 my-3" style={{ borderTop: '1px solid #e2e8f0' }} />
-
-          {/* General section */}
-          <div className="px-4 pb-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94a3b8' }}>General</h3>
-          </div>
-          <nav className="px-2 space-y-0.5">
-            <Link href="/dashboard/files" className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors hover:bg-gray-50" style={{ borderLeft: '3px solid transparent' }}>
-              <span className="text-lg">📂</span>
-              <span className="text-sm" style={{ color: '#0f172a' }}>Files</span>
-            </Link>
-            <Link href="/dashboard/settings" className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors hover:bg-gray-50" style={{ borderLeft: '3px solid transparent' }}>
-              <span className="text-lg">⚙️</span>
-              <span className="text-sm" style={{ color: '#0f172a' }}>Settings</span>
-            </Link>
           </nav>
 
           {/* Divider */}

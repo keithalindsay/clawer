@@ -517,7 +517,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   /* ── Fetch ─────────────────────────────────────────────────── */
 
@@ -899,16 +898,7 @@ export default function SettingsPage() {
         {/* ── Danger Zone ──────────────────────────────────────── */}
         <section className="bg-white rounded-2xl border border-red-200 p-6">
           <h2 className="text-lg font-semibold text-red-600 mb-2">Danger Zone</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Permanently delete your account and all associated data. This action cannot be undone.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowDeleteModal(true)}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors text-sm"
-          >
-            Delete Account
-          </button>
+          <p className="text-sm text-gray-500">To delete your account and all associated data, please contact us at lex@clawer.ai</p>
         </section>
 
         {/* ── Save bar ─────────────────────────────────────────── */}
@@ -940,37 +930,6 @@ export default function SettingsPage() {
         </div>
       </main>
 
-      {/* ── Delete confirmation modal ──────────────────────────── */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Account?</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              This will permanently delete your account, all conversations, bot settings, and
-              connected platform data. This cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  // TODO: wire up actual account deletion
-                  setShowDeleteModal(false);
-                }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-              >
-                Yes, Delete My Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+   </div>
   );
 }

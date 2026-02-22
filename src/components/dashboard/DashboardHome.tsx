@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { LogoutButton } from '@/components/LogoutButton';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { MemoryCard, type MemoryStats } from '@/components/dashboard/MemoryCard';
 import { SystemHealthPill } from '@/components/dashboard/SystemHealthPill';
@@ -70,33 +69,6 @@ export function DashboardHome({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Top Nav ─────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Logo + primary nav */}
-          <div className="flex items-center gap-5 min-w-0">
-            <Link href="/dashboard" className="text-lg font-bold text-gray-900 flex-shrink-0">
-              🦞 Clawer.ai
-            </Link>
-            <nav className="hidden md:flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="text-orange-600 font-semibold">Dashboard</Link>
-              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
-              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
-              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
-              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
-              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
-            </nav>
-          </div>
-
-          {/* Right side */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="hidden sm:block text-xs text-gray-400 truncate max-w-[160px]">{userEmail}</span>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-
       {/* ── Main content ─────────────────────────────────────────────── */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
 
