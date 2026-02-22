@@ -193,19 +193,7 @@ export const containerApi = {
       body: JSON.stringify({ message, context, settings }),
     }, token || undefined);
   },
-  
-  // API Keys - push keys to container
-  pushApiKeys: async (port: number, keys: {
-    openaiKey?: string;
-    anthropicKey?: string;
-    googleKey?: string;
-  }) => {
-    const token = await getGatewayToken(port);
-    return containerRequest<{ success: boolean }>(port, '/api/keys/push', {
-      method: 'POST',
-      body: JSON.stringify(keys),
-    }, token || undefined);
-  },
+
 
   // ── Command Center endpoints ────────────────────────────────────────────
 

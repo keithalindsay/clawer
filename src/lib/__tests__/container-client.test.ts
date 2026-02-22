@@ -302,15 +302,4 @@ describe('containerApi methods', () => {
     expect((call.init.headers as Record<string, string>)['Authorization']).toBeTruthy();
   });
 
-  it('containerApi.pushApiKeys sends POST to /api/keys/push with key payload', async () => {
-    await containerApi.pushApiKeys(4010, { openaiKey: 'sk-123', googleKey: 'goog-456' });
-
-    const [call] = capturedFetchCalls;
-    expect(call.url).toContain('/api/keys/push');
-    expect(call.init.method).toBe('POST');
-
-    const body = JSON.parse(call.init.body as string);
-    expect(body.openaiKey).toBe('sk-123');
-    expect(body.googleKey).toBe('goog-456');
-  });
 });
