@@ -199,12 +199,13 @@ export default function AgentPage() {
               🦞 Clawer.ai
             </Link>
             <nav className="hidden sm:flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Dashboard</Link>
-              <Link href="/dashboard/chat" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Chat</Link>
-              <Link href="/dashboard/tasks" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Tasks</Link>
-              <Link href="/dashboard/files" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Files</Link>
-              <span className="font-semibold" style={{ color: '#2563eb' }}>Agent</span>
-              <Link href="/dashboard/settings" className="hover:text-gray-900 transition-colors" style={{ color: '#94a3b8' }}>Settings</Link>
+              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
+              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
+              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
+              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
+              <span className="text-orange-600 font-semibold">Agent</span>
+              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
+              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
             </nav>
           </div>
           <Link

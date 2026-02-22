@@ -5,8 +5,8 @@ import { useState, useEffect, useCallback } from 'react';
 interface StatsData {
   messagesToday: number;
   tasksCompleted: number;
-  agentActivities: number;
-  teamMembersActive: number;
+  eventsToday: number;
+  activeAgents: number;
 }
 
 function StatCard({
@@ -66,14 +66,14 @@ export function TodayStatsBar() {
     return () => clearInterval(id);
   }, [fetchStats]);
 
-  const s = stats ?? { messagesToday: 0, tasksCompleted: 0, agentActivities: 0, teamMembersActive: 0 };
+  const s = stats ?? { messagesToday: 0, tasksCompleted: 0, eventsToday: 0, activeAgents: 0 };
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <StatCard icon="💬" label="Messages today" value={s.messagesToday} loading={loading} />
       <StatCard icon="✅" label="Tasks completed" value={s.tasksCompleted} loading={loading} />
-      <StatCard icon="⚡" label="Agent activities" value={s.agentActivities} loading={loading} />
-      <StatCard icon="👥" label="Agents active" value={s.teamMembersActive} loading={loading} />
+      <StatCard icon="⚡" label="Agent activities" value={s.eventsToday} loading={loading} />
+      <StatCard icon="👥" label="Agents active" value={s.activeAgents} loading={loading} />
     </div>
   );
 }

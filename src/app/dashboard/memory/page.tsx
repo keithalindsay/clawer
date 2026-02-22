@@ -156,12 +156,12 @@ export default async function MemoryPage() {
               🦞 Clawer.ai
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="text-gray-500 hover:text-gray-900">Dashboard</Link>
-              <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900">Tasks</Link>
-              <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900">Chat</Link>
-              <Link href="/dashboard/files" className="text-gray-500 hover:text-gray-900">Files</Link>
-              <Link href="/dashboard/agent" className="text-gray-500 hover:text-gray-900">Agent</Link>
-              <Link href="/dashboard/memory" className="text-orange-600 font-semibold">Memory</Link>
+              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900">Dashboard</Link>
+              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900">Chat</Link>
+              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900">Tasks</Link>
+              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900">Files</Link>
+              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900">Agent</Link>
+              <span className="text-orange-600 font-semibold">Memory</span>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
             </nav>
           </div>

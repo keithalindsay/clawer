@@ -23,24 +23,23 @@ export function UpgradeBanner({ isSubscribed }: UpgradeBannerProps) {
   };
 
   return (
-    <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
+    <div className="relative flex items-center gap-4 bg-white border border-gray-200 border-l-4 border-l-orange-500 rounded-lg px-4 py-3 shadow-sm">
+      <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <p className="text-sm text-gray-700">
+          <span className="font-semibold text-gray-900">Upgrade to Pro</span>
+          {' '}— 500 messages/day, full AI team, and priority responses.
+        </p>
+        <CheckoutButton className="flex-shrink-0 bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors">
+          Upgrade to Pro →
+        </CheckoutButton>
+      </div>
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors text-lg"
+        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors ml-1"
         aria-label="Dismiss"
       >
         ✕
       </button>
-      <h3 className="text-lg font-semibold mb-2">Upgrade to Pro — $49/mo</h3>
-      <ul className="text-sm text-indigo-100 space-y-1 mb-4">
-        <li>✓ 500 messages/day (vs 25)</li>
-        <li>✓ Full AI team — all members unlocked</li>
-        <li>✓ Priority model & faster responses</li>
-        <li>✓ Custom skills & automations</li>
-      </ul>
-      <CheckoutButton className="bg-white text-indigo-600 px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-50 transition-colors">
-        Upgrade Now
-      </CheckoutButton>
     </div>
   );
 }

@@ -95,11 +95,12 @@ export function FilesPage() {
               🦞 Clawer.ai
             </Link>
             <nav className="hidden sm:flex items-center gap-4 text-sm">
-              <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-              <Link href="/dashboard/tasks" className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
-              <Link href="/dashboard/chat" className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
-              <span className="text-blue-600 font-medium">Files</span>
-              <Link href="/dashboard/agent" className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
+              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
+              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
+              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
+              <span className="text-orange-600 font-semibold">Files</span>
+              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
+              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
             </nav>
           </div>

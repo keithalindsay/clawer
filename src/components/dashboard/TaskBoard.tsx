@@ -633,10 +633,12 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
               🦞 Clawer.ai
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard"       className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-              <Link href="/dashboard/tasks" className="text-orange-600 font-semibold">Tasks</Link>
-              <Link href="/dashboard/chat"  className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
-              <Link href="/dashboard/files" className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
+              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
+              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
+              <Link href="/dashboard/tasks"    className="text-orange-600 font-semibold">Tasks</Link>
+              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
+              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
+              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
               <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
             </nav>
           </div>
