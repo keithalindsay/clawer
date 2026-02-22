@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import Link from 'next/link';
-import { LogoutButton } from '@/components/LogoutButton';
 import type { Task } from '@/lib/db/schema/tasks';
 import type { TeamMember } from '@/lib/teams';
 
@@ -625,29 +623,6 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Top Nav ─────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold text-gray-900">
-              🦞 Clawer.ai
-            </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
-              <Link href="/dashboard/tasks"    className="text-orange-600 font-semibold">Tasks</Link>
-              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
-              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
-              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-[1400px] mx-auto px-6 py-6">
         {/* ── Page header ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">

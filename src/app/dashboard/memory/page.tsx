@@ -148,31 +148,6 @@ export default async function MemoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold text-gray-900">
-              🦞 Clawer.ai
-            </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900">Dashboard</Link>
-              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900">Chat</Link>
-              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900">Tasks</Link>
-              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900">Files</Link>
-              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900">Agent</Link>
-              <span className="text-orange-600 font-semibold">Memory</span>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900">Settings</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">
-              {clerkUser?.emailAddresses[0]?.emailAddress}
-            </span>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-3xl mx-auto px-6 py-10 space-y-10">
         {/* Hero */}
         <div>

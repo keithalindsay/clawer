@@ -191,33 +191,6 @@ export default function AgentPage() {
   return (
     <div className="min-h-screen" style={{ background: '#f8fafc' }}>
 
-      {/* Header */}
-      <header className="bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-lg font-bold" style={{ color: '#0f172a' }}>
-              🦞 Clawer.ai
-            </Link>
-            <nav className="hidden sm:flex items-center gap-4 text-sm">
-              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
-              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
-              <Link href="/dashboard/files"    className="text-gray-500 hover:text-gray-900 transition-colors">Files</Link>
-              <span className="text-orange-600 font-semibold">Agent</span>
-              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
-            </nav>
-          </div>
-          <Link
-            href="/dashboard"
-            className="text-sm transition-colors hover:text-gray-900"
-            style={{ color: '#94a3b8' }}
-          >
-            ← Dashboard
-          </Link>
-        </div>
-      </header>
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
         {/* Page title */}

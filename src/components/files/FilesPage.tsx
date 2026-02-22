@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { FolderTree } from './FolderTree';
 import { ContentViewer } from './ContentViewer';
 import type { FileInfo, Folder } from './FolderTree';
-// LogoutButton moved to shared DashboardNav
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FilesData {
@@ -87,29 +85,6 @@ export function FilesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Top Nav ──────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold text-gray-900">
-              🦞 Clawer.ai
-            </Link>
-            <nav className="hidden sm:flex items-center gap-4 text-sm">
-              <Link href="/dashboard"          className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-              <Link href="/dashboard/chat"     className="text-gray-500 hover:text-gray-900 transition-colors">Chat</Link>
-              <Link href="/dashboard/tasks"    className="text-gray-500 hover:text-gray-900 transition-colors">Tasks</Link>
-              <span className="text-orange-600 font-semibold">Files</span>
-              <Link href="/dashboard/agent"    className="text-gray-500 hover:text-gray-900 transition-colors">Agent</Link>
-              <Link href="/dashboard/memory"   className="text-gray-500 hover:text-gray-900 transition-colors">Memory</Link>
-              <Link href="/dashboard/settings" className="text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Page title */}
         <div className="mb-6 flex items-center justify-between">
