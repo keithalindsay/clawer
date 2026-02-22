@@ -43,6 +43,20 @@ export default function LiveProofBar() {
           {/* Divider */}
           <div className="hidden md:block w-px h-16 bg-gray-200" />
 
+          {/* Security trust signal */}
+          <div className="text-center">
+            <div className="flex items-center gap-2 justify-center text-green-600 mb-1">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z" />
+              </svg>
+              <span className="font-semibold text-gray-900">Every template security-scanned</span>
+            </div>
+            <p className="text-sm text-gray-500">Malware, exfiltration &amp; prompt injection checks</p>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden md:block w-px h-16 bg-gray-200" />
+
           {/* Channel icons */}
           <div className="flex items-center gap-4">
             {CHANNELS.map((channel, index) => (

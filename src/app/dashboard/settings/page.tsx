@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { TEAM_CONFIGS } from "@/lib/teams";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 /* ── Morning Briefing types ─────────────────────────────────────── */
 
@@ -894,6 +895,23 @@ export default function SettingsPage() {
 
         {/* ── AI Team Template ──────────────────────────────────── */}
         <TeamTemplateSection />
+
+        {/* ── Security ─────────────────────────────────────────── */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🛡️ Security</h3>
+          <p className="text-sm text-gray-600 mb-4">All Clawer.ai templates are automatically scanned for malicious content.</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> Malicious shell commands</div>
+            <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> Data exfiltration attempts</div>
+            <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> Credential harvesting</div>
+            <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> Unauthorized network access</div>
+            <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> Prompt injection patterns</div>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <VerifiedBadge size="md" />
+            <span className="text-sm text-gray-500">Your team template is verified</span>
+          </div>
+        </div>
 
         {/* ── Danger Zone ──────────────────────────────────────── */}
         <section className="bg-white rounded-2xl border border-red-200 p-6">

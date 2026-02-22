@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 export const metadata: Metadata = {
   title: "Use Cases — Clawer.ai | AI Teams for Founders, Creators & Families",
@@ -85,7 +86,10 @@ export default function UseCasesPage() {
               key={uc.title}
               className="border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:border-orange-200 transition-all"
             >
-              <div className="text-4xl mb-4">{uc.icon}</div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-4xl">{uc.icon}</div>
+                <VerifiedBadge size="sm" />
+              </div>
               <h2 className="text-2xl font-bold mb-2">{uc.title}</h2>
               <p className="text-gray-600 mb-5">{uc.tagline}</p>
               <ul className="space-y-3 mb-6">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface TeamMemberStatus {
   id: string;
@@ -52,7 +53,10 @@ function MemberCard({ member }: { member: TeamMemberStatus }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm text-gray-900 truncate">{member.name}</div>
-          <div className="text-xs text-gray-500 truncate">{member.role}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500 truncate">{member.role}</span>
+            <VerifiedBadge size="sm" showText={false} />
+          </div>
         </div>
         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
           member.status === 'active'

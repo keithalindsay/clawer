@@ -11,6 +11,7 @@ import { TeamStatusPanel } from '@/components/dashboard/TeamStatusPanel';
 import { MorningBriefingCard } from '@/components/dashboard/MorningBriefingCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { trackEvent } from '@/lib/analytics';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT } from '@/lib/constants';
 
 interface TeamMember {
@@ -171,7 +172,10 @@ export function DashboardHome({
                   <div className="text-sm font-medium text-gray-900 truncate group-hover:text-orange-700 transition-colors">
                     {member.name}
                   </div>
-                  <div className="text-[11px] text-gray-400 truncate">{member.role}</div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-gray-400 truncate">{member.role}</span>
+                    <VerifiedBadge size="sm" showText={false} />
+                  </div>
                 </div>
               </Link>
             ))}

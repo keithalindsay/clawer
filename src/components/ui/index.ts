@@ -23,3 +23,5 @@ export {
   EmployeeCard,
   GlassModal,
 } from './GlassCard';
+
+export { VerifiedBadge } from './VerifiedBadge';
