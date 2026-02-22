@@ -81,7 +81,7 @@ function buildDeviceConnect() {
     clientId: 'cli',
     clientMode: 'cli',
     role: 'operator',
-    scopes: ['operator.admin'],
+    scopes: ['operator.read', 'operator.write', 'operator.admin'],
     signedAtMs,
     token: GATEWAY_TOKEN,
   });
@@ -136,13 +136,13 @@ function connectGateway() {
         client: { 
           id: 'cli',
           displayName: 'Clawer API Server',
-          version: '2026.2.16', 
+          version: '2026.2.22', 
           platform: 'linux', 
           mode: 'cli'
         },
         device,
         caps: [],
-        scopes: ['operator.admin'],
+        scopes: ['operator.read', 'operator.write', 'operator.admin'],
         auth: { token: GATEWAY_TOKEN },
         locale: 'en-US',
         userAgent: 'clawer-api/1.0.0'

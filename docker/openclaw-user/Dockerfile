@@ -9,9 +9,11 @@ WORKDIR /home/user
 RUN mkdir -p /home/user/clawd /home/user/.openclaw /home/user/.openclaw/skills \
     /var/lib/openclaw/soul-guardian
 
-# Install OpenClaw v2026.2.18
-COPY openclaw-2026.2.18.tgz /tmp/
-RUN npm install -g /tmp/openclaw-2026.2.18.tgz && rm /tmp/openclaw-2026.2.18.tgz
+# Install OpenClaw v2026.2.22
+# Note: If not yet on npm, use tgz fallback:
+#   COPY openclaw-2026.2.22.tgz /tmp/
+#   RUN npm install -g /tmp/openclaw-2026.2.22.tgz && rm /tmp/openclaw-2026.2.22.tgz
+RUN npm install -g openclaw@2026.2.22
 
 # Copy files
 COPY config-template.json /home/user/.openclaw/openclaw.json.template
