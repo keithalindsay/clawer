@@ -3,11 +3,18 @@
  * 
  * Abstracts the container URL construction and provides
  * typed methods for all container endpoints.
+ * 
+ * Also provides CLI wrappers for OpenClaw commands that run
+ * inside containers via docker exec.
  */
 
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { spawn } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(require('child_process').exec);
 
 // Container host - defaults to localhost for same-server deployment
 const CONTAINER_HOST = process.env.CONTAINER_HOST || 'localhost';
@@ -231,3 +238,386 @@ export const containerApi = {
     return containerRequest<{ members: unknown[] }>(port, '/api/team-status', {}, token || undefined);
   },
 };
+
+
+// ============================================================================
+// OpenClaw CLI Wrappers
+// ============================================================================
+// These functions execute OpenClaw CLI commands inside user containers
+// using docker exec. They provide a more secure alternative to SSH-based
+// file reads.
+
+// --- Types ---
+
+export interface OpenClawAgent {
+  id: string;
+  name: string;
+  role?: string;
+  emoji?: string;
+  identity?: string;
+}
+
+export interface OpenClawCron {
+  id: string;
+  schedule: string;
+  command: string;
+  enabled: boolean;
+  lastRun?: string;
+  nextRun?: string;
+}
+
+export interface OpenClawHook {
+  name: string;
+  enabled: boolean;
+  description?: string;
+}
+
+export interface OpenClawMemorySearchResult {
+  content: string;
+  source: string;
+  timestamp?: string;
+  score?: number;
+}
+
+// --- Helper: Execute command in container ---
+
+/**
+ * Execute a command inside a container via docker exec.
+ * Returns the stdout, or throws an error on non-zero exit.
+ */
+async function execInContainer(
+  containerId: string,
+  command: string,
+  timeoutMs: number = 30_000
+): Promise<string> {
+  const fullCommand = `docker exec ${containerId} ${command}`;
+  console.log(`[container-cli] ${fullCommand.substring(0, 100)}...`);
+  
+  try {
+    const { stdout, stderr } = await execAsync(fullCommand, { 
+      timeout: timeoutMs,
+      encoding: 'utf-8',
+    });
+    
+    if (stderr && !stderr.includes('WARNING')) {
+      console.warn(`[container-cli] stderr: ${stderr}`);
+    }
+    
+    return stdout.trim();
+  } catch (error: any) {
+    console.error(`[container-cli] Failed: ${fullCommand}`, error.message);
+    throw new Error(`Container CLI failed: ${error.message}`);
+  }
+}
+
+/**
+ * Get container ID from user ID
+ */
+async function getContainerIdFromUserId(userId: string): Promise<string | null> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { containerId: true },
+  });
+  return user?.containerId || null;
+}
+
+/**
+ * Get container ID from container port
+ */
+async function getContainerIdFromPort(containerPort: number): Promise<string | null> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.containerPort, containerPort),
+    columns: { containerId: true },
+  });
+  return user?.containerId || null;
+}
+
+// --- CLI Wrappers ---
+
+/**
+ * List all agents from the container via `openclaw agents list`
+ */
+export async function listAgents(userId: string): Promise<{ agents: OpenClawAgent[]; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { agents: [], error: 'User container not found' };
+    }
+    
+    const output = await execInContainer(containerId, 'openclaw agents list');
+    
+    // Parse JSON output
+    let agents: OpenClawAgent[] = [];
+    try {
+      agents = JSON.parse(output);
+    } catch {
+      // If not JSON, try to parse line-by-line format
+      const lines = output.split('\n').filter(line => line.trim());
+      agents = lines.map((line, idx) => {
+        const parts = line.split(/\s+/);
+        return {
+          id: parts[0] || `agent-${idx}`,
+          name: parts[1] || line,
+        };
+      });
+    }
+    
+    return { agents, error: null };
+  } catch (error: any) {
+    return { agents: [], error: error.message };
+  }
+}
+
+/**
+ * List all cron jobs from the container via `openclaw cron list`
+ */
+export async function listCrons(userId: string): Promise<{ crons: OpenClawCron[]; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { crons: [], error: 'User container not found' };
+    }
+    
+    const output = await execInContainer(containerId, 'openclaw cron list');
+    
+    // Parse JSON output
+    let crons: OpenClawCron[] = [];
+    try {
+      crons = JSON.parse(output);
+    } catch {
+      // If not JSON, try simple parsing
+      const lines = output.split('\n').filter(line => line.trim() && !line.startsWith('ID'));
+      crons = lines.map(line => {
+        const parts = line.split(/\s+/);
+        return {
+          id: parts[0] || 'unknown',
+          schedule: parts[1] || '* * * * *',
+          command: parts.slice(2).join(' ') || line,
+          enabled: !line.includes('[disabled]'),
+        };
+      });
+    }
+    
+    return { crons, error: null };
+  } catch (error: any) {
+    return { crons: [], error: error.message };
+  }
+}
+
+/**
+ * Add a new cron job via `openclaw cron add "<schedule>" "<command>"`
+ */
+export async function addCron(
+  userId: string,
+  schedule: string,
+  command: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { success: false, error: 'User container not found' };
+    }
+    
+    // Escape quotes for shell
+    const safeSchedule = schedule.replace(/"/g, '\\"');
+    const safeCommand = command.replace(/"/g, '\\"');
+    
+    await execInContainer(containerId, `openclaw cron add "${safeSchedule}" "${safeCommand}"`);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Enable a cron job via `openclaw cron enable <id>`
+ */
+export async function enableCron(
+  userId: string,
+  cronId: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { success: false, error: 'User container not found' };
+    }
+    
+    await execInContainer(containerId, `openclaw cron enable ${cronId}`);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Disable a cron job via `openclaw cron disable <id>`
+ */
+export async function disableCron(
+  userId: string,
+  cronId: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { success: false, error: 'User container not found' };
+    }
+    
+    await execInContainer(containerId, `openclaw cron disable ${cronId}`);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Remove a cron job via `openclaw cron rm <id>`
+ */
+export async function removeCron(
+  userId: string,
+  cronId: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { success: false, error: 'User container not found' };
+    }
+    
+    await execInContainer(containerId, `openclaw cron rm ${cronId}`);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get cron scheduler status via `openclaw cron status`
+ */
+export async function cronStatus(
+  userId: string
+): Promise<{ running: boolean; jobsCount: number; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { running: false, jobsCount: 0, error: 'User container not found' };
+    }
+    
+    const output = await execInContainer(containerId, 'openclaw cron status');
+    
+    // Parse simple status output
+    const running = output.toLowerCase().includes('running');
+    const jobsMatch = output.match(/(\d+)\s*job/i);
+    const jobsCount = jobsMatch ? parseInt(jobsMatch[1], 10) : 0;
+    
+    return { running, jobsCount, error: null };
+  } catch (error: any) {
+    return { running: false, jobsCount: 0, error: error.message };
+  }
+}
+
+/**
+ * List all hooks from the container via `openclaw hooks list`
+ */
+export async function listHooks(userId: string): Promise<{ hooks: OpenClawHook[]; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { hooks: [], error: 'User container not found' };
+    }
+    
+    const output = await execInContainer(containerId, 'openclaw hooks list');
+    
+    // Parse JSON output
+    let hooks: OpenClawHook[] = [];
+    try {
+      hooks = JSON.parse(output);
+    } catch {
+      // Simple parsing
+      const lines = output.split('\n').filter(line => line.trim() && !line.startsWith('Hook'));
+      hooks = lines.map(line => {
+        const enabled = !line.includes('[disabled]') && !line.includes('disabled');
+        return {
+          name: line.replace(/[\[\]]/g, '').trim().split(/\s+/)[0],
+          enabled,
+        };
+      });
+    }
+    
+    return { hooks, error: null };
+  } catch (error: any) {
+    return { hooks: [], error: error.message };
+  }
+}
+
+/**
+ * Enable a hook via `openclaw hooks enable <hook>`
+ */
+export async function enableHook(
+  userId: string,
+  hookName: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { success: false, error: 'User container not found' };
+    }
+    
+    await execInContainer(containerId, `openclaw hooks enable ${hookName}`);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Disable a hook via `openclaw hooks disable <hook>`
+ */
+export async function disableHook(
+  userId: string,
+  hookName: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { success: false, error: 'User container not found' };
+    }
+    
+    await execInContainer(containerId, `openclaw hooks disable ${hookName}`);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Search memory via `openclaw memory search <query>`
+ */
+export async function searchMemory(
+  userId: string,
+  query: string
+): Promise<{ results: OpenClawMemorySearchResult[]; error: string | null }> {
+  try {
+    const containerId = await getContainerIdFromUserId(userId);
+    if (!containerId) {
+      return { results: [], error: 'User container not found' };
+    }
+    
+    const safeQuery = query.replace(/"/g, '\\"');
+    const output = await execInContainer(containerId, `openclaw memory search "${safeQuery}"`);
+    
+    // Parse JSON output
+    let results: OpenClawMemorySearchResult[] = [];
+    try {
+      results = JSON.parse(output);
+    } catch {
+      // If not JSON, treat each line as a result
+      results = output.split('\n').filter(line => line.trim()).map(line => ({
+        content: line,
+        source: 'unknown',
+      }));
+    }
+    
+    return { results, error: null };
+  } catch (error: any) {
+    return { results: [], error: error.message };
+  }
+}

@@ -63,6 +63,14 @@ export const users = pgTable('users', {
   
   /** Container created timestamp */
   containerCreatedAt: timestamp('container_created_at'),
+  /** Container image version */
+  imageVersion: text('image_version'),
+  
+  /** Last backup timestamp */
+  lastBackup: timestamp('last_backup'),
+  
+  /** Number of backups */
+  backupCount: integer('backup_count').default(0),
   
   /** Gateway token for container API authentication */
   gatewayToken: text('gateway_token'),
