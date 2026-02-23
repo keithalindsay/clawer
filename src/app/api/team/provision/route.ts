@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
-import { provisionTeam, hasTeamProvisioned } from '@/lib/container/provision-team';
+import { provisionFullTeam as provisionTeam } from '@/lib/container/provision-team';
 import { getTeamConfig } from '@/lib/teams';
 
 export async function POST(req: NextRequest) {

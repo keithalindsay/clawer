@@ -275,3 +275,16 @@ async function writeContainerFile(basePath: string, filename: string, content: s
 ${content}
 EOF`);
 }
+
+export async function hasTeamProvisioned(containerName: string): Promise<boolean> {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(
+      `ssh root@YOUR_DOCKER_HOST 'docker exec ${containerName} cat /workspace/.team-config 2>/dev/null'`,
+      { encoding: 'utf-8', timeout: 5000 }
+    ).trim();
+    return result.length > 0;
+  } catch {
+    return false;
+  }
+}
