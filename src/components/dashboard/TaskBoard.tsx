@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import type { Task } from '@/lib/db/schema/tasks';
 import type { TeamMember } from '@/lib/teams';
+import { autoAssignAgent } from '@/lib/agent-matcher';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,21 +129,26 @@ function ExecuteButton({
 function TaskCard({
   task,
   member,
+  teamMembers,
   onDragStart,
   onExecute,
   onDelete,
   onMove,
+  onAssignAgent,
   executing,
 }: {
   task: Task;
   member?: TeamMember;
+  teamMembers: TeamMember[];
   onDragStart: (id: string) => void;
   onExecute: (id: string) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, status: Status) => void;
+  onAssignAgent: (id: string, agentId: string) => void;
   executing: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showAgentMenu, setShowAgentMenu] = useState(false);
   const running = task.status === 'running' || executing;
 
   return (
@@ -167,12 +173,46 @@ function TaskCard({
       {/* Badges */}
       <div className="flex items-center gap-2 flex-wrap mb-2">
         {priorityBadge(task.priority)}
-        {member && (
-          <span className="text-[11px] text-gray-500 flex items-center gap-1">
-            <span>{member.emoji || '🤖'}</span>
-            <span>{member.name}</span>
-          </span>
-        )}
+        
+        {/* Agent selector */}
+        <div className="relative">
+          <button
+            onClick={() => setShowAgentMenu(v => !v)}
+            className="text-[11px] text-gray-700 flex items-center gap-1 hover:bg-gray-50 px-1.5 py-0.5 rounded transition-colors border border-transparent hover:border-gray-200"
+            title={member ? 'Change agent' : 'Assign agent'}
+          >
+            <span>{member?.emoji || '🤖'}</span>
+            <span>{member ? member.name : 'Auto-assign'}</span>
+            <span className="text-[9px] opacity-50">▼</span>
+          </button>
+          
+          {showAgentMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowAgentMenu(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                <div className="px-2 py-1 text-[10px] text-gray-400 uppercase tracking-wide font-medium">
+                  Assign to:
+                </div>
+                {teamMembers.map(agent => (
+                  <button
+                    key={agent.id}
+                    onClick={() => {
+                      onAssignAgent(task.id, agent.id);
+                      setShowAgentMenu(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${
+                      member?.id === agent.id ? 'bg-orange-50 text-orange-700 font-medium' : ''
+                    }`}
+                  >
+                    <span>{agent.emoji || '🤖'}</span>
+                    <span>{agent.name}</span>
+                    {member?.id === agent.id && <span className="ml-auto text-[10px]">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Description */}
@@ -239,19 +279,24 @@ function TaskCard({
 function ListRow({
   task,
   member,
+  teamMembers,
   onExecute,
   onDelete,
   onMove,
+  onAssignAgent,
   executing,
 }: {
   task: Task;
   member?: TeamMember;
+  teamMembers: TeamMember[];
   onExecute: (id: string) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, status: Status) => void;
+  onAssignAgent: (id: string, agentId: string) => void;
   executing: boolean;
 }) {
   const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const [showAgentMenu, setShowAgentMenu] = useState(false);
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
@@ -265,14 +310,44 @@ function ListRow({
 
       {/* Agent */}
       <td className="px-4 py-3 whitespace-nowrap">
-        {member ? (
-          <span className="text-sm text-gray-700 flex items-center gap-1.5">
-            <span>{member.emoji || '🤖'}</span>
-            {member.name}
-          </span>
-        ) : (
-          <span className="text-xs text-gray-400 italic">Unassigned</span>
-        )}
+        <div className="relative inline-block">
+          <button
+            onClick={() => setShowAgentMenu(v => !v)}
+            className="text-sm text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 px-2 py-1 rounded transition-colors border border-transparent hover:border-gray-200"
+            title={member ? 'Change agent' : 'Assign agent'}
+          >
+            <span>{member?.emoji || '🤖'}</span>
+            <span>{member ? member.name : 'Auto-assign'}</span>
+            <span className="text-[10px] opacity-50 ml-0.5">▼</span>
+          </button>
+          
+          {showAgentMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowAgentMenu(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[180px]">
+                <div className="px-3 py-1.5 text-[10px] text-gray-400 uppercase tracking-wide font-medium">
+                  Assign to:
+                </div>
+                {teamMembers.map(agent => (
+                  <button
+                    key={agent.id}
+                    onClick={() => {
+                      onAssignAgent(task.id, agent.id);
+                      setShowAgentMenu(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                      member?.id === agent.id ? 'bg-orange-50 text-orange-700 font-medium' : ''
+                    }`}
+                  >
+                    <span>{agent.emoji || '🤖'}</span>
+                    <span>{agent.name}</span>
+                    {member?.id === agent.id && <span className="ml-auto text-xs">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </td>
 
       {/* Priority */}
@@ -355,6 +430,19 @@ function AddTaskModal({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [suggestedAgent, setSuggestedAgent] = useState<TeamMember | null>(null);
+
+  // Auto-suggest agent based on title + description
+  const updateSuggestion = (title: string, description: string) => {
+    if (!title.trim() && !description.trim()) {
+      setSuggestedAgent(null);
+      return;
+    }
+    
+    const suggestedId = autoAssignAgent(title, description, teamMembers);
+    const agent = teamMembers.find(m => m.id === suggestedId);
+    setSuggestedAgent(agent || null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -385,7 +473,11 @@ function AddTaskModal({
             <input
               type="text"
               value={form.title}
-              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              onChange={e => {
+                const newTitle = e.target.value;
+                setForm(f => ({ ...f, title: newTitle }));
+                updateSuggestion(newTitle, form.description);
+              }}
               placeholder="What needs to be done?"
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
               autoFocus
@@ -398,12 +490,35 @@ function AddTaskModal({
             </label>
             <textarea
               value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              onChange={e => {
+                const newDesc = e.target.value;
+                setForm(f => ({ ...f, description: newDesc }));
+                updateSuggestion(form.title, newDesc);
+              }}
               placeholder="Describe what the agent should do in detail..."
               rows={3}
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent resize-none"
             />
           </div>
+
+          {/* Suggested agent */}
+          {suggestedAgent && !form.assigned_to && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-blue-600">💡</span>
+                <span className="text-gray-700">
+                  Suggested: <strong>{suggestedAgent.emoji || '🤖'} {suggestedAgent.name}</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, assigned_to: suggestedAgent.id }))}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 hover:bg-blue-100 rounded transition-colors"
+              >
+                Use →
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -540,6 +655,27 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
     }
   }, [taskList]);
 
+  // ── Assign agent ──
+  const handleAssignAgent = useCallback(async (id: string, agentId: string) => {
+    const task = taskList.find(t => t.id === id);
+    if (!task) return;
+    const oldAgent = task.assignedTo;
+    
+    // Optimistic update
+    setTaskList(prev => prev.map(t => (t.id === id ? { ...t, assignedTo: agentId, updatedAt: new Date() } : t)));
+    
+    try {
+      await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedTo: agentId }),
+      });
+    } catch {
+      // Revert on error
+      setTaskList(prev => prev.map(t => (t.id === id ? { ...t, assignedTo: oldAgent } : t)));
+    }
+  }, [taskList]);
+
   // ── Execute task → /api/tasks/execute ──
   const handleExecute = useCallback(async (id: string) => {
     if (executingIds.has(id)) return;
@@ -547,10 +683,62 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
     const task = taskList.find(t => t.id === id);
     if (!task) return;
 
-    if (!task.assignedTo) {
-      // Prompt user to assign first — move to queued so they notice
-      alert('Assign the task to an agent before executing it.');
-      return;
+    // Auto-assign agent if not assigned
+    let assignedAgentId = task.assignedTo;
+    if (!assignedAgentId) {
+      // Find best match based on task content
+      assignedAgentId = autoAssignAgent(
+        task.title,
+        task.description,
+        teamMembers,
+        teamMembers.find(m => m.id === 'executive-assistant' || m.id === 'chief-of-staff')?.id
+      );
+
+      if (!assignedAgentId) {
+        alert('No agents available to execute this task.');
+        return;
+      }
+
+      // Update task with assigned agent
+      try {
+        await fetch(`/api/tasks/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assignedTo: assignedAgentId }),
+        });
+
+        // Update local state
+        setTaskList(prev =>
+          prev.map(t => (t.id === id ? { ...t, assignedTo: assignedAgentId } : t))
+        );
+
+        // Show which agent was assigned
+        const assignedAgent = teamMembers.find(m => m.id === assignedAgentId);
+        if (assignedAgent) {
+          // Brief notification (you can replace with a toast if you have one)
+          const notification = document.createElement('div');
+          notification.textContent = `✓ Assigned to ${assignedAgent.emoji || '🤖'} ${assignedAgent.name}`;
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+        }
+      } catch (error) {
+        console.error('Failed to assign agent:', error);
+        alert('Failed to assign agent. Please try again.');
+        return;
+      }
     }
 
     setExecutingIds(prev => new Set([...prev, id]));
@@ -721,10 +909,12 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
                         key={task.id}
                         task={task}
                         member={getMember(task.assignedTo)}
+                        teamMembers={teamMembers}
                         onDragStart={handleDragStart}
                         onExecute={handleExecute}
                         onDelete={handleDelete}
                         onMove={handleMove}
+                        onAssignAgent={handleAssignAgent}
                         executing={executingIds.has(task.id)}
                       />
                     ))}
@@ -782,9 +972,11 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
                         key={task.id}
                         task={task}
                         member={getMember(task.assignedTo)}
+                        teamMembers={teamMembers}
                         onExecute={handleExecute}
                         onDelete={handleDelete}
                         onMove={handleMove}
+                        onAssignAgent={handleAssignAgent}
                         executing={executingIds.has(task.id)}
                       />
                     ))}
