@@ -9,12 +9,13 @@ import { containerApi } from '@/lib/container-client';
 /**
  * GET /api/dashboard/health
  *
- * Returns container health, model connectivity, and cron job status.
- * Container health is fetched live; cron status is served from DB
- * (populated by /api/dashboard/sync).
+ * Returns system health status for the SystemHealthPill component.
  *
  * Response:
  * {
+ *   status: 'healthy' | 'warning' | 'error',
+ *   message: string,
+ *   details: { containerStatus, modelConnected, lastSync },
  *   container: { status, uptime, port },
  *   crons: CronStatus[],
  *   models: { primary, fallback, heartbeat }
@@ -98,7 +99,41 @@ export async function GET(_req: NextRequest) {
     }
   }
 
+  // ── Derive top-level status for SystemHealthPill component ────────────────
+  // Container online = healthy; offline/unknown with port = warning; no port = error
+  let status: 'healthy' | 'warning' | 'error' = 'healthy';
+  let message = 'All systems operational';
+
+  if (containerHealth.status === 'offline') {
+    status = 'warning';
+    message = 'Container offline';
+  } else if (containerHealth.status === 'unknown') {
+    if (!user.containerPort) {
+      status = 'warning';
+      message = 'Container not provisioned';
+    } else {
+      status = 'warning';
+      message = 'Checking container status...';
+    }
+  }
+
+  // Check for failed crons as an additional warning signal
+  const failedCrons = crons.filter((c) => c.status === 'failed');
+  if (failedCrons.length > 0 && status === 'healthy') {
+    status = 'warning';
+    message = `${failedCrons.length} cron job${failedCrons.length > 1 ? 's' : ''} failed`;
+  }
+
   return NextResponse.json({
+    // Fields expected by SystemHealthPill
+    status,
+    message,
+    details: {
+      containerStatus: containerHealth.status === 'online' ? 'running' : containerHealth.status,
+      modelConnected: containerHealth.status === 'online',
+      lastSync: new Date().toISOString(),
+    },
+    // Extended data for detailed views
     container: containerHealth,
     crons,
     models,
