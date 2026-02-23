@@ -595,15 +595,30 @@ export async function listHooks(userId: string): Promise<{ hooks: OpenClawHook[]
       return { hooks: [], error: 'User container not found' };
     }
     
-    const output = await execInContainer(containerId, 'openclaw hooks list');
+    const output = await execInContainer(containerId, 'openclaw hooks list --json');
     
-    // Parse JSON output
+    // Parse JSON output, skipping doctor diagnostic noise
     let hooks: OpenClawHook[] = [];
     try {
-      hooks = JSON.parse(output);
+      // Find first JSON structure in output (skip doctor box-drawing output)
+      const jsonStart = output.indexOf('[');
+      const jsonStartObj = output.indexOf('{');
+      const start = jsonStart === -1 ? jsonStartObj : (jsonStartObj === -1 ? jsonStart : Math.min(jsonStart, jsonStartObj));
+      if (start === -1) throw new Error('No JSON found');
+      const jsonStr = output.slice(start);
+      const parsed = JSON.parse(jsonStr);
+      hooks = Array.isArray(parsed) ? parsed : (parsed.hooks || []);
     } catch {
-      // Simple parsing
-      const lines = output.split('\n').filter(line => line.trim() && !line.startsWith('Hook'));
+      // Fallback: filter lines to only those that look like hook names (no box-drawing chars)
+      const lines = output.split('\n').filter(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.length < 2) return false;
+        // Skip box-drawing, doctor output, and config warnings
+        if (/[│├╮╯◇─╭┤┬┴┼]/.test(trimmed)) return false;
+        if (/Doctor|doctor|config|Run "|Unknown|configured|enabled automatically/.test(trimmed)) return false;
+        if (trimmed.startsWith('Hook') || trimmed.startsWith('File:') || trimmed.startsWith('Problem:')) return false;
+        return true;
+      });
       hooks = lines.map(line => {
         const enabled = !line.includes('[disabled]') && !line.includes('disabled');
         return {
