@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { eq } from 'drizzle-orm';
 import { users } from '@/lib/db/schema/users';
 import { containerApi } from '@/lib/container-client';
 
