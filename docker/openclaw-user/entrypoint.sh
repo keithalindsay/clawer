@@ -55,8 +55,8 @@ fi
 # Gemini provider
 if [ -n "$GEMINI_KEY" ]; then
   [ -n "$PROVIDERS" ] && PROVIDERS="${PROVIDERS},"
-  PROVIDERS="${PROVIDERS}\"gemini\":{\"baseUrl\":\"https://generativelanguage.googleapis.com/v1beta\",\"apiKey\":\"${GEMINI_KEY}\",\"api\":\"gemini\",\"models\":[{\"id\":\"gemini-2.0-flash\",\"name\":\"Gemini 2.0 Flash\",\"reasoning\":false,\"input\":[\"text\",\"image\"],\"cost\":{\"input\":0.1,\"output\":0.4},\"contextWindow\":1000000,\"maxTokens\":8192,\"api\":\"gemini\"}]}"
-  [ -z "$PRIMARY" ] && PRIMARY="gemini/gemini-2.0-flash"
+  PROVIDERS="${PROVIDERS}\"gemini\":{\"baseUrl\":\"https://generativelanguage.googleapis.com/v1beta\",\"apiKey\":\"${GEMINI_KEY}\",\"api\":\"google-generative-ai\",\"models\":[{\"id\":\"gemini-2.5-flash\",\"name\":\"Gemini 2.5 Flash\",\"reasoning\":false,\"input\":[\"text\",\"image\"],\"cost\":{\"input\":0.1,\"output\":0.4},\"contextWindow\":1000000,\"maxTokens\":8192}]}"
+  [ -z "$PRIMARY" ] && PRIMARY="gemini/gemini-2.5-flash"
 fi
 
 if [ -z "$PRIMARY" ]; then

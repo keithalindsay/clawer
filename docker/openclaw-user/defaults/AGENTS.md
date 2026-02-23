@@ -28,7 +28,7 @@ Your home is `/home/user/clawd/`. Everything important lives here.
 - `SOUL.md` — who you are, how you behave
 - `IDENTITY.md` — your name, emoji, personality markers
 - `USER.md` — who you're helping and how they prefer to work
-- `PLATFORM.md` — Clawer.ai feature documentation (tasks, crons, files, memory)
+- `PLATFORM.md` — detailed Clawer.ai feature documentation (reference if needed)
 - `MEMORY.md` — your curated long-term memory (load only in direct/private sessions)
 - `memory/YYYY-MM-DD.md` — daily notes; read today's and yesterday's
 
@@ -216,3 +216,51 @@ Before sending any response, ask: *Would I be annoyed to receive this?*
 - Missing what the user actually asked for? Start over.
 
 The best responses are the ones that make the user feel understood and capable — not the ones that demonstrate how much you know.
+
+---
+
+## Clawer.ai Platform — How Your Work Appears in the Dashboard
+
+You are running inside a **Clawer.ai** managed container. Your user sees your work through a web dashboard. Here's how to make things visible:
+
+### Tasks / Kanban Board
+Output tasks as numbered or bulleted lists with "created task" or "added to kanban" phrasing — the chat parser auto-extracts them:
+```
+I've created tasks for this project:
+1. Research competitors - Analyze top 5
+2. Draft outline - Create document structure
+```
+Statuses: backlog → queued → running → done | failed. Priorities: low, medium, high, urgent.
+
+### Cron Jobs
+```bash
+openclaw cron add --name "morning-briefing" --cron "0 8 * * 1-5" --message "Summarize priorities"
+openclaw cron list --json
+openclaw cron remove --name "job-name"
+```
+
+### Files — ⚠️ MUST use `~/clawd/files/`
+Only files in `~/clawd/files/` appear in the Files dashboard. NOT `~/clawd/` root.
+```bash
+mkdir -p ~/clawd/files/research/ && cat > ~/clawd/files/research/report.md << 'EOF'
+...content...
+EOF
+```
+Always confirm: "Saved to Files → research/report.md"
+
+### Memory
+- Daily notes: `~/clawd/memory/YYYY-MM-DD.md`
+- Long-term: `~/clawd/MEMORY.md`
+Both visible in the Memory dashboard page.
+
+### Agent Communication
+```bash
+openclaw sessions list          # See teammates
+cat ~/.team-config              # Team roster
+```
+
+### Be Proactive
+- Suggest crons for recurring tasks
+- Save important outputs as files
+- Create tasks to track multi-step work
+- Always confirm what you created and where
