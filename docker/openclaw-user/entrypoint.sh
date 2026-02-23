@@ -134,11 +134,7 @@ fi
 
 mkdir -p /home/user/clawd/memory
 
-# Patch Brave search URL
-SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://searxng-proxy:8889/res/v1/web/search}"
-for f in $(grep -rl "api.search.brave.com" /usr/local/lib/node_modules/openclaw/dist/ 2>/dev/null); do
-    sed -i "s|https://api.search.brave.com/res/v1/web/search|${SEARXNG_PROXY_URL}|g" "$f"
-done
+# Brave search URL patching moved to Dockerfile build time (for read-only filesystem)
 export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 
 # Initialize ClawSec
