@@ -24,14 +24,14 @@ vi.mock('@/db', () => ({
   },
 }));
 
-vi.mock('@/db/schema', () => ({
+vi.mock('@/lib/db/schema/users', () => ({
   users: {},
 }));
 
 // ─── Imports ──────────────────────────────────────────────────────────────────
 
 import { auth } from '@clerk/nextjs/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { GET } from '../route';
 import { POST } from '../[skillId]/[action]/route';
 
