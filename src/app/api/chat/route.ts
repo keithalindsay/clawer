@@ -4,8 +4,10 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { bots } from '@/lib/db/schema/bots';
 import { conversations } from '@/lib/db/schema/conversations';
+import { tasks } from '@/lib/db/schema/tasks';
 // ✅ REMOVED: messages import - no longer writing to DB
 import { eq, sql, and, isNull } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
 import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN, MAX_MESSAGE_LENGTH } from '@/lib/constants';
@@ -306,9 +308,80 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 🔧 Bug Fix: Detect task creation intent and create tasks in database
+    const responseContent = result.data?.content || '';
+    const createdTaskIds: string[] = [];
+    
+    // Detect task creation markers in response
+    if (responseContent && (
+      /creat(?:ed|ing)|add(?:ed|ing)|popula(?:ted|ting)/i.test(responseContent) &&
+      /task|kanban|board/i.test(responseContent)
+    )) {
+      try {
+        // Parse tasks from response using multiple patterns
+        const taskPatterns = [
+          // Pattern 1: Numbered list with descriptions (e.g., "1. Task title - description")
+          /(?:^|\n)\d+\.\s+([^\n-:]+?)(?:\s*[-:]\s*([^\n]+))?(?=\n|$)/gm,
+          // Pattern 2: Bullet points (e.g., "- Task title: description")
+          /(?:^|\n)[-*]\s+([^\n:]+?)(?:\s*:\s*([^\n]+))?(?=\n|$)/gm,
+          // Pattern 3: Task: format (e.g., "Task: Title - description")
+          /(?:^|\n)Task:\s*([^\n-]+?)(?:\s*[-:]\s*([^\n]+))?(?=\n|$)/gim,
+        ];
+        
+        const extractedTasks: Array<{ title: string; description?: string }> = [];
+        
+        for (const pattern of taskPatterns) {
+          let match;
+          while ((match = pattern.exec(responseContent)) !== null) {
+            const title = match[1]?.trim();
+            const description = match[2]?.trim();
+            
+            if (title && title.length > 2 && title.length < 200) {
+              // Avoid duplicates
+              if (!extractedTasks.some(t => t.title === title)) {
+                extractedTasks.push({ title, description: description || null });
+              }
+            }
+          }
+          if (extractedTasks.length > 0) break; // Stop if we found tasks with first pattern
+        }
+        
+        console.log('[chat] Detected task creation intent, extracted tasks:', extractedTasks.length);
+        
+        // Create tasks in database
+        if (extractedTasks.length > 0) {
+          for (const task of extractedTasks.slice(0, 20)) { // Limit to 20 tasks max
+            try {
+              const [newTask] = await db
+                .insert(tasks)
+                .values({
+                  id: randomUUID(),
+                  userId,
+                  title: task.title,
+                  description: task.description,
+                  status: 'backlog',
+                  priority: 'medium',
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                })
+                .returning();
+              
+              createdTaskIds.push(newTask.id);
+              console.log('[chat] Created task:', newTask.title);
+            } catch (taskErr: any) {
+              console.error('[chat] Failed to create task:', task.title, taskErr.message);
+            }
+          }
+        }
+      } catch (parseErr: any) {
+        console.error('[chat] Task parsing error:', parseErr.message);
+      }
+    }
+
     return NextResponse.json({
       content: result.data?.content || 'No response from assistant',
       conversationId,
+      createdTasks: createdTaskIds.length > 0 ? createdTaskIds : undefined,
       routing: {
         tier: routing.tier,
         model: routing.model,
