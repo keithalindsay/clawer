@@ -800,31 +800,81 @@ const server = http.createServer(async (req, res) => {
       }
       
       try {
-        // Call gateway sessions.history
-        const historyResult = await gatewayRequest('sessions.history', {
-          key: sessionKey,
-          limit,
-          offset,
-        });
+        // Read session history directly from JSONL file since gateway doesn't have sessions.history
+        const sessionsFile = path.join(sessionsDir, 'sessions.json');
+        let sessionFilePath = null;
         
-        if (historyResult.ok && historyResult.payload) {
-          res.writeHead(200);
-          res.end(JSON.stringify({
-            sessionKey,
-            messages: historyResult.payload.history || [],
-            totalMessages: historyResult.payload.totalMessages || 0,
-            hasMore: historyResult.payload.hasMore || false,
-            metadata: historyResult.payload.metadata || {},
-          }));
-        } else {
+        if (fs.existsSync(sessionsFile)) {
+          const sessionsData = JSON.parse(fs.readFileSync(sessionsFile, 'utf-8'));
+          const session = sessionsData[sessionKey];
+          if (session?.sessionFile) {
+            sessionFilePath = session.sessionFile;
+          }
+        }
+        
+        // Also try: key = sessionId.jsonl
+        if (!sessionFilePath) {
+          const sessionIdJsonl = path.join(sessionsDir, `${sessionKey}.jsonl`);
+          if (fs.existsSync(sessionIdJsonl)) {
+            sessionFilePath = sessionIdJsonl;
+          }
+        }
+        
+        if (!sessionFilePath) {
           res.writeHead(200);
           res.end(JSON.stringify({
             sessionKey,
             messages: [],
             totalMessages: 0,
             hasMore: false,
+            error: 'Session not found',
           }));
+          return;
         }
+        
+        // Read and parse the JSONL file
+        const jsonlContent = fs.readFileSync(sessionFilePath, 'utf-8');
+        const lines = jsonlContent.trim().split('\n').filter(l => l.trim());
+        
+        // Extract only message entries
+        const messages = [];
+        for (const line of lines) {
+          try {
+            const entry = JSON.parse(line);
+            if (entry.type === 'message' && entry.message) {
+              const msg = entry.message;
+              // Extract text content
+              let text = '';
+              if (Array.isArray(msg.content)) {
+                for (const block of msg.content) {
+                  if (block.type === 'text') text += block.text;
+                  if (block.type === 'thinking') text += `[thinking] ${block.thinking}\n`;
+                }
+              }
+              if (text) {
+                messages.push({
+                  role: msg.role,
+                  content: text,
+                  timestamp: entry.timestamp,
+                });
+              }
+            }
+          } catch (e) {
+            // Skip malformed lines
+          }
+        }
+        
+        // Apply pagination
+        const totalMessages = messages.length;
+        const paginatedMessages = messages.slice(offset, offset + limit);
+        
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          sessionKey,
+          messages: paginatedMessages,
+          totalMessages,
+          hasMore: offset + limit < totalMessages,
+        }));
       } catch (e) {
         console.error('[api] sessions.history error:', e.message);
         res.writeHead(500);
