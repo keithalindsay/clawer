@@ -1,8 +1,21 @@
 {
   "version": "1.0",
-  "generated_at": "2026-02-22T20:00:00Z",
-  "container_version": "v2026.2.22",
+  "generated_at": "2026-02-23T20:00:00Z",
+  "container_version": "v2026.2.25",
   "skills": [
+    {
+      "skill_id": "clawer-platform",
+      "name": "Clawer Platform",
+      "description": "Manage tasks on your user's Clawer.ai kanban board",
+      "category": "platform",
+      "icon_emoji": "📋",
+      "version": "1.0.0",
+      "author": "Clawer Team",
+      "path": "/opt/skills/universal/clawer-platform",
+      "dependencies": [],
+      "tested_with": "openclaw-v2026.2.22",
+      "builtin": true
+    },
     {
       "skill_id": "github",
       "name": "GitHub Operations",

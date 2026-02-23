@@ -1,0 +1,387 @@
+#!/bin/bash
+#
+# clawer-tasks - CLI for managing Clawer.ai kanban tasks
+# Talks to the container api-server at localhost:8081
+#
+
+set -e
+
+API="http://localhost:8081/api/tasks"
+TOKEN="${GATEWAY_TOKEN:-}"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+BOLD='\033[1m'
+
+# Auth header
+auth_header() {
+  if [ -n "$TOKEN" ]; then
+    echo "Authorization: Bearer $TOKEN"
+  fi
+}
+
+# JSON parsing helper - extract field from JSON
+json_value() {
+  local json="$1"
+  local field="$2"
+  echo "$json" | grep -o "\"$field\":[^,}]*" | sed 's/.*://' | tr -d '"' | tr -d ' '
+}
+
+# Pretty print a task
+print_task() {
+  local json="$1"
+  local id=$(echo "$json" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
+  local title=$(echo "$json" | grep -o '"title":"[^"]*"' | head -1 | sed 's/"title":"//;s/"//')
+  local status=$(echo "$json" | grep -o '"status":"[^"]*"' | head -1 | sed 's/"status":"//;s/"//')
+  local priority=$(echo "$json" | grep -o '"priority":"[^"]*"' | head -1 | sed 's/"priority":"//;s/"//')
+  local desc=$(echo "$json" | grep -o '"description":"[^"]*"' | head -1 | sed 's/"description":"//;s/"//')
+  
+  # Status emoji
+  case "$status" in
+    backlog) status_icon="📋" ;;
+    queued)  status_icon="⏳" ;;
+    running) status_icon="🏃" ;;
+    done)    status_icon="✅" ;;
+    failed)  status_icon="❌" ;;
+    *)       status_icon="❓" ;;
+  esac
+  
+  # Priority color
+  case "$priority" in
+    urgent) prio_color="$RED" ;;
+    high)   prio_color="$YELLOW" ;;
+    medium) prio_color="$BLUE" ;;
+    low)    prio_color="$NC" ;;
+    *)      prio_color="$NC" ;;
+  esac
+  
+  echo -e "${status_icon} ${BOLD}${title}${NC}"
+  echo -e "   ID: ${id:0:8}..."
+  echo -e "   Status: ${status} | Priority: ${prio_color}${priority}${NC}"
+  if [ -n "$desc" ] && [ "$desc" != "null" ]; then
+    echo -e "   ${desc}"
+  fi
+}
+
+# List tasks
+cmd_list() {
+  local query=""
+  
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --status)
+        [ -n "$query" ] && query="${query}&"
+        query="${query}status=$2"
+        shift 2
+        ;;
+      --priority)
+        [ -n "$query" ] && query="${query}&"
+        query="${query}priority=$2"
+        shift 2
+        ;;
+      --assigned-to|--agent)
+        [ -n "$query" ] && query="${query}&"
+        query="${query}assigned_to=$2"
+        shift 2
+        ;;
+      *)
+        echo "Unknown option: $1" >&2
+        exit 1
+        ;;
+    esac
+  done
+  
+  local url="$API"
+  [ -n "$query" ] && url="${url}?${query}"
+  
+  local response
+  response=$(curl -s -H "$(auth_header)" "$url")
+  
+  # Check for error
+  if echo "$response" | grep -q '"error"'; then
+    echo -e "${RED}Error: $(echo "$response" | grep -o '"error":"[^"]*"' | sed 's/"error":"//;s/"//')${NC}" >&2
+    exit 1
+  fi
+  
+  # Parse tasks array
+  local tasks=$(echo "$response" | grep -o '"tasks":\[.*\]' | sed 's/"tasks"://')
+  
+  if [ "$tasks" = "[]" ] || [ -z "$tasks" ]; then
+    echo "No tasks found."
+    return 0
+  fi
+  
+  echo -e "${BOLD}Tasks:${NC}"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  
+  # Split by task objects and print each
+  echo "$response" | grep -o '{[^{}]*"id"[^{}]*}' | while read -r task; do
+    print_task "$task"
+    echo ""
+  done
+}
+
+# Get single task
+cmd_get() {
+  local task_id="$1"
+  
+  if [ -z "$task_id" ]; then
+    echo "Usage: clawer-tasks get <task-id>" >&2
+    exit 1
+  fi
+  
+  local response
+  response=$(curl -s -H "$(auth_header)" "$API/$task_id")
+  
+  if echo "$response" | grep -q '"error"'; then
+    echo -e "${RED}Error: $(echo "$response" | grep -o '"error":"[^"]*"' | sed 's/"error":"//;s/"//')${NC}" >&2
+    exit 1
+  fi
+  
+  # Extract task object
+  local task=$(echo "$response" | grep -o '"task":{[^}]*}' | sed 's/"task"://')
+  if [ -n "$task" ]; then
+    print_task "$task"
+  else
+    print_task "$response"
+  fi
+}
+
+# Create task
+cmd_create() {
+  local title=""
+  local description=""
+  local priority="medium"
+  local status="backlog"
+  local assigned_to=""
+  
+  # First positional arg is title
+  if [[ $# -gt 0 ]] && [[ ! "$1" =~ ^-- ]]; then
+    title="$1"
+    shift
+  fi
+  
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --description|-d)
+        description="$2"
+        shift 2
+        ;;
+      --priority|-p)
+        priority="$2"
+        shift 2
+        ;;
+      --status|-s)
+        status="$2"
+        shift 2
+        ;;
+      --assigned-to|--agent)
+        assigned_to="$2"
+        shift 2
+        ;;
+      *)
+        # If no title yet, treat as title
+        if [ -z "$title" ]; then
+          title="$1"
+          shift
+        else
+          echo "Unknown option: $1" >&2
+          exit 1
+        fi
+        ;;
+    esac
+  done
+  
+  if [ -z "$title" ]; then
+    echo "Usage: clawer-tasks create \"Task title\" [--priority high] [--description \"desc\"] [--status queued]" >&2
+    exit 1
+  fi
+  
+  # Build JSON body
+  local body="{\"title\":\"$title\",\"priority\":\"$priority\",\"status\":\"$status\""
+  [ -n "$description" ] && body="${body},\"description\":\"$description\""
+  [ -n "$assigned_to" ] && body="${body},\"assigned_to\":\"$assigned_to\""
+  body="${body}}"
+  
+  local response
+  response=$(curl -s -X POST -H "$(auth_header)" -H "Content-Type: application/json" -d "$body" "$API")
+  
+  if echo "$response" | grep -q '"error"'; then
+    echo -e "${RED}Error: $(echo "$response" | grep -o '"error":"[^"]*"' | sed 's/"error":"//;s/"//')${NC}" >&2
+    exit 1
+  fi
+  
+  local task_id=$(echo "$response" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
+  echo -e "${GREEN}✓ Task created${NC}"
+  echo "  ID: $task_id"
+  echo "  Title: $title"
+  echo "  Status: $status"
+  echo "  Priority: $priority"
+}
+
+# Update task
+cmd_update() {
+  local task_id="$1"
+  shift
+  
+  if [ -z "$task_id" ]; then
+    echo "Usage: clawer-tasks update <task-id> --status done [--priority high] [--description \"desc\"]" >&2
+    exit 1
+  fi
+  
+  local body="{"
+  local first=true
+  
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --status|-s)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"status\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      --priority|-p)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"priority\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      --description|-d)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"description\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      --title|-t)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"title\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      --assigned-to|--agent)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"assigned_to\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      --result)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"result\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      --error)
+        [ "$first" = false ] && body="${body},"
+        body="${body}\"error\":\"$2\""
+        first=false
+        shift 2
+        ;;
+      *)
+        echo "Unknown option: $1" >&2
+        exit 1
+        ;;
+    esac
+  done
+  
+  body="${body}}"
+  
+  if [ "$body" = "{}" ]; then
+    echo "Nothing to update. Use --status, --priority, or --description" >&2
+    exit 1
+  fi
+  
+  local response
+  response=$(curl -s -X PATCH -H "$(auth_header)" -H "Content-Type: application/json" -d "$body" "$API/$task_id")
+  
+  if echo "$response" | grep -q '"error"'; then
+    echo -e "${RED}Error: $(echo "$response" | grep -o '"error":"[^"]*"' | sed 's/"error":"//;s/"//')${NC}" >&2
+    exit 1
+  fi
+  
+  echo -e "${GREEN}✓ Task updated${NC}"
+  local task=$(echo "$response" | grep -o '"task":{[^}]*}' | sed 's/"task"://')
+  if [ -n "$task" ]; then
+    print_task "$task"
+  fi
+}
+
+# Delete task
+cmd_delete() {
+  local task_id="$1"
+  
+  if [ -z "$task_id" ]; then
+    echo "Usage: clawer-tasks delete <task-id>" >&2
+    exit 1
+  fi
+  
+  local response
+  response=$(curl -s -X DELETE -H "$(auth_header)" "$API/$task_id")
+  
+  if echo "$response" | grep -q '"error"'; then
+    echo -e "${RED}Error: $(echo "$response" | grep -o '"error":"[^"]*"' | sed 's/"error":"//;s/"//')${NC}" >&2
+    exit 1
+  fi
+  
+  echo -e "${GREEN}✓ Task deleted${NC}"
+}
+
+# Help
+cmd_help() {
+  echo "clawer-tasks - Manage tasks on the Clawer.ai kanban board"
+  echo ""
+  echo "Usage: clawer-tasks <command> [options]"
+  echo ""
+  echo "Commands:"
+  echo "  list [--status STATUS] [--priority PRIORITY]"
+  echo "      List tasks, optionally filtered"
+  echo ""
+  echo "  get <task-id>"
+  echo "      Get details for a specific task"
+  echo ""
+  echo "  create \"title\" [--description \"desc\"] [--priority low|medium|high|urgent] [--status STATUS]"
+  echo "      Create a new task"
+  echo ""
+  echo "  update <task-id> [--status STATUS] [--priority PRIORITY] [--description \"desc\"]"
+  echo "      Update an existing task"
+  echo ""
+  echo "  delete <task-id>"
+  echo "      Delete a task"
+  echo ""
+  echo "Status values: backlog, queued, running, done, failed"
+  echo "Priority values: low, medium, high, urgent"
+}
+
+# Main
+case "${1:-}" in
+  list)
+    shift
+    cmd_list "$@"
+    ;;
+  get)
+    shift
+    cmd_get "$@"
+    ;;
+  create)
+    shift
+    cmd_create "$@"
+    ;;
+  update)
+    shift
+    cmd_update "$@"
+    ;;
+  delete)
+    shift
+    cmd_delete "$@"
+    ;;
+  help|--help|-h)
+    cmd_help
+    ;;
+  *)
+    cmd_help
+    exit 1
+    ;;
+esac

@@ -32,6 +32,13 @@ COPY api-server.js /usr/local/bin/api-server.js
 COPY teams/ /opt/teams/
 COPY skills/ /opt/skills/
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Install clawer-platform skill scripts to PATH
+RUN if [ -d /opt/skills/universal/clawer-platform/scripts ]; then \
+      for script in /opt/skills/universal/clawer-platform/scripts/*; do \
+        [ -f "$script" ] && chmod +x "$script" && ln -sf "$script" /usr/local/bin/$(basename "$script"); \
+      done; \
+    fi
 COPY init_clawsec.sh /usr/local/bin/init_clawsec.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/api-server.js /usr/local/bin/init_clawsec.sh
 

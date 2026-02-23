@@ -299,7 +299,7 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.writeHead(200);
     res.end();
@@ -1005,6 +1005,128 @@ const server = http.createServer(async (req, res) => {
         console.error('[api] skill disable error:', e.message);
         res.writeHead(500);
         res.end(JSON.stringify({ error: e.message }));
+      }
+
+    // ─── Task Management Proxy Routes ──────────────────────────────────────────
+    // Proxy requests to the Clawer.ai Next.js app's container task endpoints
+    // This allows the agent to manage tasks visible in the user's dashboard
+    
+    } else if (path === '/api/tasks' && req.method === 'GET') {
+      // GET /api/tasks — List tasks
+      const platformUrl = process.env.PLATFORM_API_URL || 'http://172.17.0.1:3000';
+      const queryString = url.search || '';
+      try {
+        const response = await fetch(`${platformUrl}/api/container/tasks${queryString}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (e) {
+        console.error('[api] tasks list proxy error:', e.message);
+        res.writeHead(503);
+        res.end(JSON.stringify({ error: 'Platform API unreachable: ' + e.message }));
+      }
+      
+    } else if (path === '/api/tasks' && req.method === 'POST') {
+      // POST /api/tasks — Create task
+      const platformUrl = process.env.PLATFORM_API_URL || 'http://172.17.0.1:3000';
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      await new Promise(resolve => req.on('end', resolve));
+      const body = Buffer.concat(chunks).toString();
+      
+      try {
+        const response = await fetch(`${platformUrl}/api/container/tasks`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body,
+        });
+        const data = await response.json();
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (e) {
+        console.error('[api] tasks create proxy error:', e.message);
+        res.writeHead(503);
+        res.end(JSON.stringify({ error: 'Platform API unreachable: ' + e.message }));
+      }
+      
+    } else if (path.match(/^\/api\/tasks\/[^\/]+$/) && req.method === 'GET') {
+      // GET /api/tasks/:id — Get single task
+      const taskId = path.split('/')[3];
+      const platformUrl = process.env.PLATFORM_API_URL || 'http://172.17.0.1:3000';
+      
+      try {
+        const response = await fetch(`${platformUrl}/api/container/tasks/${taskId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (e) {
+        console.error('[api] tasks get proxy error:', e.message);
+        res.writeHead(503);
+        res.end(JSON.stringify({ error: 'Platform API unreachable: ' + e.message }));
+      }
+      
+    } else if (path.match(/^\/api\/tasks\/[^\/]+$/) && req.method === 'PATCH') {
+      // PATCH /api/tasks/:id — Update task
+      const taskId = path.split('/')[3];
+      const platformUrl = process.env.PLATFORM_API_URL || 'http://172.17.0.1:3000';
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      await new Promise(resolve => req.on('end', resolve));
+      const body = Buffer.concat(chunks).toString();
+      
+      try {
+        const response = await fetch(`${platformUrl}/api/container/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body,
+        });
+        const data = await response.json();
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (e) {
+        console.error('[api] tasks update proxy error:', e.message);
+        res.writeHead(503);
+        res.end(JSON.stringify({ error: 'Platform API unreachable: ' + e.message }));
+      }
+      
+    } else if (path.match(/^\/api\/tasks\/[^\/]+$/) && req.method === 'DELETE') {
+      // DELETE /api/tasks/:id — Delete task
+      const taskId = path.split('/')[3];
+      const platformUrl = process.env.PLATFORM_API_URL || 'http://172.17.0.1:3000';
+      
+      try {
+        const response = await fetch(`${platformUrl}/api/container/tasks/${taskId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (e) {
+        console.error('[api] tasks delete proxy error:', e.message);
+        res.writeHead(503);
+        res.end(JSON.stringify({ error: 'Platform API unreachable: ' + e.message }));
       }
 
     } else if (path === '/ready') {

@@ -6,36 +6,55 @@ You are running inside a **Clawer.ai** managed container. Your user interacts wi
 
 ## 📋 Tasks / Kanban Board
 
-Users can view and manage tasks in the **Tasks** page of their dashboard.
+Users can view and manage tasks in the **Tasks** page of their dashboard. You have direct CLI access to create, update, and manage tasks.
 
-### Creating Tasks
-To create tasks, output them in structured format that the chat parser detects:
+### Commands (clawer-tasks)
+```bash
+# List all tasks
+clawer-tasks list
 
-**Numbered lists:**
-```
-1. Task title - description
-2. Another task - more details
-```
+# Filter by status
+clawer-tasks list --status queued
+clawer-tasks list --status running
 
-**Bullet points:**
-```
-- Task title: description
-- Another task: more details
-```
+# Filter by priority
+clawer-tasks list --priority high
 
-**Important:** Always include a phrase like "created task", "added to kanban", or "here are the tasks" so the parser knows to extract them.
+# Get a specific task
+clawer-tasks get <task-id>
+
+# Create a new task
+clawer-tasks create "Task title"
+clawer-tasks create "Task title" --priority high
+clawer-tasks create "Task title" --description "More details"
+clawer-tasks create "Task title" --status queued  # Skip backlog
+
+# Update a task
+clawer-tasks update <task-id> --status done
+clawer-tasks update <task-id> --status running
+clawer-tasks update <task-id> --priority urgent
+
+# Delete a task
+clawer-tasks delete <task-id>
+```
 
 ### Task Properties
 - **Statuses:** backlog → queued → running → done | failed
 - **Priorities:** low, medium, high, urgent
 
-### Example
+### Workflow Example
+When the user asks you to do something significant:
+```bash
+# Create a task to track the work
+clawer-tasks create "Research competitors" --priority high --status running
+
+# ... do the work ...
+
+# Mark it complete when done
+clawer-tasks update <task-id> --status done
 ```
-I've created tasks for this project:
-1. Research competitors - Analyze top 5 competitors in the space
-2. Draft initial outline - Create document structure
-3. Write first draft - Complete the main content
-```
+
+This way, the user can follow your progress on their dashboard.
 
 ---
 
@@ -230,7 +249,7 @@ Remember: the user sees your work through the dashboard. Structure your output s
 |---------|----------|------------------|
 | Files | ~/clawd/files/ | `mkdir -p ~/clawd/files/ && cat > ~/clawd/files/name.md` |
 | Memory | ~/clawd/memory/ | `cat > ~/clawd/memory/$(date +%Y-%m-%d).md` |
-| Tasks | (output format) | Use numbered/bulleted lists with "created task" |
+| Tasks | clawer-tasks | `clawer-tasks create "title"` / `clawer-tasks list` |
 | Crons | openclaw cron | `openclaw cron add --name X --cron "..." --message "..."` |
 | Skills | openclaw skills | `openclaw skills list` |
 | Hooks | openclaw hooks | `openclaw hooks list --json` |
