@@ -1,0 +1,101 @@
+{
+  "agents": {
+    "list": [
+      {
+        "id": "chief-of-staff",
+        "name": "Max",
+        "workspace": "/home/user/clawd-max",
+        "agentDir": "~/.openclaw/agents/chief-of-staff/agent",
+        "model": "anthropic/claude-sonnet-4-5",
+        "identity": {
+          "name": "Max",
+          "emoji": "📋",
+          "theme": "chief of staff"
+        },
+        "default": true
+      },
+      {
+        "id": "goal-tracker",
+        "name": "North",
+        "workspace": "/home/user/clawd-north",
+        "agentDir": "~/.openclaw/agents/goal-tracker/agent",
+        "model": "anthropic/claude-sonnet-4-5",
+        "identity": {
+          "name": "North",
+          "emoji": "🎯",
+          "theme": "goal tracker"
+        }
+      },
+      {
+        "id": "researcher",
+        "name": "Scout",
+        "workspace": "/home/user/clawd-scout",
+        "agentDir": "~/.openclaw/agents/researcher/agent",
+        "model": "anthropic/claude-sonnet-4-5",
+        "identity": {
+          "name": "Scout",
+          "emoji": "🔍",
+          "theme": "curious researcher"
+        },
+        "tools": {
+          "allow": ["web_search", "web_fetch", "read", "write", "edit", "sessions_send", "sessions_spawn"],
+          "deny": ["exec", "browser"]
+        }
+      },
+      {
+        "id": "executor",
+        "name": "Dash",
+        "workspace": "/home/user/clawd-dash",
+        "agentDir": "~/.openclaw/agents/executor/agent",
+        "model": "anthropic/claude-sonnet-4-5",
+        "identity": {
+          "name": "Dash",
+          "emoji": "⚡",
+          "theme": "execution-focused task runner"
+        },
+        "tools": {
+          "allow": ["exec", "read", "write", "edit", "message", "sessions_send", "sessions_spawn"],
+          "deny": ["browser"]
+        }
+      },
+      {
+        "id": "wellness",
+        "name": "Zen",
+        "workspace": "/home/user/clawd-zen",
+        "agentDir": "~/.openclaw/agents/wellness/agent",
+        "model": "anthropic/claude-sonnet-4-5",
+        "identity": {
+          "name": "Zen",
+          "emoji": "💪",
+          "theme": "wellness coach"
+        }
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "chief-of-staff",
+      "match": {
+        "channel": "webchat"
+      }
+    }
+  ],
+  "tools": {
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["chief-of-staff", "goal-tracker", "researcher", "executor", "wellness"],
+      "maxPingPongTurns": 3
+    },
+    "sessions": {
+      "visibility": "agent"
+    },
+    "subagents": {
+      "tools": ["read", "write", "web_search", "web_fetch"]
+    }
+  },
+  "session": {
+    "sendPolicy": {
+      "default": "allow"
+    }
+  }
+}

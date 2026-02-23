@@ -334,6 +334,21 @@ export async function provisionContainer(
     
     console.log(`[PROVISION] ✅ Successfully provisioned container for user ${userId}`);
     
+    // Provision full team after container is ready
+    try {
+      console.log(`[PROVISION] Starting full team provisioning...`);
+      const { provisionFullTeam } = await import('./container/provision-team');
+      await provisionFullTeam({
+        userId,
+        containerName,
+        templateName: teamTemplate,
+      });
+      console.log(`[PROVISION] ✅ Full team provisioned successfully`);
+    } catch (teamError) {
+      console.error(`[PROVISION] ⚠️ Failed to provision team (container still usable):`, teamError);
+      // Don't fail the whole provisioning - container is still functional
+    }
+    
     return {
       success: true,
       containerId: cleanContainerId,

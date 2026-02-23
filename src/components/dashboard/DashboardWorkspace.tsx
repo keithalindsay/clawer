@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { LogoutButton } from '@/components/LogoutButton';
 import { StarterPrompts } from '@/components/StarterPrompts';
+import { AgentSelector } from '@/components/dashboard/AgentSelector';
 
 interface TeamMember {
   id: string;
@@ -412,6 +413,17 @@ export function DashboardWorkspace({
 
         {/* Main chat panel */}
         <main className="flex-1 flex flex-col min-h-0" style={{ background: '#f8fafc' }}>
+          {/* Mobile agent selector */}
+          <div className="md:hidden">
+            <AgentSelector
+              currentAgentId={selectedAgent?.id || ''}
+              onAgentChange={(agentId) => {
+                const agent = teamMembers.find(m => m.id === agentId);
+                if (agent) setSelectedAgent(agent);
+              }}
+            />
+          </div>
+          
           {selectedAgent ? (
             <>
               {/* Agent header */}
