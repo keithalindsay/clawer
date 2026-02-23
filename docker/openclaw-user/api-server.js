@@ -63,7 +63,8 @@ function getOrCreateDeviceIdentity() {
 function buildDeviceAuthPayload(params) {
   const scopes = params.scopes.join(',');
   const token = params.token || '';
-  return ['v1', params.deviceId, params.clientId, params.clientMode, params.role, scopes, String(params.signedAtMs), token].join('|');
+  const nonce = params.nonce || '';
+  return ['v2', params.deviceId, params.clientId, params.clientMode, params.role, scopes, String(params.signedAtMs), token, nonce].join('|');
 }
 
 function signPayload(payload) {
@@ -73,7 +74,7 @@ function signPayload(payload) {
   return sig.toString('base64url');
 }
 
-function buildDeviceConnect() {
+function buildDeviceConnect(nonce) {
   const di = getOrCreateDeviceIdentity();
   const signedAtMs = Date.now();
   const payload = buildDeviceAuthPayload({
@@ -84,12 +85,14 @@ function buildDeviceConnect() {
     scopes: ['operator.read', 'operator.write', 'operator.admin'],
     signedAtMs,
     token: GATEWAY_TOKEN,
+    nonce: nonce || '',
   });
   return {
     id: di.id,
     publicKey: di.publicKey,
     signature: signPayload(payload),
     signedAt: signedAtMs,
+    nonce: nonce || '',
   };
 }
 
@@ -124,48 +127,43 @@ function connectGateway() {
   }
   
   ws.addEventListener('open', () => {
-    console.log('[api] Gateway connected, sending handshake...');
-    const device = buildDeviceConnect();
-    ws.send(JSON.stringify({
-      type: 'req',
-      id: 'connect',
-      method: 'connect',
-      params: {
-        minProtocol: 3,
-        maxProtocol: 3,
-        client: { 
-          id: 'cli',
-          displayName: 'Clawer API Server',
-          version: '2026.2.22', 
-          platform: 'linux', 
-          mode: 'cli'
-        },
-        device,
-        caps: [],
-        scopes: ['operator.read', 'operator.write', 'operator.admin'],
-        auth: { token: GATEWAY_TOKEN },
-        locale: 'en-US',
-        userAgent: 'clawer-api/1.0.0'
-      }
-    }));
+    console.log('[api] Gateway connected, waiting for challenge...');
   });
   
   ws.addEventListener('message', (event) => {
     try {
       const msg = JSON.parse(event.data);
-      // Handle connect.challenge — respond with device signature
+      // Handle connect.challenge — extract nonce, then send connect with signed device auth
       if (msg.type === 'event' && msg.event === 'connect.challenge') {
-        const challenge = msg.payload?.challenge;
-        if (challenge) {
-          console.log('[api] Received connect.challenge, signing nonce...');
-          const di = getOrCreateDeviceIdentity();
-          const sig = signPayload(challenge);
+        const nonce = msg.payload?.nonce;
+        if (nonce) {
+          console.log('[api] Received connect.challenge with nonce, sending connect...');
+          const device = buildDeviceConnect(nonce);
           ws.send(JSON.stringify({
             type: 'req',
-            id: 'connect.challenge',
-            method: 'connect.challenge',
-            params: { signature: sig }
+            id: 'connect',
+            method: 'connect',
+            params: {
+              minProtocol: 3,
+              maxProtocol: 3,
+              client: { 
+                id: 'cli',
+                displayName: 'Clawer API Server',
+                version: '2026.2.22', 
+                platform: 'linux', 
+                mode: 'cli'
+              },
+              device,
+              caps: [],
+              scopes: ['operator.read', 'operator.write', 'operator.admin'],
+              auth: { token: GATEWAY_TOKEN },
+              locale: 'en-US',
+              userAgent: 'clawer-api/1.0.0'
+            }
           }));
+        } else {
+          console.error('[api] connect.challenge missing nonce, closing');
+          ws.close(1008, 'missing nonce');
         }
         return;
       }

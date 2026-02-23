@@ -9,14 +9,11 @@ WORKDIR /home/user
 RUN mkdir -p /home/user/clawd /home/user/.openclaw /home/user/.openclaw/skills \
     /var/lib/openclaw/soul-guardian
 
-# Install OpenClaw v2026.2.22
-# Note: If not yet on npm, use tgz fallback:
-#   COPY openclaw-2026.2.22.tgz /tmp/
-#   RUN npm install -g /tmp/openclaw-2026.2.22.tgz && rm /tmp/openclaw-2026.2.22.tgz
-RUN npm install -g openclaw@2026.2.22
+# Install OpenClaw v2026.2.22 from tarball
+COPY openclaw-2026.2.22.tgz /tmp/
+RUN npm install -g /tmp/openclaw-2026.2.22.tgz && rm /tmp/openclaw-2026.2.22.tgz
 
 # Copy files
-COPY config-template.json /home/user/.openclaw/openclaw.json.template
 COPY defaults/ /opt/defaults/
 COPY api-server.js /usr/local/bin/api-server.js
 COPY teams/ /opt/teams/
@@ -28,6 +25,6 @@ WORKDIR /home/user/clawd
 EXPOSE 8080 8081
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD node -e "fetch('http://localhost:8081/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+    CMD curl -f http://127.0.0.1:8081/api/health || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
