@@ -825,6 +825,120 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ members: [], status: 'ok' }));
 
+    } else if (path === '/api/skills' && req.method === 'GET') {
+      // GET /api/skills — list available skills with enabled status
+      try {
+        const manifestPath = '/opt/skills/manifest.json';
+        const skillsConfigPath = '/home/user/.openclaw/skills.json';
+        
+        // Read manifest
+        let manifest = { skills: [] };
+        try {
+          manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        } catch (e) {
+          console.log('[api] No skills manifest found');
+        }
+        
+        // Read user's enabled skills
+        let enabledSkills = [];
+        try {
+          const skillsConfig = JSON.parse(fs.readFileSync(skillsConfigPath, 'utf8'));
+          enabledSkills = skillsConfig.enabled || [];
+        } catch (e) {
+          console.log('[api] No skills config found, using defaults');
+        }
+        
+        // Merge with enabled status
+        const skills = manifest.skills.map(skill => ({
+          ...skill,
+          enabled: enabledSkills.includes(skill.skill_id)
+        }));
+        
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          available: skills,
+          config_path: skillsConfigPath,
+          manifest_path: manifestPath
+        }));
+      } catch (e) {
+        console.error('[api] skills list error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
+    } else if (path.startsWith('/api/skills/') && path.endsWith('/enable') && req.method === 'POST') {
+      // POST /api/skills/:id/enable — enable a skill
+      const skillId = path.split('/')[3];
+      try {
+        const skillsConfigPath = '/home/user/.openclaw/skills.json';
+        
+        // Read or create skills config
+        let config = { version: '1.0', enabled: [], metadata: {} };
+        try {
+          config = JSON.parse(fs.readFileSync(skillsConfigPath, 'utf8'));
+        } catch (e) {
+          console.log('[api] Creating new skills config');
+        }
+        
+        // Add skill if not already enabled
+        if (!config.enabled.includes(skillId)) {
+          config.enabled.push(skillId);
+          config.metadata.last_updated = new Date().toISOString();
+          config.metadata.synced_from_dashboard = true;
+          
+          fs.writeFileSync(skillsConfigPath, JSON.stringify(config, null, 2));
+          console.log('[api] Enabled skill:', skillId);
+        }
+        
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          skill_id: skillId,
+          enabled: true,
+          config_updated: true,
+          restart_required: false
+        }));
+      } catch (e) {
+        console.error('[api] skill enable error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
+    } else if (path.startsWith('/api/skills/') && path.endsWith('/disable') && req.method === 'POST') {
+      // POST /api/skills/:id/disable — disable a skill
+      const skillId = path.split('/')[3];
+      try {
+        const skillsConfigPath = '/home/user/.openclaw/skills.json';
+        
+        // Read skills config
+        let config = { version: '1.0', enabled: [], metadata: {} };
+        try {
+          config = JSON.parse(fs.readFileSync(skillsConfigPath, 'utf8'));
+        } catch (e) {
+          // Config doesn't exist, nothing to disable
+        }
+        
+        // Remove skill from enabled list
+        config.enabled = config.enabled.filter(id => id !== skillId);
+        config.metadata.last_updated = new Date().toISOString();
+        config.metadata.synced_from_dashboard = true;
+        
+        fs.writeFileSync(skillsConfigPath, JSON.stringify(config, null, 2));
+        console.log('[api] Disabled skill:', skillId);
+        
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          skill_id: skillId,
+          enabled: false,
+          config_updated: true
+        }));
+      } catch (e) {
+        console.error('[api] skill disable error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+
     } else if (path === '/ready') {
       res.writeHead(wsConnected ? 200 : 503);
       res.end(JSON.stringify({ ready: wsConnected }));

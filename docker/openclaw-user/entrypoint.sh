@@ -119,6 +119,56 @@ fi
 # Ensure memory directory exists
 mkdir -p /home/user/clawd/memory
 
+# ─── Activate User Skills ─────────────────────────────────────────────────
+# Read skills.json and symlink enabled skills from /opt/skills/ to active directory
+SKILLS_CONFIG="/home/user/.openclaw/skills.json"
+SKILLS_DIR="/opt/skills"
+ACTIVE_SKILLS_DIR="/home/user/.openclaw/skills"
+
+# Create active skills directory
+mkdir -p "$ACTIVE_SKILLS_DIR"
+
+if [ -f "$SKILLS_CONFIG" ]; then
+  echo "Loading user skill preferences..."
+  
+  # Extract enabled skills (requires jq - should be in base image)
+  if command -v jq >/dev/null 2>&1; then
+    ENABLED_SKILLS=$(jq -r '.enabled[]' "$SKILLS_CONFIG" 2>/dev/null || echo "")
+    
+    # Clear old symlinks
+    rm -f "$ACTIVE_SKILLS_DIR"/*
+    
+    # Symlink each enabled skill
+    for skill in $ENABLED_SKILLS; do
+      SKILL_PATH="$SKILLS_DIR/$skill"
+      ACTIVE_PATH="$ACTIVE_SKILLS_DIR/$skill"
+      
+      if [ -d "$SKILL_PATH" ]; then
+        ln -sf "$SKILL_PATH" "$ACTIVE_PATH"
+        echo "  ✓ Activated skill: $skill"
+      else
+        echo "  ⚠ Skill not found in image: $skill"
+      fi
+    done
+  else
+    echo "  ⚠ jq not installed, skipping skill activation"
+  fi
+else
+  echo "No custom skill preferences found"
+  # Create default skills.json (empty enabled list for now)
+  cat > "$SKILLS_CONFIG" <<EOF
+{
+  "version": "1.0",
+  "enabled": [],
+  "metadata": {
+    "last_updated": "$(date -Iseconds)",
+    "synced_from_dashboard": false
+  }
+}
+EOF
+  echo "Created default skills.json"
+fi
+
 # Patch Brave search URL to use local SearXNG proxy
 # Default uses Docker DNS name (works when container is on clawer_shared network)
 # Override with SEARXNG_PROXY_URL env var for containers not on the shared network

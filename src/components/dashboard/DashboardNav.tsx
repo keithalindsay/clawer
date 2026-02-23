@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/chat', label: 'Chat' },
   { href: '/dashboard/tasks', label: 'Tasks' },
   { href: '/dashboard/files', label: 'Files' },
+  { href: '/dashboard/skills', label: 'Skills' },
   { href: '/dashboard/agent', label: 'Agent' },
   { href: '/dashboard/memory', label: 'Memory' },
   { href: '/dashboard/crons', label: 'Crons' },

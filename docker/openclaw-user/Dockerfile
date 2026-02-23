@@ -17,6 +17,7 @@ RUN npm install -g /tmp/openclaw-2026.2.22.tgz && rm /tmp/openclaw-2026.2.22.tgz
 COPY defaults/ /opt/defaults/
 COPY api-server.js /usr/local/bin/api-server.js
 COPY teams/ /opt/teams/
+COPY skills/ /opt/skills/
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY init_clawsec.sh /usr/local/bin/init_clawsec.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/api-server.js /usr/local/bin/init_clawsec.sh
