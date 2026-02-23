@@ -4,29 +4,22 @@ import { useState, useEffect, useCallback } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface CronJob {
+interface OpenClawCron {
   id: string;
-  jobName: string;
   schedule: string;
-  lastStatus: 'ok' | 'error' | 'running';
-  lastRunAt: string | null;
-  lastDurationMs: number | null;
-  consecutiveErrors: number;
-  updatedAt: string;
-}
-
-interface CronEvent {
-  id: string;
-  agentName: string;
-  agentEmoji: string | null;
-  summary: string;
-  details: Record<string, unknown> | null;
-  createdAt: string;
+  command: string;
+  enabled: boolean;
+  lastRun?: string;
+  nextRun?: string;
 }
 
 interface CronsData {
-  jobs: CronJob[];
-  history: CronEvent[];
+  crons: OpenClawCron[];
+  scheduler: {
+    running: boolean;
+    jobsCount: number;
+  };
+  error?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -40,13 +33,6 @@ function relativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
-}
-
-function formatDuration(ms: number | null): string {
-  if (ms === null) return '—';
-  if (ms < 1000) return `${ms}ms`;
-  const s = (ms / 1000).toFixed(1);
-  return `${s}s`;
 }
 
 /** Human-readable cron schedule (best-effort) */
@@ -81,24 +67,6 @@ function nextRunApprox(schedule: string): string {
   return next.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Chicago' }) + ' CST tomorrow-ish';
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
-
-const STATUS_CFG = {
-  ok:      { label: 'OK',      dot: 'bg-green-500', badge: 'bg-green-50 text-green-700 border border-green-200' },
-  error:   { label: 'Error',   dot: 'bg-red-500',   badge: 'bg-red-50   text-red-700   border border-red-200'   },
-  running: { label: 'Running', dot: 'bg-blue-500',  badge: 'bg-blue-50  text-blue-700  border border-blue-200'  },
-} as const;
-
-function StatusBadge({ status }: { status: CronJob['lastStatus'] }) {
-  const cfg = STATUS_CFG[status] ?? STATUS_CFG.ok;
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badge}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${status === 'running' ? 'animate-pulse' : ''}`} />
-      {cfg.label}
-    </span>
-  );
-}
-
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function Skeleton() {
@@ -129,47 +97,92 @@ function Skeleton() {
 
 // ─── Job card ─────────────────────────────────────────────────────────────────
 
-function JobCard({ job }: { job: CronJob }) {
-  const hasErrors = job.consecutiveErrors > 0;
+function JobCard({ 
+  job, 
+  onToggle, 
+  onRemove 
+}: { 
+  job: OpenClawCron; 
+  onToggle: (id: string, enabled: boolean) => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = async () => {
+    setLoading(true);
+    try {
+      await onToggle(job.id, !job.enabled);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!confirm(`Remove cron job "${job.command}"? This cannot be undone.`)) return;
+    setLoading(true);
+    try {
+      await onRemove(job.id);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
       className={`bg-white rounded-xl border p-5 transition-shadow hover:shadow-sm ${
-        job.lastStatus === 'error' ? 'border-red-200' : 'border-gray-200'
+        !job.enabled ? 'border-gray-200 opacity-60' : 'border-gray-200'
       }`}
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 font-mono">
-            {job.jobName}
-          </h3>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-900 font-mono truncate">
+              {job.command}
+            </h3>
+            {!job.enabled && (
+              <span className="flex-shrink-0 px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">
+                Disabled
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500 mt-0.5">
             {describeCron(job.schedule)}{' '}
             <span className="font-mono text-gray-400">({job.schedule})</span>
           </p>
         </div>
-        <StatusBadge status={job.lastStatus} />
+        
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={handleToggle}
+            disabled={loading}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              job.enabled
+                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                : 'bg-green-100 text-green-700 hover:bg-green-200'
+            } disabled:opacity-50`}
+            title={job.enabled ? 'Disable cron job' : 'Enable cron job'}
+          >
+            {loading ? '...' : job.enabled ? 'Disable' : 'Enable'}
+          </button>
+          <button
+            onClick={handleRemove}
+            disabled={loading}
+            className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+            title="Remove cron job"
+          >
+            {loading ? '...' : 'Remove'}
+          </button>
+        </div>
       </div>
 
       {/* Stats row */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Last run" value={job.lastRunAt ? relativeTime(job.lastRunAt) : 'Never'} />
-        <Stat label="Duration" value={formatDuration(job.lastDurationMs)} />
-        <Stat label="Next run (approx)" value={nextRunApprox(job.schedule)} />
-        <Stat
-          label="Consecutive errors"
-          value={String(job.consecutiveErrors)}
-          valueClass={hasErrors ? 'text-red-600 font-semibold' : 'text-gray-700'}
-        />
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <Stat label="Schedule ID" value={job.id} />
+        <Stat label="Last run" value={job.lastRun ? relativeTime(job.lastRun) : 'Never'} />
+        <Stat label="Next run (approx)" value={job.nextRun || nextRunApprox(job.schedule)} />
       </div>
-
-      {/* Error callout */}
-      {hasErrors && (
-        <div className="mt-3 rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-xs text-red-600">
-          ⚠ {job.consecutiveErrors} consecutive error{job.consecutiveErrors !== 1 ? 's' : ''} — check container logs
-        </div>
-      )}
     </div>
   );
 }
@@ -186,85 +199,108 @@ function Stat({
   return (
     <div>
       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className={`text-xs mt-0.5 ${valueClass}`}>{value}</p>
+      <p className={`text-xs mt-0.5 truncate ${valueClass}`}>{value}</p>
     </div>
   );
 }
 
-// ─── History timeline ─────────────────────────────────────────────────────────
+// ─── Add Cron Form ────────────────────────────────────────────────────────────
 
-function HistoryTimeline({ events }: { events: CronEvent[] }) {
-  if (events.length === 0) {
-    return (
-      <p className="text-sm text-gray-400 text-center py-8">
-        No cron run history yet. Events will appear here once jobs start running.
-      </p>
-    );
-  }
+function AddCronForm({ onAdd }: { onAdd: (schedule: string, command: string) => Promise<void> }) {
+  const [schedule, setSchedule] = useState('');
+  const [command, setCommand] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!schedule.trim() || !command.trim()) return;
+    
+    setLoading(true);
+    try {
+      await onAdd(schedule.trim(), command.trim());
+      setSchedule('');
+      setCommand('');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <ol className="relative border-l border-gray-200 ml-2 space-y-4">
-      {events.map((event) => {
-        const isError = (event.details as any)?.status === 'error' || event.summary.toLowerCase().includes('error');
-        return (
-          <li key={event.id} className="ml-4">
-            {/* Timeline dot */}
-            <span
-              className={`absolute -left-1.5 w-3 h-3 rounded-full border-2 border-white ${
-                isError ? 'bg-red-400' : 'bg-green-400'
-              }`}
-            />
-
-            <div className="flex items-start gap-2">
-              <span className="text-base leading-none flex-shrink-0 mt-0.5">
-                {event.agentEmoji ?? '⏱'}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-800 leading-snug">{event.summary}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-gray-400">{relativeTime(event.createdAt)}</span>
-                  <span className="text-xs text-gray-300">·</span>
-                  <span className="text-xs text-gray-500">{event.agentName}</span>
-                </div>
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+    <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+      <h3 className="text-sm font-semibold text-gray-900">Add New Cron Job</h3>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Schedule (cron expression)
+          </label>
+          <input
+            type="text"
+            value={schedule}
+            onChange={(e) => setSchedule(e.target.value)}
+            placeholder="0 2 * * *"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            disabled={loading}
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            E.g., <code className="font-mono bg-gray-100 px-1 rounded">0 2 * * *</code> for daily at 2 AM
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Command
+          </label>
+          <input
+            type="text"
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            placeholder="openclaw chat 'Good morning!'"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            disabled={loading}
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Command to execute (relative to container)
+          </p>
+        </div>
+      </div>
+      
+      <button
+        type="submit"
+        disabled={loading || !schedule.trim() || !command.trim()}
+        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Adding...' : 'Add Cron Job'}
+      </button>
+    </form>
   );
 }
 
 // ─── Summary bar ─────────────────────────────────────────────────────────────
 
-function SummaryBar({ jobs }: { jobs: CronJob[] }) {
-  const total = jobs.length;
-  const healthy = jobs.filter((j) => j.lastStatus === 'ok').length;
-  const errored = jobs.filter((j) => j.lastStatus === 'error').length;
-  const running = jobs.filter((j) => j.lastStatus === 'running').length;
+function SummaryBar({ crons, scheduler }: { crons: OpenClawCron[]; scheduler: { running: boolean; jobsCount: number } }) {
+  const total = crons.length;
+  const enabled = crons.filter((j) => j.enabled).length;
+  const disabled = total - enabled;
 
-  const overallColor =
-    errored > 0
-      ? 'text-red-600 bg-red-50 border-red-200'
-      : running > 0
-      ? 'text-blue-600 bg-blue-50 border-blue-200'
-      : 'text-green-600 bg-green-50 border-green-200';
+  const overallColor = scheduler.running
+    ? 'text-green-600 bg-green-50 border-green-200'
+    : 'text-red-600 bg-red-50 border-red-200';
 
-  const overallLabel =
-    errored > 0 ? `${errored} failing` : running > 0 ? 'Jobs running' : 'All healthy';
+  const overallLabel = scheduler.running ? 'Scheduler running' : 'Scheduler stopped';
 
   return (
     <div className="flex flex-wrap items-center gap-3 mb-6">
       {/* Overall pill */}
       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${overallColor}`}>
-        {errored > 0 ? '●' : running > 0 ? '●' : '✓'} {overallLabel}
+        {scheduler.running ? '✓' : '✗'} {overallLabel}
       </span>
 
       {/* Stat chips */}
-      <span className="text-xs text-gray-500">{total} job{total !== 1 ? 's' : ''} tracked</span>
-      {healthy > 0 && <span className="text-xs text-green-600">✓ {healthy} healthy</span>}
-      {errored > 0 && <span className="text-xs text-red-600">✗ {errored} errored</span>}
-      {running > 0 && <span className="text-xs text-blue-600">⟳ {running} running</span>}
+      <span className="text-xs text-gray-500">{total} job{total !== 1 ? 's' : ''} configured</span>
+      {enabled > 0 && <span className="text-xs text-green-600">✓ {enabled} enabled</span>}
+      {disabled > 0 && <span className="text-xs text-gray-600">○ {disabled} disabled</span>}
+      <span className="text-xs text-gray-400">({scheduler.jobsCount} loaded)</span>
     </div>
   );
 }
@@ -281,11 +317,15 @@ export function CronJobsPanel() {
   const fetchData = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true);
     try {
-      const res = await fetch('/api/dashboard/crons');
+      const res = await fetch('/api/dashboard/crons/cli');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: CronsData = await res.json();
       setData(json);
-      setError(null);
+      if (json.error) {
+        setError(json.error);
+      } else {
+        setError(null);
+      }
       setLastRefreshed(new Date());
     } catch (err) {
       setError('Failed to load cron jobs. Make sure your container is running.');
@@ -295,6 +335,53 @@ export function CronJobsPanel() {
     }
   }, []);
 
+  const handleToggle = async (id: string, enabled: boolean) => {
+    const action = enabled ? 'enable' : 'disable';
+    try {
+      const res = await fetch(`/api/dashboard/crons/cli/${action}/${id}`, { method: 'POST' });
+      const result = await res.json();
+      if (!result.success) {
+        alert(`Failed to ${action} cron job: ${result.error || 'Unknown error'}`);
+      } else {
+        await fetchData(false);
+      }
+    } catch (err: any) {
+      alert(`Failed to ${action} cron job: ${err.message}`);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    try {
+      const res = await fetch(`/api/dashboard/crons/cli/remove/${id}`, { method: 'POST' });
+      const result = await res.json();
+      if (!result.success) {
+        alert(`Failed to remove cron job: ${result.error || 'Unknown error'}`);
+      } else {
+        await fetchData(false);
+      }
+    } catch (err: any) {
+      alert(`Failed to remove cron job: ${err.message}`);
+    }
+  };
+
+  const handleAdd = async (schedule: string, command: string) => {
+    try {
+      const res = await fetch('/api/dashboard/crons/cli', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedule, command }),
+      });
+      const result = await res.json();
+      if (!result.success) {
+        alert(`Failed to add cron job: ${result.error || 'Unknown error'}`);
+      } else {
+        await fetchData(false);
+      }
+    } catch (err: any) {
+      alert(`Failed to add cron job: ${err.message}`);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const id = setInterval(() => fetchData(false), 30_000);
@@ -303,7 +390,7 @@ export function CronJobsPanel() {
 
   if (loading) return <Skeleton />;
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-center">
         <p className="text-sm text-red-600">{error}</p>
@@ -317,13 +404,20 @@ export function CronJobsPanel() {
     );
   }
 
-  const jobs = data?.jobs ?? [];
-  const history = data?.history ?? [];
+  const crons = data?.crons ?? [];
+  const scheduler = data?.scheduler ?? { running: false, jobsCount: 0 };
 
   return (
     <div className="space-y-8">
       {/* Summary */}
-      {jobs.length > 0 && <SummaryBar jobs={jobs} />}
+      {crons.length > 0 && <SummaryBar crons={crons} scheduler={scheduler} />}
+
+      {/* Error banner */}
+      {error && (
+        <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-700">
+          ⚠ {error}
+        </div>
+      )}
 
       {/* Refresh button + last updated */}
       <div className="flex items-center justify-between -mt-4 mb-2">
@@ -341,36 +435,30 @@ export function CronJobsPanel() {
         </button>
       </div>
 
+      {/* Add Cron Form */}
+      <AddCronForm onAdd={handleAdd} />
+
       {/* Job list */}
-      {jobs.length === 0 ? (
+      {crons.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
           <div className="text-4xl mb-3">⏱</div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-1">No cron jobs tracked yet</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">No cron jobs configured yet</h3>
           <p className="text-xs text-gray-400 max-w-sm mx-auto">
-            Cron jobs appear here once your container starts running them and syncs status.
-            Trigger a sync from the Dashboard page to populate data.
+            Add a cron job above to schedule recurring tasks in your container.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {jobs.map((job) => (
-            <JobCard key={job.id} job={job} />
+          {crons.map((job) => (
+            <JobCard 
+              key={job.id} 
+              job={job} 
+              onToggle={handleToggle}
+              onRemove={handleRemove}
+            />
           ))}
         </div>
       )}
-
-      {/* History timeline */}
-      <section>
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">
-          Execution History
-          {history.length > 0 && (
-            <span className="ml-2 text-xs font-normal text-gray-400">
-              (last {history.length} events)
-            </span>
-          )}
-        </h2>
-        <HistoryTimeline events={history} />
-      </section>
     </div>
   );
 }

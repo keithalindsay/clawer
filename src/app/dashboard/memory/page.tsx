@@ -14,6 +14,7 @@ import { conversations } from '@/lib/db/schema/conversations';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { resolveUserFilesDir, listFiles } from '@/lib/files';
 import fs from 'fs/promises';
+import { MemorySearch } from '@/components/dashboard/MemorySearch';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,14 @@ export default async function MemoryPage() {
             Everything your agent has learned about {userName}.
           </p>
         </div>
+
+        {/* Memory Search */}
+        <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            🔍 Search Memory
+          </h2>
+          <MemorySearch />
+        </section>
 
         {/* Prominent stat */}
         <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-2xl p-8 text-white text-center shadow-md">
