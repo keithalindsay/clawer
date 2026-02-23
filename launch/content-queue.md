@@ -54,7 +54,7 @@
    - **Priority:** 🔴 Commercial intent, taps into trending conversation
    - **Priority:** 🔴 High — practical how-to with strong search + social share potential
 
-3d. [ ] `/blog/openclaw-clawhub-malware-security`
+3d. [x] `/blog/openclaw-clawhub-malware-security` (Feb 23)
    - **Title:** "341 Malicious Skills Found on ClawHub: How to Protect Your Agent"
    - **Target keywords:** openclaw skills security, clawhub malware, openclaw skill safety, is clawhub safe
    - **Angle:** Real data — RedLine/Lumma infostealers targeting ~/.openclaw/, supply chain attacks via skill marketplace. What to check before installing skills. How Clawer.ai scans and verifies every skill. Position as the security-first alternative.
