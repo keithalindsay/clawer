@@ -115,6 +115,11 @@ if [ -d "$DEFAULTS_DIR" ]; then
       cp "$f" "$dest" && echo "Installed default: $fname"
     fi
   done
+  # PLATFORM.md is always installed (even if exists) to ensure updates
+  if [ -f "$DEFAULTS_DIR/PLATFORM.md" ]; then
+    cp "$DEFAULTS_DIR/PLATFORM.md" "/home/user/clawd/PLATFORM.md"
+    echo "Installed platform docs: PLATFORM.md"
+  fi
 fi
 
 # Install team template

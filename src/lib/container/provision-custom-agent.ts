@@ -199,6 +199,20 @@ export async function provisionCustomAgent(
       console.log(`[provision-custom] Copied TOOLS.md`);
     }
     
+    // 5b. Copy PLATFORM.md if exists (platform feature documentation)
+    const platformMdExists = await fileExistsInContainer(
+      containerName,
+      '/home/user/clawd/PLATFORM.md'
+    );
+    
+    if (platformMdExists) {
+      await execInContainer(
+        containerName,
+        `cp "/home/user/clawd/PLATFORM.md" "${workspacePath}/PLATFORM.md"`
+      );
+      console.log(`[provision-custom] Copied PLATFORM.md`);
+    }
+    
     // 6. Create initial daily note
     const today = new Date().toISOString().split('T')[0];
     const initialNote = generateInitialDailyNote(name, role);

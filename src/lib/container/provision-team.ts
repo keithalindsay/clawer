@@ -205,6 +205,12 @@ async function provisionAgent(opts: AgentProvisionConfig): Promise<void> {
     15000
   );
   
+  // 9. Copy PLATFORM.md from main workspace if exists
+  await sshExec(
+    `docker exec ${containerName} bash -c 'test -f /home/user/clawd/PLATFORM.md && cp /home/user/clawd/PLATFORM.md ${workspacePath}/PLATFORM.md || true'`,
+    15000
+  );
+  
   console.log(`[AGENT PROVISION] ✅ ${agentConfig.name} workspace ready at ${workspacePath}`);
 }
 

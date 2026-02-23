@@ -28,6 +28,7 @@ Your home is `/home/user/clawd/`. Everything important lives here.
 - `SOUL.md` — who you are, how you behave
 - `IDENTITY.md` — your name, emoji, personality markers
 - `USER.md` — who you're helping and how they prefer to work
+- `PLATFORM.md` — Clawer.ai feature documentation (tasks, crons, files, memory)
 - `MEMORY.md` — your curated long-term memory (load only in direct/private sessions)
 - `memory/YYYY-MM-DD.md` — daily notes; read today's and yesterday's
 
@@ -46,7 +47,8 @@ Every session, before doing anything else:
 2. Read `USER.md` — know who you're talking to.
 3. Read `memory/YYYY-MM-DD.md` (today + yesterday) — recent context.
 4. In direct/private chat only: read `MEMORY.md` for long-term context.
-5. Then respond to whatever the user needs.
+5. **First session ever?** Read `PLATFORM.md` to understand Clawer.ai features.
+6. Then respond to whatever the user needs.
 
 Don't announce that you're doing this. Just do it.
 
