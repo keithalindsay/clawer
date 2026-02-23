@@ -2,47 +2,44 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
-import { customAgents } from '@/lib/db/schema/custom-agents';
-import { eq, and } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
-import { getTeamConfig, getAgentFromTeam } from '@/lib/teams';
 
 /**
- * Derive OpenClaw session key from agentId
+ * Find the active OpenClaw session for a given agent and channel
  * 
- * Pattern:
- * - Template agents: `agent:{agentId}:main` (e.g., `agent:executive-assistant:main`)
- * - Custom agents: `custom-agent:{agentId}:main`
+ * OpenClaw transforms session keys to: agent:main:{channel}-{timestamp}
+ * e.g., "agent:main:web-chat-1771880431560"
  * 
- * This matches the pattern used in /api/chat/route.ts line ~98
+ * Instead of deriving the key, we list all sessions and find the right one.
  */
-async function deriveSessionKey(userId: string, agentId: string, teamTemplate?: string): Promise<{ sessionKey: string; isCustomAgent: boolean } | null> {
-  const templateName = teamTemplate || 'lifeos';
-  const teamConfig = getTeamConfig(templateName);
+async function findSessionKey(port: number, agentId: string, channel: string = 'webchat'): Promise<string | null> {
+  const sessionsResult = await containerApi.getSessions(port);
   
-  if (!teamConfig) {
+  if (sessionsResult.error || !sessionsResult.data?.sessions) {
+    console.error('[history] Failed to list sessions:', sessionsResult.error);
     return null;
   }
 
-  // First try template agent
-  const agent = getAgentFromTeam(templateName, agentId);
+  // Find session matching: agent:main:{channel}-*
+  // The agentId parameter tells us which agent, but OpenClaw stores under "main"
+  const targetPrefix = `agent:main:${channel}-`;
   
-  if (agent) {
-    return { sessionKey: `agent:${agentId}:main`, isCustomAgent: false };
+  for (const session of sessionsResult.data.sessions) {
+    if (session.key.startsWith(targetPrefix)) {
+      console.log(`[history] Found session: ${session.key} for agent ${agentId}`);
+      return session.key;
+    }
   }
   
-  // Check custom agents in database
-  const customAgent = await db.query.customAgents.findFirst({
-    where: and(
-      eq(customAgents.userId, userId),
-      eq(customAgents.agentId, agentId)
-    ),
-  });
-  
-  if (customAgent) {
-    return { sessionKey: `custom-agent:${agentId}:main`, isCustomAgent: true };
+  // Also check custom-agent:* pattern for custom agents
+  for (const session of sessionsResult.data.sessions) {
+    if (session.key.startsWith(`custom-agent:${agentId}:`)) {
+      console.log(`[history] Found custom session: ${session.key}`);
+      return session.key;
+    }
   }
   
+  console.log('[history] No session found. Available:', sessionsResult.data.sessions.map(s => s.key));
   return null;
 }
 
@@ -92,16 +89,19 @@ export async function GET(req: NextRequest) {
 
     // Derive session key directly from agentId (no DB lookup needed!)
     // This matches the pattern used in /api/chat/route.ts
-    const sessionInfo = await deriveSessionKey(userId, agentId, user.teamTemplate || undefined);
+    // Find the actual session key from OpenClaw instead of deriving it
+    // OpenClaw transforms "agent:X:main" to "agent:main:webchat-TIMESTAMP"
+    const sessionKey = await findSessionKey(user.containerPort, agentId);
     
-    if (!sessionInfo) {
-      return NextResponse.json(
-        { error: 'Agent not found in your team' },
-        { status: 404 }
-      );
+    if (!sessionKey) {
+      // No active session for this agent yet - return empty history
+      return NextResponse.json({
+        messages: [],
+        sessionKey: null,
+        totalMessages: 0,
+        hasMore: false,
+      });
     }
-
-    const { sessionKey } = sessionInfo;
 
     // Fetch history directly from OpenClaw session via container API
     // No conversation record needed - OpenClaw IS the source of truth
