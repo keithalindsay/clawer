@@ -22,9 +22,9 @@ const FILE_DESCRIPTIONS: Record<string, string> = {
   'MEMORY.md': 'Long-term memory storage for your agent',
 };
 
-function getContainerPath(userId: string): string {
-  const containerName = `clawer_user_${userId}`;
-  return `/opt/clawer/userdata/${containerName}/clawd`;
+function getContainerPath(containerId: string): string {
+  // Use the actual container ID from the database
+  return `/opt/clawer/userdata/${containerId}/clawd`;
 }
 
 async function getFileInfo(filePath: string, filename: string) {
@@ -61,11 +61,13 @@ export async function GET() {
     const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
     if (!user) return apiErrors.notFound('User');
 
-    if (!user.containerId && user.containerStatus !== 'running') {
+    // Check if container is provisioned
+    if (!user.containerId) {
       return apiSuccess({ files: [], containerReady: false });
     }
 
-    const claWdPath = getContainerPath(userId);
+    // Use the actual containerId from database
+    const claWdPath = getContainerPath(user.containerId);
     const files = await Promise.all(
       ALLOWED_FILES.map(filename => getFileInfo(path.join(claWdPath, filename), filename))
     );
@@ -102,7 +104,13 @@ export async function PUT(req: NextRequest) {
     const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
     if (!user) return apiErrors.notFound('User');
 
-    const claWdPath = getContainerPath(userId);
+    // Check if container is provisioned
+    if (!user.containerId) {
+      return apiError('CONTAINER_NOT_PROVISIONED', 'Container not yet provisioned', 503);
+    }
+
+    // Use the actual containerId from database
+    const claWdPath = getContainerPath(user.containerId);
 
     // Ensure directory exists
     await fs.mkdir(claWdPath, { recursive: true });

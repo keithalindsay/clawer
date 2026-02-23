@@ -179,10 +179,73 @@ function AgentCard({
 function AgentDetailsSidebar({
   agent,
   onClose,
+  onAgentUpdated,
 }: {
   agent: Agent;
   onClose: () => void;
+  onAgentUpdated?: () => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: agent.name,
+    emoji: agent.emoji,
+    role: agent.role,
+    description: agent.description,
+    triggers: agent.triggers?.join(', ') || '',
+    quickPrompts: agent.quickPrompts?.join('\n') || '',
+  });
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Reset form when agent changes
+  useEffect(() => {
+    setEditForm({
+      name: agent.name,
+      emoji: agent.emoji,
+      role: agent.role,
+      description: agent.description,
+      triggers: agent.triggers?.join(', ') || '',
+      quickPrompts: agent.quickPrompts?.join('\n') || '',
+    });
+    setIsEditing(false);
+    setSaveError(null);
+  }, [agent]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    
+    try {
+      const response = await fetch(`/api/team/agents?agentId=${agent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name,
+          emoji: editForm.emoji,
+          role: editForm.role,
+          personality: editForm.description,
+          triggers: editForm.triggers.split(',').map(t => t.trim()).filter(Boolean),
+          quickPrompts: editForm.quickPrompts.split('\n').map(p => p.trim()).filter(Boolean),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save');
+      }
+
+      setIsEditing(false);
+      onAgentUpdated?.();
+    } catch (error: any) {
+      setSaveError(error.message || 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const canEdit = agent.isCustom;
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
       <div
@@ -190,7 +253,9 @@ function AgentDetailsSidebar({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Agent Details</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            {isEditing ? 'Edit Agent' : 'Agent Details'}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -202,94 +267,220 @@ function AgentDetailsSidebar({
         </div>
         
         <div className="p-6 space-y-6">
-          {/* Header */}
-          <div className="text-center">
-            <div className="text-6xl mb-3">{agent.emoji}</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">{agent.name}</h3>
-            <p className="text-gray-600 mb-2">{agent.role}</p>
-            {agent.isCustom && (
-              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                Custom Agent
-              </span>
-            )}
-          </div>
-          
-          {/* Description */}
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
-            <p className="text-gray-600 text-sm">{agent.description}</p>
-          </div>
-          
-          {/* Triggers */}
-          {agent.triggers && agent.triggers.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Triggers</h4>
-              <div className="flex flex-wrap gap-2">
-                {agent.triggers.map(trigger => (
-                  <span
-                    key={trigger}
-                    className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-                  >
-                    {trigger}
+          {/* Template agent notice */}
+          {!canEdit && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+              <span className="font-medium">📋 Template Agent</span>
+              <p className="mt-1 text-xs">This is a pre-configured agent and cannot be edited. Create a custom agent to customize settings.</p>
+            </div>
+          )}
+
+          {/* Header / Edit Mode */}
+          {isEditing ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Emoji</label>
+                <input
+                  type="text"
+                  value={editForm.emoji}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, emoji: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl"
+                  placeholder="🤖"
+                  maxLength={4}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Agent name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <input
+                  type="text"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Research Assistant"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={3}
+                  placeholder="What does this agent do?"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Triggers (comma-separated)</label>
+                <input
+                  type="text"
+                  value={editForm.triggers}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, triggers: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="research, analyze, find"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Quick Prompts (one per line)</label>
+                <textarea
+                  value={editForm.quickPrompts}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, quickPrompts: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={3}
+                  placeholder="Research X for me&#10;Find information about Y"
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Display Mode Header */}
+              <div className="text-center">
+                <div className="text-6xl mb-3">{agent.emoji}</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">{agent.name}</h3>
+                <p className="text-gray-600 mb-2">{agent.role}</p>
+                {agent.isCustom && (
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                    Custom Agent
                   </span>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Quick Prompts */}
-          {agent.quickPrompts && agent.quickPrompts.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Quick Prompts</h4>
-              <div className="space-y-2">
-                {agent.quickPrompts.map(prompt => (
-                  <div
-                    key={prompt}
-                    className="px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-700"
-                  >
-                    "{prompt}"
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Skills */}
-          {agent.skills && agent.skills.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Available Tools</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {agent.skills.map(skill => (
-                  <div
-                    key={skill}
-                    className="px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-700 font-mono"
-                  >
-                    {skill}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Metadata */}
-          {agent.isCustom && agent.createdAt && (
-            <div className="pt-4 border-t border-gray-200">
-              <div className="text-xs text-gray-500 space-y-1">
-                <div>Created: {new Date(agent.createdAt).toLocaleDateString()}</div>
-                {agent.updatedAt && (
-                  <div>Updated: {new Date(agent.updatedAt).toLocaleDateString()}</div>
                 )}
               </div>
+              
+              {/* Description */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
+                <p className="text-gray-600 text-sm">{agent.description || 'No description set.'}</p>
+              </div>
+              
+              {/* Triggers */}
+              {agent.triggers && agent.triggers.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Triggers</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {agent.triggers.map(trigger => (
+                      <span
+                        key={trigger}
+                        className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                      >
+                        {trigger}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Quick Prompts */}
+              {agent.quickPrompts && agent.quickPrompts.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Quick Prompts</h4>
+                  <div className="space-y-2">
+                    {agent.quickPrompts.map(prompt => (
+                      <div
+                        key={prompt}
+                        className="px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-700"
+                      >
+                        "{prompt}"
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Skills */}
+              {agent.skills && agent.skills.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Available Tools</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {agent.skills.map(skill => (
+                      <div
+                        key={skill}
+                        className="px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-700 font-mono"
+                      >
+                        {skill}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Metadata */}
+              {agent.isCustom && agent.createdAt && (
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <div>Created: {new Date(agent.createdAt).toLocaleDateString()}</div>
+                    {agent.updatedAt && (
+                      <div>Updated: {new Date(agent.updatedAt).toLocaleDateString()}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Error message */}
+          {saveError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              {saveError}
             </div>
           )}
-          
-          {/* Chat button */}
-          <Link
-            href={`/dashboard/chat?agent=${agent.id}`}
-            className="block w-full px-4 py-3 bg-blue-500 text-white rounded-lg text-center font-medium hover:bg-blue-600 transition-colors"
-          >
-            💬 Start Chat with {agent.name}
-          </Link>
+
+          {/* Action buttons */}
+          <div className="space-y-3">
+            {isEditing ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setSaveError(null);
+                    setEditForm({
+                      name: agent.name,
+                      emoji: agent.emoji,
+                      role: agent.role,
+                      description: agent.description,
+                      triggers: agent.triggers?.join(', ') || '',
+                      quickPrompts: agent.quickPrompts?.join('\n') || '',
+                    });
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            ) : (
+              <>
+                {canEdit && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    ✏️ Edit Agent
+                  </button>
+                )}
+                <Link
+                  href={`/dashboard/chat?agent=${agent.id}`}
+                  className="block w-full px-4 py-3 bg-blue-500 text-white rounded-lg text-center font-medium hover:bg-blue-600 transition-colors"
+                >
+                  💬 Start Chat with {agent.name}
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -782,6 +973,10 @@ export default function AgentPage() {
           <AgentDetailsSidebar
             agent={selectedAgent}
             onClose={() => setSelectedAgent(null)}
+            onAgentUpdated={() => {
+              loadAgents();
+              setSelectedAgent(null);
+            }}
           />
         )}
 

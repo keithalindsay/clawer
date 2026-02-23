@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { botSettings } from '@/lib/db/schema/bot-settings';
+import { customAgents } from '@/lib/db/schema/custom-agents';
 import { eq } from 'drizzle-orm';
 import { getTeamConfig } from '@/lib/teams';
 import { DashboardWorkspace } from '@/components/dashboard/DashboardWorkspace';
@@ -53,6 +54,25 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
     if (userBotSettings.botAvatar) {
       teamMembers[0] = { ...teamMembers[0], emoji: userBotSettings.botAvatar };
     }
+  }
+
+  // Fetch and add custom agents to the team members list
+  const userCustomAgents = await db.query.customAgents.findMany({
+    where: eq(customAgents.userId, userId),
+    orderBy: (agents, { desc }) => [desc(agents.createdAt)],
+  });
+  
+  // Add custom agents to teamMembers
+  for (const agent of userCustomAgents) {
+    teamMembers.push({
+      id: agent.agentId,
+      name: agent.name,
+      role: agent.role || 'Assistant',
+      emoji: agent.emoji || '🤖',
+      description: agent.personality || '',
+      triggers: agent.triggers || [],
+      quickPrompts: agent.quickPrompts || [],
+    });
   }
 
   return (

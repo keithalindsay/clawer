@@ -5,13 +5,14 @@ import { users } from '@/lib/db/schema/users';
 import { bots } from '@/lib/db/schema/bots';
 import { conversations } from '@/lib/db/schema/conversations';
 import { tasks } from '@/lib/db/schema/tasks';
+import { customAgents } from '@/lib/db/schema/custom-agents';
 // ✅ REMOVED: messages import - no longer writing to DB
 import { eq, sql, and, isNull } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
 import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN, MAX_MESSAGE_LENGTH } from '@/lib/constants';
-import { getTeamConfig, getAgentFromTeam } from '@/lib/teams';
+import { getTeamConfig, getAgentFromTeam, TeamMember } from '@/lib/teams';
 import { trackDailyUsage, checkDailyLimit, checkUserRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
@@ -97,7 +98,33 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const agent = getAgentFromTeam(templateName, agentId);
+      // First try template agent, then check custom agents
+      let agent: TeamMember | null = getAgentFromTeam(templateName, agentId);
+      let isCustomAgent = false;
+      
+      if (!agent) {
+        // Check custom agents in database
+        const customAgent = await db.query.customAgents.findFirst({
+          where: and(
+            eq(customAgents.userId, userId),
+            eq(customAgents.agentId, agentId)
+          ),
+        });
+        
+        if (customAgent) {
+          // Convert custom agent to TeamMember format
+          agent = {
+            id: customAgent.agentId,
+            name: customAgent.name,
+            role: customAgent.role || 'Assistant',
+            emoji: customAgent.emoji || '🤖',
+            description: customAgent.personality || '',
+            triggers: customAgent.triggers || [],
+            quickPrompts: customAgent.quickPrompts || [],
+          };
+          isCustomAgent = true;
+        }
+      }
       
       if (!agent) {
         return NextResponse.json(
@@ -107,7 +134,8 @@ export async function POST(req: NextRequest) {
       }
 
       // Use agent-specific session key (routes to agent's workspace)
-      sessionKey = `agent:${agentId}:main`;
+      // For custom agents, use a custom-agent-specific session
+      sessionKey = isCustomAgent ? `custom-agent:${agentId}:main` : `agent:${agentId}:main`;
 
       // Find or create agent conversation
       let conversation = await db.query.conversations.findFirst({
@@ -138,6 +166,7 @@ export async function POST(req: NextRequest) {
               metadata: {
                 agentDescription: agent.description,
                 triggers: agent.triggers,
+                isCustomAgent,
               },
             })
             .returning();
