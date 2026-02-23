@@ -4,6 +4,20 @@ import { bots } from './bots';
 
 /**
  * Conversations table - chat threads
+ * 
+ * ⚠️ DEPRECATED FOR CHAT PERSISTENCE (Feb 2025)
+ * ------------------------------------------------
+ * Chat history is now stored directly in OpenClaw sessions.
+ * The session key is derived deterministically from agentId:
+ *   - Template agents: `agent:{agentId}:main`
+ *   - Custom agents: `custom-agent:{agentId}:main`
+ * 
+ * This table is no longer used for:
+ *   - Looking up chat history
+ *   - Storing message references
+ * 
+ * Kept for potential future use (conversation metadata, analytics).
+ * DO NOT use this table for chat persistence logic.
  */
 export const conversations = pgTable('conversations', {
   /** Unique conversation ID */

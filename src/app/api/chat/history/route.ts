@@ -2,9 +2,49 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
-import { conversations } from '@/lib/db/schema/conversations';
-import { eq, and, isNull } from 'drizzle-orm';
+import { customAgents } from '@/lib/db/schema/custom-agents';
+import { eq, and } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
+import { getTeamConfig, getAgentFromTeam } from '@/lib/teams';
+
+/**
+ * Derive OpenClaw session key from agentId
+ * 
+ * Pattern:
+ * - Template agents: `agent:{agentId}:main` (e.g., `agent:executive-assistant:main`)
+ * - Custom agents: `custom-agent:{agentId}:main`
+ * 
+ * This matches the pattern used in /api/chat/route.ts line ~98
+ */
+async function deriveSessionKey(userId: string, agentId: string, teamTemplate?: string): Promise<{ sessionKey: string; isCustomAgent: boolean } | null> {
+  const templateName = teamTemplate || 'lifeos';
+  const teamConfig = getTeamConfig(templateName);
+  
+  if (!teamConfig) {
+    return null;
+  }
+
+  // First try template agent
+  const agent = getAgentFromTeam(templateName, agentId);
+  
+  if (agent) {
+    return { sessionKey: `agent:${agentId}:main`, isCustomAgent: false };
+  }
+  
+  // Check custom agents in database
+  const customAgent = await db.query.customAgents.findFirst({
+    where: and(
+      eq(customAgents.userId, userId),
+      eq(customAgents.agentId, agentId)
+    ),
+  });
+  
+  if (customAgent) {
+    return { sessionKey: `custom-agent:${agentId}:main`, isCustomAgent: true };
+  }
+  
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
@@ -26,12 +66,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get user's container info
+    // Get user's container info and team template
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: {
         containerPort: true,
         containerStatus: true,
+        teamTemplate: true,
       },
     });
 
@@ -49,30 +90,24 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Find or create conversation for this agent
-    let conversation = await db.query.conversations.findFirst({
-      where: and(
-        eq(conversations.userId, userId),
-        eq(conversations.agentId, agentId),
-        isNull(conversations.deletedAt)
-      ),
-    });
-
-    if (!conversation) {
-      // No conversation exists yet - return empty history
-      return NextResponse.json({
-        messages: [],
-        conversationId: null,
-        sessionKey: null,
-        totalMessages: 0,
-        hasMore: false,
-      });
+    // Derive session key directly from agentId (no DB lookup needed!)
+    // This matches the pattern used in /api/chat/route.ts
+    const sessionInfo = await deriveSessionKey(userId, agentId, user.teamTemplate || undefined);
+    
+    if (!sessionInfo) {
+      return NextResponse.json(
+        { error: 'Agent not found in your team' },
+        { status: 404 }
+      );
     }
 
-    // Fetch history from OpenClaw session via container API
+    const { sessionKey } = sessionInfo;
+
+    // Fetch history directly from OpenClaw session via container API
+    // No conversation record needed - OpenClaw IS the source of truth
     const historyResult = await containerApi.getSessionHistory(
       user.containerPort,
-      conversation.sessionKey,
+      sessionKey,
       { limit, offset }
     );
 
@@ -81,8 +116,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           messages: [],
-          conversationId: conversation.id,
-          sessionKey: conversation.sessionKey,
+          sessionKey,
           totalMessages: 0,
           hasMore: false,
           error: historyResult.error,
@@ -93,8 +127,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       messages: historyResult.data?.messages || [],
-      conversationId: conversation.id,
-      sessionKey: conversation.sessionKey,
+      sessionKey,
       totalMessages: historyResult.data?.totalMessages || 0,
       hasMore: historyResult.data?.hasMore || false,
       metadata: historyResult.data?.metadata,

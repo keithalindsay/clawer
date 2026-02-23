@@ -107,7 +107,7 @@ export function DashboardWorkspace({
   const [chatHistory, setChatHistory] = useState<Record<string, Message[]>>({});
   const [historyLoaded, setHistoryLoaded] = useState<Record<string, boolean>>({});
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [conversationIds, setConversationIds] = useState<Record<string, string>>({});
+  // REMOVED: conversationIds state - no longer needed, OpenClaw sessions are the source of truth
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -123,7 +123,7 @@ export function DashboardWorkspace({
     if (!selectedAgent || historyLoaded[selectedAgent.id]) return;
 
     setHistoryLoading(true);
-    // ✅ CHANGED: Read from OpenClaw sessions instead of DB
+    // ✅ Fetch directly from OpenClaw sessions (no DB conversation record needed)
     fetch(`/api/chat/history?agentId=${encodeURIComponent(selectedAgent.id)}`)
       .then(res => res.json())
       .then(data => {
@@ -134,10 +134,6 @@ export function DashboardWorkspace({
         }));
         setChatHistory(prev => ({ ...prev, [selectedAgent.id]: loaded }));
         setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
-        // Store conversationId for this agent
-        if (data.conversationId) {
-          setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
-        }
       })
       .catch(() => {
         setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
@@ -169,10 +165,6 @@ export function DashboardWorkspace({
         })
           .then(res => res.json())
           .then(data => {
-            // Store conversationId
-            if (data.conversationId) {
-              setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
-            }
             setChatHistory(prev => ({
               ...prev,
               [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
@@ -226,11 +218,6 @@ export function DashboardWorkspace({
       });
       const data = await res.json();
       
-      // Store conversationId for future reference
-      if (data.conversationId) {
-        setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
-      }
-      
       const assistantMsg: Message = {
         role: 'assistant',
         content: data.content || data.error || 'No response',
@@ -258,41 +245,22 @@ export function DashboardWorkspace({
   const clearSession = async () => {
     if (!selectedAgent) return;
     
-    const conversationId = conversationIds[selectedAgent.id];
-    if (!conversationId) {
-      // No conversation yet, just clear local state
-      setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
-      setShowClearDialog(false);
-      return;
-    }
-
     try {
-      // Delete messages from DB
-      const res = await fetch(`/api/messages?conversationId=${encodeURIComponent(conversationId)}`, {
-        method: 'DELETE',
+      // Send /new to OpenClaw to start a fresh session
+      // This resets the agent's context and reloads workspace files (AGENTS.md, etc.)
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: '/new',
+          agentId: selectedAgent.id,
+        }),
       });
       
-      // Also reset the OpenClaw session so agent reloads workspace files (AGENTS.md, etc.)
-      try {
-        await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: '/new',
-            agentId: selectedAgent.id,
-          }),
-        });
-      } catch (e) {
-        console.warn('Failed to reset OpenClaw session:', e);
-      }
-
-      if (res.ok) {
-        // Clear local state
-        setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
-        setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: false }));
-        // Reset conversation ID so next message starts fresh
-        setConversationIds(prev => ({ ...prev, [selectedAgent.id]: undefined }));
-      }
+      // Clear local state
+      setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
+      // Reset history loaded flag so next visit re-fetches (will be empty after /new)
+      setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: false }));
     } catch (error) {
       console.error('Failed to clear session:', error);
     } finally {
@@ -326,10 +294,6 @@ export function DashboardWorkspace({
           body: JSON.stringify({ message: text, agentId: selectedAgent.id }),
         });
         const data = await res.json();
-        // Store conversationId
-        if (data.conversationId) {
-          setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
-        }
         setChatHistory(prev => ({
           ...prev,
           [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {

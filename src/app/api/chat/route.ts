@@ -2,12 +2,9 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
-import { bots } from '@/lib/db/schema/bots';
-import { conversations } from '@/lib/db/schema/conversations';
 import { tasks } from '@/lib/db/schema/tasks';
 import { customAgents } from '@/lib/db/schema/custom-agents';
-// ✅ REMOVED: messages import - no longer writing to DB
-import { eq, sql, and, isNull } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
@@ -83,8 +80,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Handle agent-specific chat if agentId provided
-    // Phase 1: Route to real agent session instead of prompt switching
-    let conversationId: string | undefined;
+    // Route to real agent session instead of prompt switching
     let sessionKey: string = `user-${userId}-agent-${agentId || 'default'}`;
     
     if (agentId) {
@@ -135,47 +131,8 @@ export async function POST(req: NextRequest) {
 
       // Use agent-specific session key (routes to agent's workspace)
       // For custom agents, use a custom-agent-specific session
+      // OpenClaw sessions ARE the source of truth - no DB conversation records needed
       sessionKey = isCustomAgent ? `custom-agent:${agentId}:main` : `agent:${agentId}:main`;
-
-      // Find or create agent conversation
-      let conversation = await db.query.conversations.findFirst({
-        where: and(
-          eq(conversations.userId, userId),
-          eq(conversations.agentId, agentId),
-          isNull(conversations.deletedAt)
-        ),
-      });
-
-      if (!conversation) {
-        // Create new agent conversation
-        const userBot = await db.query.bots.findFirst({
-          where: eq(bots.userId, userId),
-        });
-
-        if (userBot) {
-          const [newConversation] = await db
-            .insert(conversations)
-            .values({
-              userId,
-              botId: userBot.id,
-              title: `Chat with ${agent.name}`,
-              agentId: agent.id,
-              agentName: agent.name,
-              agentEmoji: agent.emoji || '',
-              agentRole: agent.role,
-              metadata: {
-                agentDescription: agent.description,
-                triggers: agent.triggers,
-                isCustomAgent,
-              },
-            })
-            .returning();
-
-          conversation = newConversation;
-        }
-      }
-
-      conversationId = conversation?.id;
     }
 
     // Free tier vs paid subscription routing
@@ -294,7 +251,7 @@ export async function POST(req: NextRequest) {
       messageLength: sanitizedMessage.length,
     });
 
-    // Phase 1: Use agent-specific session key for routing
+    // Use agent-specific session key for routing
     // Format: agent:<agentId>:main routes to agent's isolated workspace
     const finalSessionKey = context || sessionKey;
 
@@ -319,25 +276,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ NO MORE MESSAGE INSERTS — OpenClaw sessions are the single source of truth
-    // Messages are already stored in OpenClaw's session via the chat call above
+    // ✅ NO MORE DB WRITES — OpenClaw sessions are the single source of truth
+    // Messages are stored in OpenClaw's session via the chat call above
+    // No conversation records needed for chat persistence
 
-    // Update conversation metadata if this is an agent conversation
-    if (conversationId) {
-      try {
-        await db
-          .update(conversations)
-          .set({
-            updatedAt: new Date(),
-            lastMessageAt: new Date(),
-          })
-          .where(eq(conversations.id, conversationId));
-      } catch (updateErr) {
-        console.error('[chat] Failed to update conversation metadata:', updateErr);
-      }
-    }
-
-    // 🔧 Bug Fix: Detect task creation intent and create tasks in database
+    // 🔧 Task auto-creation: Detect task creation intent and create tasks in database
     const responseContent = result.data?.content || '';
     const createdTaskIds: string[] = [];
     
@@ -409,7 +352,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       content: result.data?.content || 'No response from assistant',
-      conversationId,
       createdTasks: createdTaskIds.length > 0 ? createdTaskIds : undefined,
       routing: {
         tier: routing.tier,
