@@ -197,6 +197,8 @@ export function DashboardWorkspace({
     if (!text || loading || !selectedAgent) return;
 
     setInput('');
+    // Blur input to dismiss keyboard on mobile (fixes iOS Safari zoom issue)
+    inputRef.current?.blur();
     const userMsg: Message = { role: 'user', content: text, timestamp: new Date() };
     setChatHistory(prev => ({
       ...prev,

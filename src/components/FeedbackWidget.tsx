@@ -105,7 +105,7 @@ export function FeedbackWidget() {
       <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[70]">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
+          className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-2 md:px-3 md:py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
           aria-label="Open feedback form"
         >
           <svg
@@ -122,7 +122,8 @@ export function FeedbackWidget() {
               d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
             />
           </svg>
-          <span className="[writing-mode:vertical-rl]">Feedback</span>
+          {/* Hide text label on mobile, show only on desktop */}
+          <span className="hidden md:block [writing-mode:vertical-rl]">Feedback</span>
         </button>
       </div>
 
