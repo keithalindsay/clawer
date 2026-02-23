@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { containerApi } from '@/lib/container-client';
 import { getTeamConfig, getAgentFromTeam, buildAgentSystemPrompt } from '@/lib/teams';
 import { FREE_TIER_PORT, FREE_TIER_TOKEN } from '@/lib/constants';
+import { unauthorized, badRequest } from '@/lib/api-errors';
 
 /**
  * GET /api/tasks
@@ -15,7 +16,7 @@ import { FREE_TIER_PORT, FREE_TIER_TOKEN } from '@/lib/constants';
  */
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) return unauthorized();
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
@@ -40,13 +41,13 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) return unauthorized();
 
   const body = await req.json();
   const { title, description, priority, assigned_to } = body;
 
   if (!title || typeof title !== 'string' || !title.trim()) {
-    return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    return badRequest('Title is required');
   }
 
   const validPriorities = ['low', 'medium', 'high', 'urgent'];

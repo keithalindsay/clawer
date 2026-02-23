@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { tasks } from '@/lib/db/schema/tasks';
 import { eq, and } from 'drizzle-orm';
+import { unauthorized, notFound } from '@/lib/api-errors';
 
 /**
  * PATCH /api/tasks/[id]
@@ -14,7 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) return unauthorized();
 
   const { id } = await params;
   const body = await req.json();
@@ -24,7 +25,7 @@ export async function PATCH(
   });
 
   if (!existing) {
-    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    return notFound('Task');
   }
 
   const validStatuses = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -56,7 +57,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) return unauthorized();
 
   const { id } = await params;
 
@@ -65,7 +66,7 @@ export async function DELETE(
   });
 
   if (!existing) {
-    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    return notFound('Task');
   }
 
   await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));

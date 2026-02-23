@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
+import { unauthorized, notFound, serverError } from '@/lib/api-errors';
 
 /**
  * GET /api/container/status
@@ -13,7 +14,7 @@ export async function GET() {
     const { userId } = await auth();
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return unauthorized();
     }
 
     // Get user from database
@@ -22,7 +23,7 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return notFound('User');
     }
 
     // Calculate uptime if container is running
@@ -51,11 +52,8 @@ export async function GET() {
       containerId: user.containerId,
       tier: user.tier,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Container status error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch container status' },
-      { status: 500 }
-    );
+    return serverError('Failed to fetch container status', error.message);
   }
 }

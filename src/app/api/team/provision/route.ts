@@ -15,31 +15,26 @@ import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 import { provisionFullTeam, hasTeamProvisioned, getProvisionedAgents } from '@/lib/container/provision-team';
 import { getTeamConfig } from '@/lib/teams';
+import { unauthorized, badRequest, forbidden, serviceUnavailable, serverError } from '@/lib/api-errors';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return unauthorized();
   }
 
   try {
     const { templateName, defaultAgentId } = await req.json();
 
     if (!templateName || typeof templateName !== 'string') {
-      return NextResponse.json(
-        { error: 'templateName is required' },
-        { status: 400 }
-      );
+      return badRequest('templateName is required');
     }
 
     // Validate template exists
     const teamConfig = getTeamConfig(templateName);
     if (!teamConfig) {
-      return NextResponse.json(
-        { error: `Unknown team template: ${templateName}` },
-        { status: 400 }
-      );
+      return badRequest(`Unknown team template: ${templateName}`);
     }
 
     // Get user's container info
@@ -55,28 +50,18 @@ export async function POST(req: NextRequest) {
 
     // Only paid users can provision teams (free tier uses shared container)
     if (!user?.stripeSubscriptionId) {
-      return NextResponse.json(
-        {
-          error: 'team_provisioning_requires_subscription',
-          message: 'Team provisioning requires a paid subscription. Upgrade to access AI Teams.',
-          upgradeUrl: '/pricing',
-        },
-        { status: 403 }
+      return forbidden(
+        'Team provisioning requires a paid subscription. Upgrade to access AI Teams.',
+        JSON.stringify({ upgradeUrl: '/pricing' })
       );
     }
 
     if (!user.containerId) {
-      return NextResponse.json(
-        { error: 'Container not provisioned. Please wait or contact support.' },
-        { status: 503 }
-      );
+      return serviceUnavailable('Container not provisioned. Please wait or contact support.');
     }
 
     if (user.containerStatus !== 'running') {
-      return NextResponse.json(
-        { error: `Container is ${user.containerStatus || 'not ready'}. Please wait.` },
-        { status: 503 }
-      );
+      return serviceUnavailable(`Container is ${user.containerStatus || 'not ready'}. Please wait.`);
     }
 
     // Check if team already provisioned
@@ -108,9 +93,9 @@ export async function POST(req: NextRequest) {
       });
     } catch (error) {
       console.error('[PROVISION ERROR] Failed to provision team:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Provisioning failed' },
-        { status: 500 }
+      return serverError(
+        'Provisioning failed',
+        error instanceof Error ? error.message : undefined
       );
     }
 
@@ -127,10 +112,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('[team-provision] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to provision team' },
-      { status: 500 }
-    );
+    return serverError('Failed to provision team', error.message);
   }
 }
 
@@ -142,7 +124,7 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return unauthorized();
   }
 
   try {
@@ -175,9 +157,6 @@ export async function GET(req: NextRequest) {
 
   } catch (error: any) {
     console.error('[team-provision-check] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to check provisioning status' },
-      { status: 500 }
-    );
+    return serverError('Failed to check provisioning status', error.message);
   }
 }

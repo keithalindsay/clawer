@@ -14,6 +14,7 @@ import { eq } from 'drizzle-orm';
 import { provisionContainer, stopContainer } from '@/lib/provisioner';
 import { sendWelcomeEmail } from '@/lib/email';
 import { alertPaymentFailure } from '@/lib/alerts';
+import { badRequest, serverError } from '@/lib/api-errors';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -21,10 +22,7 @@ export async function POST(request: NextRequest) {
   const signature = headersList.get('stripe-signature');
 
   if (!signature) {
-    return NextResponse.json(
-      { error: 'Missing stripe-signature header' },
-      { status: 400 }
-    );
+    return badRequest('Missing stripe-signature header');
   }
 
   let event: Stripe.Event;
@@ -35,20 +33,14 @@ export async function POST(request: NextRequest) {
     // SECURITY: NEVER allow unsigned webhooks - reject if secret not configured
     if (!webhookSecret) {
       console.error('STRIPE_WEBHOOK_SECRET not configured - blocking webhook request');
-      return NextResponse.json(
-        { error: 'Webhook not configured' },
-        { status: 500 }
-      );
+      return serverError('Webhook not configured');
     }
     
     // Always verify signature
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Webhook signature verification failed:', err);
-    return NextResponse.json(
-      { error: 'Webhook signature verification failed' },
-      { status: 400 }
-    );
+    return badRequest('Webhook signature verification failed', err.message);
   }
 
   try {
@@ -184,12 +176,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Webhook handler error:', error);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
-    );
+    return serverError('Webhook handler failed', error.message);
   }
 }
 
