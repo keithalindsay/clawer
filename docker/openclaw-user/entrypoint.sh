@@ -96,7 +96,7 @@ cat > /home/user/.openclaw/openclaw.json << EOF
   "models": {"providers": {${PROVIDERS}}},
   "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd", "compaction": {"mode": "default", "maxHistoryShare": 0.1, "memoryFlush": {"enabled": true}}${MEMORY_SEARCH_CONFIG}}},
   "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}},
-  "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}}
+  "tools": {"exec": {"security": "full", "ask": "off"}, "web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}}
 }
 EOF
 
