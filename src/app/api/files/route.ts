@@ -1,7 +1,13 @@
 /**
- * GET /api/files — List agent output files
+ * GET /api/files — List agent workspace files
  *
- * Returns the folder tree under ~/clawd/files/ for the authenticated user.
+ * Returns the folder tree under ~/clawd/ for the authenticated user.
+ * This is the agent's full workspace including:
+ *   - Root files: SOUL.md, AGENTS.md, USER.md, WORKING.md, etc.
+ *   - memory/: Daily notes and hourly summaries
+ *   - files/: Onboarding deliverables and saved artifacts
+ *   - scripts/: Agent-created scripts
+ *   - Any other files the agent creates
  */
 
 import { auth } from '@clerk/nextjs/server';

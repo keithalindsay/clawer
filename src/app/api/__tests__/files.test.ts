@@ -75,7 +75,8 @@ describe('GET /api/files', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue({ userId: 'user_abc123' });
-    mockResolveUserFilesDir.mockResolvedValue('/opt/clawer/userdata/clawer_user_user_abc123/clawd/files');
+    // Full workspace path (not just /files subdirectory) — agents write here
+    mockResolveUserFilesDir.mockResolvedValue('/opt/clawer/userdata/clawer_user_user_abc123/clawd');
     mockGetUserContainerStatus.mockResolvedValue('running');
     mockListFiles.mockResolvedValue(makeEmptyFileTree());
   });
@@ -155,7 +156,7 @@ describe('GET /api/files', () => {
   });
 
   it('calls listFiles with the resolved base directory', async () => {
-    const baseDir = '/opt/clawer/userdata/clawer_user_user_abc123/clawd/files';
+    const baseDir = '/opt/clawer/userdata/clawer_user_user_abc123/clawd';
     mockResolveUserFilesDir.mockResolvedValue(baseDir);
 
     await filesGET();
@@ -170,7 +171,8 @@ describe('GET /api/files/content', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue({ userId: 'user_abc123' });
-    mockResolveUserFilesDir.mockResolvedValue('/opt/clawer/userdata/clawer_user_user_abc123/clawd/files');
+    // Full workspace path — file browser now shows all agent files
+    mockResolveUserFilesDir.mockResolvedValue('/opt/clawer/userdata/clawer_user_user_abc123/clawd');
     mockReadFile.mockResolvedValue({
       path: 'notes.md',
       name: 'notes.md',
@@ -301,7 +303,7 @@ describe('GET /api/files/content', () => {
     await contentGET(req);
 
     expect(mockReadFile).toHaveBeenCalledWith(
-      '/opt/clawer/userdata/clawer_user_user_abc123/clawd/files',
+      '/opt/clawer/userdata/clawer_user_user_abc123/clawd',
       'research/report.md'
     );
   });
@@ -313,7 +315,8 @@ describe('DELETE /api/files/content', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue({ userId: 'user_abc123' });
-    mockResolveUserFilesDir.mockResolvedValue('/opt/clawer/userdata/clawer_user_user_abc123/clawd/files');
+    // Full workspace path — file browser now shows all agent files
+    mockResolveUserFilesDir.mockResolvedValue('/opt/clawer/userdata/clawer_user_user_abc123/clawd');
     mockDeleteFile.mockResolvedValue(undefined);
   });
 
@@ -391,7 +394,7 @@ describe('DELETE /api/files/content', () => {
     await contentDELETE(req);
 
     expect(mockDeleteFile).toHaveBeenCalledWith(
-      '/opt/clawer/userdata/clawer_user_user_abc123/clawd/files',
+      '/opt/clawer/userdata/clawer_user_user_abc123/clawd',
       'reports/q1.md'
     );
   });
