@@ -439,24 +439,28 @@ export async function listCrons(userId: string): Promise<{ crons: OpenClawCron[]
       return { crons: [], error: 'User container not found' };
     }
     
-    const output = await execInContainer(containerId, 'openclaw cron list');
+    // Use --json flag to get structured output
+    const output = await execInContainer(containerId, 'openclaw cron list --json');
+    
+    // Extract JSON from output (openclaw doctor output may appear before the JSON)
+    // Find the first '{' and take everything from there
+    const jsonStart = output.indexOf('{');
+    if (jsonStart === -1) {
+      // No JSON found, return empty
+      return { crons: [], error: null };
+    }
+    
+    const jsonStr = output.substring(jsonStart);
     
     // Parse JSON output
     let crons: OpenClawCron[] = [];
     try {
-      crons = JSON.parse(output);
-    } catch {
-      // If not JSON, try simple parsing
-      const lines = output.split('\n').filter(line => line.trim() && !line.startsWith('ID'));
-      crons = lines.map(line => {
-        const parts = line.split(/\s+/);
-        return {
-          id: parts[0] || 'unknown',
-          schedule: parts[1] || '* * * * *',
-          command: parts.slice(2).join(' ') || line,
-          enabled: !line.includes('[disabled]'),
-        };
-      });
+      const parsed = JSON.parse(jsonStr);
+      // Handle both array format and {jobs: [...]} format
+      crons = Array.isArray(parsed) ? parsed : (parsed.jobs || []);
+    } catch (parseError: any) {
+      console.error('[listCrons] JSON parse failed:', parseError.message);
+      return { crons: [], error: `Failed to parse cron list: ${parseError.message}` };
     }
     
     return { crons, error: null };
@@ -466,7 +470,7 @@ export async function listCrons(userId: string): Promise<{ crons: OpenClawCron[]
 }
 
 /**
- * Add a new cron job via `openclaw cron add "<schedule>" "<command>"`
+ * Add a new cron job via `openclaw cron add --name <name> --cron <schedule> --message <command>`
  */
 export async function addCron(
   userId: string,
@@ -479,11 +483,17 @@ export async function addCron(
       return { success: false, error: 'User container not found' };
     }
     
+    // Generate a unique name from schedule and timestamp
+    const name = `cron_${Date.now()}`;
+    
     // Escape quotes for shell
     const safeSchedule = schedule.replace(/"/g, '\\"');
     const safeCommand = command.replace(/"/g, '\\"');
     
-    await execInContainer(containerId, `openclaw cron add "${safeSchedule}" "${safeCommand}"`);
+    await execInContainer(
+      containerId, 
+      `openclaw cron add --name "${name}" --cron "${safeSchedule}" --message "${safeCommand}"`
+    );
     return { success: true, error: null };
   } catch (error: any) {
     return { success: false, error: error.message };
