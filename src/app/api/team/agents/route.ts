@@ -10,7 +10,8 @@ import { db } from '@/lib/db';
 import { customAgents } from '@/lib/db/schema/custom-agents';
 import { users } from '@/lib/db/schema/users';
 import { eq, and } from 'drizzle-orm';
-import { provisionCustomAgent } from '@/lib/container/provision-custom-agent';
+import { provisionCustomAgent, removeCustomAgent, updateCustomAgent } from '@/lib/container/provision-custom-agent';
+import type { AgentSOULConfig } from '@/lib/container/generate-soul';
 import { getTeamConfig } from '@/lib/teams';
 
 /**
@@ -254,6 +255,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Get user's container info for workspace cleanup
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    // Delete from database first
     await db
       .delete(customAgents)
       .where(and(
@@ -261,8 +268,18 @@ export async function DELETE(request: NextRequest) {
         eq(customAgents.agentId, agentId)
       ));
 
-    // TODO: Also remove agent workspace from container
-    // This would require additional container cleanup logic
+    // Remove agent workspace from container (best effort - don't fail if this fails)
+    if (user?.containerId) {
+      try {
+        const removalResult = await removeCustomAgent(user.containerId, agentId);
+        if (!removalResult.success) {
+          console.warn(`[DELETE agents] Container cleanup warning: ${removalResult.error}`);
+        }
+      } catch (error: any) {
+        console.error('[DELETE agents] Container cleanup failed:', error.message);
+        // Don't fail the request - DB deletion succeeded
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -346,7 +363,36 @@ export async function PATCH(request: NextRequest) {
       ))
       .returning();
 
-    // TODO: Regenerate SOUL.md in container with updated config
+    // Regenerate SOUL.md in container with updated config
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (user?.containerId) {
+      try {
+        const soulConfig: AgentSOULConfig = {
+          name: updated.name || '',
+          role: updated.role || '',
+          emoji: updated.emoji || '🤖',
+          personality: updated.personality || undefined,
+          skills: (updated.skills as string[]) || [],
+          triggers: (updated.triggers as string[]) || [],
+          quickPrompts: (updated.quickPrompts as string[]) || [],
+          delegationConfig: updated.delegationConfig as {
+            canDelegateTo?: string[];
+            canReceiveFrom?: string[];
+          } || {},
+        };
+        
+        const updateResult = await updateCustomAgent(user.containerId, agentId, soulConfig);
+        if (!updateResult.success) {
+          console.warn(`[PATCH agents] SOUL.md update warning: ${updateResult.error}`);
+        }
+      } catch (error: any) {
+        console.error('[PATCH agents] SOUL.md update failed:', error.message);
+        // Don't fail the request - DB update succeeded
+      }
+    }
 
     return NextResponse.json({
       success: true,

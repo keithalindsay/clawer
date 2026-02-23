@@ -2,10 +2,10 @@
  * Custom Agent Provisioning
  * 
  * Provisions user-created custom agents with isolated workspaces and SOUL.md files.
+ * Uses SSH to execute commands on the production server (same pattern as provision-team.ts).
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { sshExec } from '@/lib/ssh';
 import {
   generateCustomAgentSOUL,
   generateCustomAgentAGENTS,
@@ -13,8 +13,6 @@ import {
   generateUserMdTemplate,
   type AgentSOULConfig,
 } from './generate-soul';
-
-const execAsync = promisify(exec);
 
 export interface ProvisionCustomAgentRequest {
   containerName: string;
@@ -40,56 +38,20 @@ export interface ProvisionResult {
 }
 
 /**
- * Execute command inside a container
+ * Write file content to container via SSH + docker exec
+ * Uses base64 encoding to handle special characters safely (same as provision-team.ts)
  */
-async function execInContainer(
-  containerName: string,
-  command: string | string[],
-  options?: { timeout?: number }
-): Promise<string> {
-  const cmdArray = Array.isArray(command) ? command : [command];
-  const cmdString = cmdArray.join(' && ');
-  const fullCommand = `docker exec ${containerName} sh -c "${cmdString.replace(/"/g, '\\"')}"`;
-  
-  console.log('[provision-custom] Executing:', fullCommand.substring(0, 100) + '...');
-  
-  try {
-    const { stdout, stderr } = await execAsync(fullCommand, {
-      timeout: options?.timeout || 30000,
-      encoding: 'utf-8',
-    });
-    
-    if (stderr && !stderr.includes('WARNING')) {
-      console.warn('[provision-custom] stderr:', stderr);
-    }
-    
-    return stdout.trim();
-  } catch (error: any) {
-    console.error('[provision-custom] Command failed:', error.message);
-    throw new Error(`Container exec failed: ${error.message}`);
-  }
-}
-
-/**
- * Write file content to container
- */
-async function writeFileInContainer(
+async function writeContainerFile(
   containerName: string,
   filePath: string,
   content: string
 ): Promise<void> {
-  // Escape content for heredoc - preserve exact content
-  const escapedContent = content
-    .replace(/\\/g, '\\\\')
-    .replace(/\$/g, '\\$')
-    .replace(/`/g, '\\`');
+  const base64Content = Buffer.from(content).toString('base64');
   
-  const command = `cat > "${filePath}" << 'PROVISION_EOF'
-${escapedContent}
-PROVISION_EOF`;
-  
-  await execInContainer(containerName, command);
-  console.log(`[provision-custom] Wrote file: ${filePath}`);
+  await sshExec(
+    `docker exec ${containerName} bash -c 'echo "${base64Content}" | base64 -d > ${filePath}'`,
+    15000
+  );
 }
 
 /**
@@ -100,7 +62,10 @@ async function fileExistsInContainer(
   filePath: string
 ): Promise<boolean> {
   try {
-    await execInContainer(containerName, `test -f "${filePath}"`);
+    await sshExec(
+      `docker exec ${containerName} test -f "${filePath}" && echo "yes" || echo "no"`,
+      10000
+    );
     return true;
   } catch {
     return false;
@@ -133,15 +98,35 @@ export async function provisionCustomAgent(
     const workspacePath = `/home/user/clawd/workspace-${agentId}`;
     
     // 1. Create workspace directories
-    await execInContainer(containerName, [
-      `mkdir -p "${workspacePath}"`,
-      `mkdir -p "${workspacePath}/memory"`,
-      `mkdir -p "${workspacePath}/skills"`,
-    ]);
+    await sshExec(
+      `docker exec ${containerName} mkdir -p "${workspacePath}" "${workspacePath}/memory" "${workspacePath}/skills" "${workspacePath}/files"`,
+      15000
+    );
     
     console.log(`[provision-custom] Created workspace directories at ${workspacePath}`);
     
-    // 2. Generate and write SOUL.md
+    // 2. Register agent with OpenClaw (CRITICAL - this was the TODO)
+    try {
+      const addResult = await sshExec(
+        `docker exec ${containerName} openclaw agents add ${agentId} --workspace ${workspacePath} --non-interactive 2>&1 | tail -5`,
+        30000
+      );
+      console.log(`[provision-custom] openclaw agents add result: ${addResult.stdout.trim()}`);
+    } catch (error: any) {
+      // Check if agent already exists
+      const checkResult = await sshExec(
+        `docker exec ${containerName} openclaw agents list 2>&1 | grep -c "^- ${agentId}" || echo "0"`,
+        15000
+      );
+      if (checkResult.stdout.trim() === '1') {
+        console.log(`[provision-custom] Agent ${agentId} already exists, continuing...`);
+      } else {
+        console.error(`[provision-custom] Failed to add agent:`, error.message);
+        throw error;
+      }
+    }
+    
+    // 3. Generate and write SOUL.md
     const soulConfig: AgentSOULConfig = {
       name,
       role,
@@ -155,68 +140,64 @@ export async function provisionCustomAgent(
     };
     
     const soulMd = generateCustomAgentSOUL(soulConfig);
-    await writeFileInContainer(containerName, `${workspacePath}/SOUL.md`, soulMd);
+    await writeContainerFile(containerName, `${workspacePath}/SOUL.md`, soulMd);
     
     console.log(`[provision-custom] Wrote SOUL.md`);
     
-    // 3. Generate and write AGENTS.md
+    // 4. Generate and write AGENTS.md
     const agentsMd = generateCustomAgentAGENTS(soulConfig);
-    await writeFileInContainer(containerName, `${workspacePath}/AGENTS.md`, agentsMd);
+    await writeContainerFile(containerName, `${workspacePath}/AGENTS.md`, agentsMd);
     
     console.log(`[provision-custom] Wrote AGENTS.md`);
     
-    // 4. Copy or create USER.md
-    const mainUserMdExists = await fileExistsInContainer(
-      containerName,
-      '/home/user/clawd/USER.md'
-    );
-    
-    if (mainUserMdExists) {
-      // Copy existing USER.md
-      await execInContainer(
-        containerName,
-        `cp "/home/user/clawd/USER.md" "${workspacePath}/USER.md"`
+    // 5. Copy or create USER.md
+    try {
+      const { stdout } = await sshExec(
+        `docker exec ${containerName} bash -c 'test -f /home/user/clawd/USER.md && echo "yes" || echo "no"'`,
+        10000
       );
-      console.log(`[provision-custom] Copied USER.md from main workspace`);
-    } else {
-      // Create default USER.md
-      const userMd = generateUserMdTemplate(name, role);
-      await writeFileInContainer(containerName, `${workspacePath}/USER.md`, userMd);
-      console.log(`[provision-custom] Created default USER.md`);
+      
+      if (stdout.trim() === 'yes') {
+        await sshExec(
+          `docker exec ${containerName} cp "/home/user/clawd/USER.md" "${workspacePath}/USER.md"`,
+          15000
+        );
+        console.log(`[provision-custom] Copied USER.md from main workspace`);
+      } else {
+        const userMd = generateUserMdTemplate(name, role);
+        await writeContainerFile(containerName, `${workspacePath}/USER.md`, userMd);
+        console.log(`[provision-custom] Created default USER.md`);
+      }
+    } catch (error) {
+      console.warn(`[provision-custom] USER.md handling skipped:`, error);
     }
     
-    // 5. Copy TOOLS.md if exists
-    const toolsMdExists = await fileExistsInContainer(
-      containerName,
-      '/home/user/clawd/TOOLS.md'
-    );
-    
-    if (toolsMdExists) {
-      await execInContainer(
-        containerName,
-        `cp "/home/user/clawd/TOOLS.md" "${workspacePath}/TOOLS.md"`
+    // 6. Copy TOOLS.md if exists
+    try {
+      await sshExec(
+        `docker exec ${containerName} bash -c 'test -f /home/user/clawd/TOOLS.md && cp /home/user/clawd/TOOLS.md ${workspacePath}/TOOLS.md || true'`,
+        15000
       );
-      console.log(`[provision-custom] Copied TOOLS.md`);
+      console.log(`[provision-custom] Copied TOOLS.md (if exists)`);
+    } catch (error) {
+      console.warn(`[provision-custom] TOOLS.md copy skipped`);
     }
     
-    // 5b. Copy PLATFORM.md if exists (platform feature documentation)
-    const platformMdExists = await fileExistsInContainer(
-      containerName,
-      '/home/user/clawd/PLATFORM.md'
-    );
-    
-    if (platformMdExists) {
-      await execInContainer(
-        containerName,
-        `cp "/home/user/clawd/PLATFORM.md" "${workspacePath}/PLATFORM.md"`
+    // 7. Copy PLATFORM.md if exists (platform feature documentation)
+    try {
+      await sshExec(
+        `docker exec ${containerName} bash -c 'test -f /home/user/clawd/PLATFORM.md && cp /home/user/clawd/PLATFORM.md ${workspacePath}/PLATFORM.md || true'`,
+        15000
       );
-      console.log(`[provision-custom] Copied PLATFORM.md`);
+      console.log(`[provision-custom] Copied PLATFORM.md (if exists)`);
+    } catch (error) {
+      console.warn(`[provision-custom] PLATFORM.md copy skipped`);
     }
     
-    // 6. Create initial daily note
+    // 8. Create initial daily note
     const today = new Date().toISOString().split('T')[0];
     const initialNote = generateInitialDailyNote(name, role);
-    await writeFileInContainer(
+    await writeContainerFile(
       containerName,
       `${workspacePath}/memory/${today}.md`,
       initialNote
@@ -224,18 +205,20 @@ export async function provisionCustomAgent(
     
     console.log(`[provision-custom] Created initial daily note`);
     
-    // 7. Update openclaw.json to register agent
-    // Note: This is a simplified version - in production you'd want to:
-    // - Read existing openclaw.json
-    // - Parse it
-    // - Add agent to agents.list array
-    // - Write back
-    // For now, we'll just log that this should be done
-    console.log(`[provision-custom] TODO: Update openclaw.json to register agent ${agentId}`);
+    // 9. Create MEMORY.md
+    const memoryMd = `# ${name}'s Memory\n\nLong-term memory about the user and their work.\n`;
+    await writeContainerFile(containerName, `${workspacePath}/MEMORY.md`, memoryMd);
     
-    // 8. Restart gateway to pick up new config
+    // 10. Create WORKING.md
+    const workingMd = `# Current Task State\n\n**Active Task:** None\n**Status:** Idle\n\n## Context\n\n## Next Steps\n`;
+    await writeContainerFile(containerName, `${workspacePath}/WORKING.md`, workingMd);
+    
+    // 11. Restart gateway to pick up new agent config
     try {
-      await execInContainer(containerName, 'openclaw gateway restart', { timeout: 60000 });
+      await sshExec(
+        `docker exec ${containerName} openclaw gateway restart`,
+        60000
+      );
       console.log(`[provision-custom] Gateway restarted successfully`);
     } catch (error: any) {
       console.warn(`[provision-custom] Gateway restart warning (may auto-restart):`, error.message);
@@ -256,29 +239,90 @@ export async function provisionCustomAgent(
 }
 
 /**
- * Remove a custom agent's workspace
+ * Remove a custom agent's workspace and unregister from OpenClaw
  */
 export async function removeCustomAgent(
   containerName: string,
   agentId: string
 ): Promise<ProvisionResult> {
   try {
+    console.log(`[provision-custom] Removing custom agent: ${agentId}`);
+    
     const workspacePath = `/home/user/clawd/workspace-${agentId}`;
     
-    // Remove workspace directory
-    await execInContainer(containerName, `rm -rf "${workspacePath}"`);
+    // 1. Unregister agent from OpenClaw
+    try {
+      const removeResult = await sshExec(
+        `docker exec ${containerName} openclaw agents remove ${agentId} --non-interactive 2>&1 | tail -5`,
+        30000
+      );
+      console.log(`[provision-custom] openclaw agents remove result: ${removeResult.stdout.trim()}`);
+    } catch (error: any) {
+      // Non-fatal - agent might already be removed or command might not exist
+      console.warn(`[provision-custom] Agent removal warning:`, error.message);
+    }
     
-    console.log(`[provision-custom] Removed workspace for agent ${agentId}`);
+    // 2. Remove workspace directory
+    await sshExec(
+      `docker exec ${containerName} rm -rf "${workspacePath}"`,
+      15000
+    );
+    console.log(`[provision-custom] Removed workspace directory`);
     
-    // TODO: Update openclaw.json to remove agent from agents.list
-    // TODO: Restart gateway
+    // 3. Restart gateway to update agent list
+    try {
+      await sshExec(
+        `docker exec ${containerName} openclaw gateway restart`,
+        60000
+      );
+      console.log(`[provision-custom] Gateway restarted successfully`);
+    } catch (error: any) {
+      console.warn(`[provision-custom] Gateway restart warning:`, error.message);
+    }
+    
+    console.log(`[provision-custom] ✅ Successfully removed custom agent: ${agentId}`);
     
     return { success: true, agentId };
   } catch (error: any) {
-    console.error(`[provision-custom] Failed to remove agent ${agentId}:`, error);
+    console.error(`[provision-custom] ❌ Failed to remove agent ${agentId}:`, error);
     return {
       success: false,
       error: error.message || 'Failed to remove agent workspace',
+    };
+  }
+}
+
+/**
+ * Update a custom agent's SOUL.md and workspace files
+ */
+export async function updateCustomAgent(
+  containerName: string,
+  agentId: string,
+  config: AgentSOULConfig
+): Promise<ProvisionResult> {
+  try {
+    console.log(`[provision-custom] Updating custom agent: ${agentId}`);
+    
+    const workspacePath = `/home/user/clawd/workspace-${agentId}`;
+    
+    // 1. Regenerate and write SOUL.md
+    const soulMd = generateCustomAgentSOUL(config);
+    await writeContainerFile(containerName, `${workspacePath}/SOUL.md`, soulMd);
+    console.log(`[provision-custom] Updated SOUL.md`);
+    
+    // 2. Regenerate and write AGENTS.md
+    const agentsMd = generateCustomAgentAGENTS(config);
+    await writeContainerFile(containerName, `${workspacePath}/AGENTS.md`, agentsMd);
+    console.log(`[provision-custom] Updated AGENTS.md`);
+    
+    console.log(`[provision-custom] ✅ Successfully updated custom agent: ${agentId}`);
+    
+    return { success: true, agentId };
+  } catch (error: any) {
+    console.error(`[provision-custom] ❌ Failed to update agent ${agentId}:`, error);
+    return {
+      success: false,
+      error: error.message || 'Failed to update agent workspace',
     };
   }
 }

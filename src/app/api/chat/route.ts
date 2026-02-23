@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { tasks } from '@/lib/db/schema/tasks';
 import { customAgents } from '@/lib/db/schema/custom-agents';
+import { modelConfigs } from '@/lib/db/schema/model-configs';
 import { eq, sql, and } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { containerApi } from '@/lib/container-client';
@@ -11,30 +12,25 @@ import { routeRequest } from '@/lib/router';
 import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN, MAX_MESSAGE_LENGTH } from '@/lib/constants';
 import { getTeamConfig, getAgentFromTeam, TeamMember } from '@/lib/teams';
 import { trackDailyUsage, checkDailyLimit, checkUserRateLimit } from '@/lib/rate-limit';
+import { unauthorized, badRequest, forbidden, notFound, rateLimited, serviceUnavailable, serverError } from '@/lib/api-errors';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return unauthorized();
   }
 
   try {
     const { message, context, settings, agentId } = await req.json();
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
-      );
+      return badRequest('Message is required');
     }
 
     // Input validation: length limit and sanitization
     if (message.length > MAX_MESSAGE_LENGTH) {
-      return NextResponse.json(
-        { error: `Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters.` },
-        { status: 400 }
-      );
+      return badRequest(`Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters.`);
     }
 
     // Strip null bytes (potential injection vector)
@@ -49,19 +45,13 @@ export async function POST(req: NextRequest) {
     
     const rateLimit = await checkUserRateLimit(userId, userTier);
     if (!rateLimit.allowed) {
-      return NextResponse.json(
+      const retrySeconds = Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000);
+      return rateLimited(
+        'Too many requests. Please slow down.',
+        retrySeconds,
         {
-          error: 'rate_limited',
-          message: 'Too many requests. Please slow down.',
-          retryAfter: Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000),
-        },
-        { 
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000)),
-            'X-RateLimit-Limit': String(rateLimit.limit),
-            'X-RateLimit-Remaining': String(rateLimit.remaining),
-          },
+          limit: rateLimit.limit,
+          remaining: rateLimit.remaining,
         }
       );
     }
@@ -88,10 +78,7 @@ export async function POST(req: NextRequest) {
       const teamConfig = getTeamConfig(templateName);
       
       if (!teamConfig) {
-        return NextResponse.json(
-          { error: 'Team template not found' },
-          { status: 404 }
-        );
+        return notFound('Team template');
       }
 
       // First try template agent, then check custom agents
@@ -123,10 +110,7 @@ export async function POST(req: NextRequest) {
       }
       
       if (!agent) {
-        return NextResponse.json(
-          { error: 'Agent not found in your team' },
-          { status: 404 }
-        );
+        return notFound('Agent', 'Agent not found in your team');
       }
 
       // Use agent-specific session key (routes to agent's workspace)
@@ -146,28 +130,25 @@ export async function POST(req: NextRequest) {
       
       // Check total message limit
       if (freeUsed >= FREE_MESSAGE_LIMIT) {
-        return NextResponse.json(
-          { 
-            error: 'free_trial_exceeded',
-            message: `You've used all ${FREE_MESSAGE_LIMIT} free messages. Upgrade to keep chatting!`,
+        return forbidden(
+          `You've used all ${FREE_MESSAGE_LIMIT} free messages. Upgrade to keep chatting!`,
+          JSON.stringify({
             upgradeUrl: '/pricing',
             freeMessagesUsed: freeUsed,
             freeMessageLimit: FREE_MESSAGE_LIMIT,
-          },
-          { status: 403 }
+          })
         );
       }
       
       // Check daily rate limit
       if (!checkDailyLimit(userId, FREE_DAILY_LIMIT)) {
-        return NextResponse.json(
+        return rateLimited(
+          `You've reached your daily limit of ${FREE_DAILY_LIMIT} messages. Try again tomorrow!`,
+          undefined,
           {
-            error: 'daily_limit_exceeded',
-            message: `You've reached your daily limit of ${FREE_DAILY_LIMIT} messages. Try again tomorrow!`,
             freeMessagesUsed: freeUsed,
             freeMessageLimit: FREE_MESSAGE_LIMIT,
-          },
-          { status: 429 }
+          }
         );
       }
       
@@ -191,17 +172,11 @@ export async function POST(req: NextRequest) {
       // Paid tier: dedicated container
       // Check container exists and is running
       if (!user.containerPort) {
-        return NextResponse.json(
-          { error: 'Container not provisioned. Please wait or contact support.' },
-          { status: 503 }
-        );
+        return serviceUnavailable('Container not provisioned. Please wait or contact support.');
       }
 
       if (user.containerStatus !== 'running') {
-        return NextResponse.json(
-          { error: `Container is ${user.containerStatus || 'not ready'}. Please wait.` },
-          { status: 503 }
-        );
+        return serviceUnavailable(`Container is ${user.containerStatus || 'not ready'}. Please wait.`);
       }
       
       targetPort = user.containerPort;
@@ -227,13 +202,47 @@ export async function POST(req: NextRequest) {
       systemPrompt = parts.join('. ');
     }
 
+    // Load user's model config from DB for custom selections
+    let userOrchestratorModel = 'google/gemini-3-flash';   // Default: Smart tier
+    let userWorkerModel = 'google/gemini-2.0-flash-lite';  // Default: Bulk tasks
+    
+    try {
+      const userModelConfig = await db.query.modelConfigs.findFirst({
+        where: eq(modelConfigs.userId, userId),
+      });
+      
+      if (userModelConfig) {
+        // Map DB model IDs to full provider/model format
+        const orchestratorMapping: Record<string, string> = {
+          'gpt-4o': 'openai/gpt-4o',
+          'gpt-4o-mini': 'openai/gpt-4o-mini',
+          'gemini-3-flash': 'google/gemini-3-flash',
+          'gemini-2.0-flash': 'google/gemini-2.0-flash',
+        };
+        const workerMapping: Record<string, string> = {
+          'gemini-2.0-flash-lite': 'google/gemini-2.0-flash-lite',
+          'gemini-2.0-flash': 'google/gemini-2.0-flash',
+          'grok-4.1-fast': 'xai/grok-4.1-fast',
+        };
+        
+        userOrchestratorModel = orchestratorMapping[userModelConfig.orchestratorModel] || userOrchestratorModel;
+        userWorkerModel = workerMapping[userModelConfig.workerModel] || userWorkerModel;
+        
+        console.log('[chat] Using custom model config:', {
+          orchestrator: userOrchestratorModel,
+          worker: userWorkerModel,
+        });
+      }
+    } catch (error) {
+      console.warn('[chat] Failed to load model config, using defaults:', error);
+    }
+    
     // Classify request using smart router
-    // TODO: Load user's model config from DB (model-configs table) for custom selections
     const routing = routeRequest({
       prompt: sanitizedMessage,
       systemPrompt,
-      userOrchestratorModel: 'google/gemini-3-flash',   // Smart tier: best reasoning per dollar
-      userWorkerModel: 'google/gemini-2.0-flash-lite',  // Bulk tasks: near-zero cost
+      userOrchestratorModel,
+      userWorkerModel,
     });
 
     console.log('[chat] Smart routing decision:', {
@@ -270,10 +279,7 @@ export async function POST(req: NextRequest) {
 
     if (result.error) {
       console.error('[chat] Container error:', result.error);
-      return NextResponse.json(
-        { error: result.error },
-        { status: result.status }
-      );
+      return serverError('Container communication failed', result.error);
     }
 
     // ✅ NO MORE DB WRITES — OpenClaw sessions are the single source of truth
@@ -362,9 +368,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Chat error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process message' },
-      { status: 500 }
-    );
+    return serverError('Failed to process message', error.message);
   }
 }

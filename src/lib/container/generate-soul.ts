@@ -6,34 +6,52 @@
 
 export interface AgentSOULConfig {
   name: string;
-  emoji: string;
   role: string;
-  personality: string;
+  emoji?: string;
+  personality?: string;
+  description?: string;
   skills?: string[];
-  canDelegateTo?: string[];
-  canReceiveFrom?: string[];
+  triggers?: string[];
+  quickPrompts?: string[];
+  delegationConfig?: {
+    canDelegateTo?: string[];
+    canReceiveFrom?: string[];
+  };
 }
 
 export function generateCustomAgentSOUL(config: AgentSOULConfig): string {
-  const delegationSection = config.canDelegateTo?.length
-    ? `\n## Delegation\nYou can delegate tasks to: ${config.canDelegateTo.join(', ')}\nUse \`sessions_spawn\` to delegate work.\n`
+  const { name, role, emoji = '🤖', personality, description, skills, triggers, quickPrompts, delegationConfig } = config;
+  
+  const delegationSection = delegationConfig?.canDelegateTo?.length
+    ? `\n## Delegation\nYou can delegate tasks to: ${delegationConfig.canDelegateTo.join(', ')}\nUse \`sessions_spawn\` to delegate work.\n`
     : '';
 
-  const receiveSection = config.canReceiveFrom?.length
-    ? `\n## Receiving Tasks\nYou may receive delegated tasks from: ${config.canReceiveFrom.join(', ')}\nComplete them and report back via \`sessions_send\`.\n`
+  const receiveSection = delegationConfig?.canReceiveFrom?.length
+    ? `\n## Receiving Tasks\nYou may receive delegated tasks from: ${delegationConfig.canReceiveFrom.join(', ')}\nComplete them and report back via \`sessions_send\`.\n`
     : '';
 
-  return `# SOUL.md — ${config.name} ${config.emoji}
+  const skillsSection = skills?.length
+    ? `\n## Skills\n${skills.map(s => `- ${s}`).join('\n')}\n`
+    : '';
+
+  const triggersSection = triggers?.length
+    ? `\n## Triggers\nYou're most helpful when the user mentions:\n${triggers.map(t => `- ${t}`).join('\n')}\n`
+    : '';
+
+  const quickPromptsSection = quickPrompts?.length
+    ? `\n## Quick Actions\n${quickPrompts.map(p => `- "${p}"`).join('\n')}\n`
+    : '';
+
+  return `# SOUL.md — ${name} ${emoji}
 
 ## Who I Am
-I'm **${config.name}**, ${config.role}.
+I'm **${name}**, ${role}.
 
-## Personality
-${config.personality}
-
+${description ? `## Description\n${description}\n` : ''}
+${personality ? `## Personality\n${personality}\n` : ''}
 ## My Role
-${config.role}
-${delegationSection}${receiveSection}
+${role}
+${skillsSection}${triggersSection}${quickPromptsSection}${delegationSection}${receiveSection}
 ## Guidelines
 - Stay focused on my specialty
 - Be helpful, direct, and efficient
@@ -54,43 +72,80 @@ Read PLATFORM.md for documentation on Clawer.ai features:
 }
 
 export function generateCustomAgentAGENTS(config: AgentSOULConfig): string {
-  return `# AGENTS.md — ${config.name} Workspace
+  const { name, role, emoji = '🤖', skills, delegationConfig } = config;
+  
+  const skillsSection = skills?.length
+    ? `\n## Available Skills\n${skills.map(s => `- ${s}`).join('\n')}\n`
+    : '';
+
+  const delegationSection = delegationConfig?.canDelegateTo?.length
+    ? `\n## Delegation\nYou can delegate to: ${delegationConfig.canDelegateTo.join(', ')}\n`
+    : '';
+
+  return `# AGENTS.md — ${name} ${emoji} Workspace
 
 ## About
-This workspace belongs to **${config.name}** ${config.emoji}, a custom agent.
+This workspace belongs to **${name}** ${emoji}, a custom agent.
 
 ## Role
-${config.role}
+${role}
+${skillsSection}${delegationSection}
+## Every Session
 
-## Available Skills
-${config.skills?.map(s => `- ${s}`).join('\n') || '- No specific skills configured'}
+1. Read \`WORKING.md\` - current task state
+2. Read \`SOUL.md\` - your identity and role
+3. Read \`USER.md\` - your human's context
+4. Read today's \`memory/\` files - recent context
 
-## Session Management
-- Read SOUL.md on every session start
-- Keep workspace organized
-- Update memory files with important context
+## Tools & Skills
+
+You have access to OpenClaw's standard toolset:
+- \`read\`, \`write\`, \`edit\` - File operations
+- \`exec\` - Shell commands
+- \`web_search\`, \`web_fetch\` - Research
+- \`browser\` - Web automation
+- \`subagents\` - Spawn helpers for complex tasks
+
+## Memory
+
+Your memory lives in files:
+
+- \`MEMORY.md\` - Long-term facts
+- \`memory/YYYY-MM-DD.md\` - Daily notes
+- \`WORKING.md\` - Current task state
+
+**Write everything down.** Mental notes don't survive sessions.
 `;
 }
 
-export function generateInitialDailyNote(agentName: string): string {
+export function generateInitialDailyNote(agentName: string, role: string): string {
   const today = new Date().toISOString().split('T')[0];
   return `# ${today} — ${agentName}
 
 ## Created
 Agent provisioned today.
 
+## Role
+${role}
+
 ## Notes
 - First session
+- Ready to assist
 `;
 }
 
-export function generateUserMdTemplate(userName: string): string {
+export function generateUserMdTemplate(agentName: string, role: string): string {
   return `# USER.md — About My Human
 
-- **Name:** ${userName}
+This file contains information about your human. Update it as you learn more.
 
 ## Communication Style
 - Direct and efficient
 - Prefers results over process
+
+## Notes
+- Agent: ${agentName}
+- Role: ${role}
+- Update this file with relevant context about your human
 `;
 }
