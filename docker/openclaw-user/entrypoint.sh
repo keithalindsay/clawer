@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-mkdir -p /home/user/.openclaw /home/user/clawd /home/user/clawd/files
+mkdir -p /home/user/.openclaw /home/user/clawd /home/user/clawd/files 2>/dev/null || true
 
 # Check for team provisioning (Phase 1: AI Teams Native Agents)
 if [ -f /home/user/clawd/.team-config ]; then
