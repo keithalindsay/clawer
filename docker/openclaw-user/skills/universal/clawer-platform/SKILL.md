@@ -7,7 +7,9 @@ metadata: {"clawdbot":{"emoji":"📋","requires":{"bins":["clawer-tasks"]}}}
 
 # Clawer Platform Skill
 
-Tools for interacting with the Clawer.ai dashboard that your user sees. When you create or update tasks, they appear on the user's kanban board in real-time.
+**This is the authoritative source for task management CLI commands.**
+
+When you create or update tasks, they appear on the user's kanban board in real-time. See `PLATFORM.md` for other dashboard features (crons, files, memory).
 
 ## Task Management
 
