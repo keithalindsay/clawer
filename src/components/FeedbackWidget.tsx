@@ -102,7 +102,7 @@ export function FeedbackWidget() {
   return (
     <>
       {/* Feedback Tab — fixed to right edge */}
-      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[70]">
+      <div className="hidden md:block fixed right-0 top-1/2 -translate-y-1/2 z-[70]">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-2 md:px-3 md:py-4 rounded-l-lg shadow-lg transition-all duration-200 font-medium text-sm flex items-center gap-2"
