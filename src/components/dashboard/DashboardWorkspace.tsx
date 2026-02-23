@@ -106,6 +106,8 @@ export function DashboardWorkspace({
   const [chatHistory, setChatHistory] = useState<Record<string, Message[]>>({});
   const [historyLoaded, setHistoryLoaded] = useState<Record<string, boolean>>({});
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [conversationIds, setConversationIds] = useState<Record<string, string>>({});
+  const [showClearDialog, setShowClearDialog] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -130,6 +132,10 @@ export function DashboardWorkspace({
         }));
         setChatHistory(prev => ({ ...prev, [selectedAgent.id]: loaded }));
         setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
+        // Store conversationId for this agent
+        if (data.conversationId) {
+          setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
+        }
       })
       .catch(() => {
         setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
@@ -161,6 +167,10 @@ export function DashboardWorkspace({
         })
           .then(res => res.json())
           .then(data => {
+            // Store conversationId
+            if (data.conversationId) {
+              setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
+            }
             setChatHistory(prev => ({
               ...prev,
               [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
@@ -213,6 +223,12 @@ export function DashboardWorkspace({
         body: JSON.stringify({ message: text, agentId: selectedAgent.id }),
       });
       const data = await res.json();
+      
+      // Store conversationId for future reference
+      if (data.conversationId) {
+        setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
+      }
+      
       const assistantMsg: Message = {
         role: 'assistant',
         content: data.content || data.error || 'No response',
@@ -234,6 +250,35 @@ export function DashboardWorkspace({
     } finally {
       setLoading(false);
       inputRef.current?.focus();
+    }
+  };
+
+  const clearSession = async () => {
+    if (!selectedAgent) return;
+    
+    const conversationId = conversationIds[selectedAgent.id];
+    if (!conversationId) {
+      // No conversation yet, just clear local state
+      setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
+      setShowClearDialog(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/messages?conversationId=${encodeURIComponent(conversationId)}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        // Clear local state
+        setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
+        setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: false }));
+        // Keep conversationId for future messages
+      }
+    } catch (error) {
+      console.error('Failed to clear session:', error);
+    } finally {
+      setShowClearDialog(false);
     }
   };
 
@@ -263,6 +308,10 @@ export function DashboardWorkspace({
           body: JSON.stringify({ message: text, agentId: selectedAgent.id }),
         });
         const data = await res.json();
+        // Store conversationId
+        if (data.conversationId) {
+          setConversationIds(prev => ({ ...prev, [selectedAgent.id]: data.conversationId }));
+        }
         setChatHistory(prev => ({
           ...prev,
           [selectedAgent.id]: [...(prev[selectedAgent.id] || []), {
@@ -365,15 +414,32 @@ export function DashboardWorkspace({
           {selectedAgent ? (
             <>
               {/* Agent header */}
-              <div className="flex-shrink-0 px-6 py-3 flex items-center gap-3" style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
-                <span className="text-xl">{selectedAgent.emoji || '🤖'}</span>
-                <div>
-                  <h2 className="text-sm font-semibold" style={{ color: '#0f172a' }}>{selectedAgent.name}</h2>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full" style={{ background: '#16a34a' }} />
-                    <span className="text-xs" style={{ color: '#475569' }}>{selectedAgent.role}</span>
+              <div className="flex-shrink-0 px-6 py-3 flex items-center gap-3 justify-between" style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{selectedAgent.emoji || '🤖'}</span>
+                  <div>
+                    <h2 className="text-sm font-semibold" style={{ color: '#0f172a' }}>{selectedAgent.name}</h2>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full" style={{ background: '#16a34a' }} />
+                      <span className="text-xs" style={{ color: '#475569' }}>{selectedAgent.role}</span>
+                    </div>
                   </div>
                 </div>
+                {messages.length > 0 && (
+                  <button
+                    onClick={() => setShowClearDialog(true)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fee2e2' }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.background = '#fee2e2';
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.background = '#fef2f2';
+                    }}
+                  >
+                    Clear Chat
+                  </button>
+                )}
               </div>
 
               {/* Messages */}
@@ -485,6 +551,46 @@ export function DashboardWorkspace({
           )}
         </main>
       </div>
+
+      {/* Clear session confirmation dialog */}
+      {showClearDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowClearDialog(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-md mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: '#0f172a' }}>Clear this conversation?</h3>
+            <p className="text-sm mb-6" style={{ color: '#64748b' }}>
+              This will clear all messages from your chat with {selectedAgent?.name}. Messages will be archived and you'll start fresh.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowClearDialog(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ background: '#f1f5f9', color: '#475569' }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = '#e2e8f0';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = '#f1f5f9';
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={clearSession}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ background: '#dc2626', color: '#ffffff' }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = '#b91c1c';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = '#dc2626';
+                }}
+              >
+                Clear Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
