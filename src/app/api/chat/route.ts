@@ -9,7 +9,7 @@ import { eq, sql, and, isNull } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
 import { FREE_MESSAGE_LIMIT, FREE_DAILY_LIMIT, FREE_TIER_PORT, FREE_TIER_TOKEN, MAX_MESSAGE_LENGTH } from '@/lib/constants';
-import { getTeamConfig, getAgentFromTeam, buildAgentSystemPrompt } from '@/lib/teams';
+import { getTeamConfig, getAgentFromTeam } from '@/lib/teams';
 import { trackDailyUsage, checkDailyLimit, checkUserRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
@@ -80,8 +80,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Handle agent-specific chat if agentId provided
-    let agentSystemPrompt: string | undefined;
+    // Phase 1: Route to real agent session instead of prompt switching
     let conversationId: string | undefined;
+    let sessionKey: string = `user-${userId}-agent-${agentId || 'default'}`;
     
     if (agentId) {
       const templateName = user?.teamTemplate || 'lifeos';
@@ -103,8 +104,8 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Build agent-specific system prompt
-      agentSystemPrompt = buildAgentSystemPrompt(agent, teamConfig, user?.name || undefined);
+      // Use agent-specific session key (routes to agent's workspace)
+      sessionKey = `agent:${agentId}:main`;
 
       // Find or create agent conversation
       let conversation = await db.query.conversations.findFirst({
@@ -220,18 +221,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract bot settings if provided
+    // Phase 1: Remove system prompt injection - agents have SOUL.md instead
     const botSettings = settings ? {
       botName: settings.botName || 'Assistant',
       personality: settings.personality || 'helpful and friendly',
-      customInstructions: agentSystemPrompt || settings.customInstructions || '',
+      customInstructions: settings.customInstructions || '',
       communicationStyle: settings.communicationStyle || 'balanced',
       responseLength: settings.responseLength || 'balanced',
-    } : agentSystemPrompt ? {
-      botName: 'Assistant',
-      personality: 'helpful and friendly',
-      customInstructions: agentSystemPrompt,
-      communicationStyle: 'balanced',
-      responseLength: 'balanced',
     } : undefined;
 
     // Build system prompt for routing classification
@@ -267,14 +263,14 @@ export async function POST(req: NextRequest) {
       messageLength: sanitizedMessage.length,
     });
 
-    // Generate a stable session key per user+agent so OpenClaw maintains conversation history.
-    // Without this, each message creates a new session and the agent has no memory of prior messages.
-    const stableSessionKey = context || `user-${userId}-agent-${agentId || 'default'}`;
+    // Phase 1: Use agent-specific session key for routing
+    // Format: agent:<agentId>:main routes to agent's isolated workspace
+    const finalSessionKey = context || sessionKey;
 
     const result = await containerApi.chat(
       targetPort,
       sanitizedMessage,
-      stableSessionKey,
+      finalSessionKey,
       {
         ...botSettings,
         model: routing.model,

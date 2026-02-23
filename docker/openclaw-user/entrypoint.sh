@@ -2,6 +2,29 @@
 set -e
 mkdir -p /home/user/.openclaw /home/user/clawd
 
+# Check for team provisioning (Phase 1: AI Teams Native Agents)
+if [ -f /home/user/clawd/.team-config ]; then
+  echo "📋 Team configuration detected"
+  
+  # Read team config
+  TEAM_TEMPLATE=$(cat /home/user/clawd/.team-config | jq -r '.template // "lifeos"')
+  DEFAULT_AGENT=$(cat /home/user/clawd/.team-config | jq -r '.defaultAgent // "main"')
+  
+  echo "   Template: $TEAM_TEMPLATE"
+  echo "   Default agent: $DEFAULT_AGENT"
+  
+  # Set agent workspace
+  export OPENCLAW_AGENT_ID="$DEFAULT_AGENT"
+  export OPENCLAW_WORKSPACE="/home/user/clawd/workspace-${DEFAULT_AGENT}"
+  
+  echo "   Workspace: $OPENCLAW_WORKSPACE"
+else
+  echo "📋 Legacy single-agent mode (no team config)"
+  # Legacy mode: use main workspace
+  export OPENCLAW_WORKSPACE="/home/user/clawd"
+  export OPENCLAW_AGENT_ID="main"
+fi
+
 # Generate gateway token if not provided
 [ -z "$GATEWAY_TOKEN" ] && GATEWAY_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d "/+=" | head -c 32)
 export GATEWAY_TOKEN

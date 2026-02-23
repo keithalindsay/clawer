@@ -78,6 +78,9 @@ export const users = pgTable('users', {
   /** Selected AI team template */
   teamTemplate: text('team_template').default('lifeos'),
   
+  /** Default/active agent ID for team (Phase 1: single agent) */
+  defaultAgentId: text('default_agent_id'),
+  
   /** WhatsApp connected status */
   whatsappConnected: integer('whatsapp_connected').default(0),
   
