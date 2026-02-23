@@ -787,6 +787,7 @@ const server = http.createServer(async (req, res) => {
       
     } else if (path === '/api/sessions/history' && req.method === 'POST') {
       // POST /api/sessions/history — Get session history from OpenClaw
+      const sessionsDir = '/home/user/.openclaw/agents/main/sessions';
       const chunks = [];
       req.on('data', chunk => chunks.push(chunk));
       await new Promise(resolve => req.on('end', resolve));
