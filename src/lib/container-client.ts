@@ -457,7 +457,16 @@ export async function listCrons(userId: string): Promise<{ crons: OpenClawCron[]
     try {
       const parsed = JSON.parse(jsonStr);
       // Handle both array format and {jobs: [...]} format
-      crons = Array.isArray(parsed) ? parsed : (parsed.jobs || []);
+      const rawJobs = Array.isArray(parsed) ? parsed : (parsed.jobs || []);
+      // Normalize nested OpenClaw cron format to flat format
+      crons = rawJobs.map((job: any) => ({
+        id: job.id || '',
+        schedule: typeof job.schedule === 'string' ? job.schedule : (job.schedule?.expr || job.schedule?.cron || ''),
+        command: typeof job.payload === 'string' ? job.payload : (job.payload?.message || job.command || job.name || ''),
+        enabled: job.enabled !== false,
+        lastRun: job.state?.lastRunAtMs ? new Date(job.state.lastRunAtMs).toISOString() : undefined,
+        nextRun: job.state?.nextRunAtMs ? new Date(job.state.nextRunAtMs).toISOString() : undefined,
+      }));
     } catch (parseError: any) {
       console.error('[listCrons] JSON parse failed:', parseError.message);
       return { crons: [], error: `Failed to parse cron list: ${parseError.message}` };
