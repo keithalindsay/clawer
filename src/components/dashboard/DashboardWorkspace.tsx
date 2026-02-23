@@ -122,7 +122,8 @@ export function DashboardWorkspace({
     if (!selectedAgent || historyLoaded[selectedAgent.id]) return;
 
     setHistoryLoading(true);
-    fetch(`/api/messages?agentId=${encodeURIComponent(selectedAgent.id)}`)
+    // ✅ CHANGED: Read from OpenClaw sessions instead of DB
+    fetch(`/api/chat/history?agentId=${encodeURIComponent(selectedAgent.id)}`)
       .then(res => res.json())
       .then(data => {
         const loaded: Message[] = (data.messages || []).map((m: { role: 'user' | 'assistant'; content: string; timestamp: string }) => ({

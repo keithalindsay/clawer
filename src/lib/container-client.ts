@@ -237,6 +237,67 @@ export const containerApi = {
     const token = await getGatewayToken(port);
     return containerRequest<{ members: unknown[] }>(port, '/api/team-status', {}, token || undefined);
   },
+
+  /**
+   * POST /api/sessions/history
+   * Get session history from OpenClaw
+   * Response: { sessionKey, messages, totalMessages, hasMore, metadata }
+   */
+  getSessionHistory: async (
+    port: number,
+    sessionKey: string,
+    options?: { limit?: number; offset?: number }
+  ) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{
+      sessionKey: string;
+      messages: Array<{
+        role: 'user' | 'assistant' | 'system' | 'tool';
+        content: string;
+        timestamp: string;
+      }>;
+      totalMessages: number;
+      hasMore: boolean;
+      metadata?: {
+        createdAt: string;
+        updatedAt: string;
+        compactionCount?: number;
+        tokenEstimate?: number;
+      };
+    }>(
+      port,
+      '/api/sessions/history',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionKey,
+          limit: options?.limit || 50,
+          offset: options?.offset || 0,
+        }),
+      },
+      token || undefined
+    );
+  },
+
+  /**
+   * GET /api/sessions
+   * List user's sessions from OpenClaw
+   * Response: { sessions }
+   */
+  getSessions: async (port: number) => {
+    const token = await getGatewayToken(port);
+    return containerRequest<{
+      sessions: Array<{
+        key: string;
+        id: string;
+        messageCount: number;
+        tokenEstimate: number;
+        createdAt: string;
+        updatedAt: string;
+        compactionCount?: number;
+      }>;
+    }>(port, '/api/sessions', {}, token || undefined);
+  },
 };
 
 

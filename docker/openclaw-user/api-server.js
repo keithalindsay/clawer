@@ -785,6 +785,74 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: e.message }));
       }
       
+    } else if (path === '/api/sessions/history' && req.method === 'POST') {
+      // POST /api/sessions/history — Get session history from OpenClaw
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      await new Promise(resolve => req.on('end', resolve));
+      const body = Buffer.concat(chunks).toString();
+      const { sessionKey, limit = 50, offset = 0 } = JSON.parse(body || '{}');
+      
+      if (!sessionKey) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'sessionKey required' }));
+        return;
+      }
+      
+      try {
+        // Call gateway sessions.history
+        const historyResult = await gatewayRequest('sessions.history', {
+          key: sessionKey,
+          limit,
+          offset,
+        });
+        
+        if (historyResult.ok && historyResult.payload) {
+          res.writeHead(200);
+          res.end(JSON.stringify({
+            sessionKey,
+            messages: historyResult.payload.history || [],
+            totalMessages: historyResult.payload.totalMessages || 0,
+            hasMore: historyResult.payload.hasMore || false,
+            metadata: historyResult.payload.metadata || {},
+          }));
+        } else {
+          res.writeHead(200);
+          res.end(JSON.stringify({
+            sessionKey,
+            messages: [],
+            totalMessages: 0,
+            hasMore: false,
+          }));
+        }
+      } catch (e) {
+        console.error('[api] sessions.history error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
+    } else if (path === '/api/sessions' && req.method === 'GET') {
+      // GET /api/sessions — List user's sessions from OpenClaw
+      try {
+        const sessionsResult = await gatewayRequest('sessions.list', {
+          activeMinutes: 10080, // 7 days
+        });
+        
+        if (sessionsResult.ok && sessionsResult.payload) {
+          res.writeHead(200);
+          res.end(JSON.stringify({
+            sessions: sessionsResult.payload.sessions || [],
+          }));
+        } else {
+          res.writeHead(200);
+          res.end(JSON.stringify({ sessions: [] }));
+        }
+      } catch (e) {
+        console.error('[api] sessions.list error:', e.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      
     } else if (path === '/api/activity' && req.method === 'GET') {
       // GET /api/activity?since=ISO&limit=N — Command Center activity feed
       const urlObj = new URL(req.url, `http://localhost`);

@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { bots } from '@/lib/db/schema/bots';
 import { conversations } from '@/lib/db/schema/conversations';
-import { messages } from '@/lib/db/schema/messages';
+// ✅ REMOVED: messages import - no longer writing to DB
 import { eq, sql, and, isNull } from 'drizzle-orm';
 import { containerApi } from '@/lib/container-client';
 import { routeRequest } from '@/lib/router';
@@ -292,16 +292,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Persist both messages to the DB for history
+    // ✅ NO MORE MESSAGE INSERTS — OpenClaw sessions are the single source of truth
+    // Messages are already stored in OpenClaw's session via the chat call above
+
+    // Update conversation metadata if this is an agent conversation
     if (conversationId) {
       try {
-        await db.insert(messages).values([
-          { conversationId, role: 'user', content: sanitizedMessage },
-          { conversationId, role: 'assistant', content: result.data?.content || '' },
-        ]);
-      } catch (saveErr) {
-        // Non-fatal: log but don't fail the response
-        console.error('[chat] Failed to save messages:', saveErr);
+        await db
+          .update(conversations)
+          .set({
+            updatedAt: new Date(),
+            lastMessageAt: new Date(),
+          })
+          .where(eq(conversations.id, conversationId));
+      } catch (updateErr) {
+        console.error('[chat] Failed to update conversation metadata:', updateErr);
       }
     }
 
