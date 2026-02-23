@@ -267,15 +267,31 @@ export function DashboardWorkspace({
     }
 
     try {
+      // Delete messages from DB
       const res = await fetch(`/api/messages?conversationId=${encodeURIComponent(conversationId)}`, {
         method: 'DELETE',
       });
       
+      // Also reset the OpenClaw session so agent reloads workspace files (AGENTS.md, etc.)
+      try {
+        await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: '/new',
+            agentId: selectedAgent.id,
+          }),
+        });
+      } catch (e) {
+        console.warn('Failed to reset OpenClaw session:', e);
+      }
+
       if (res.ok) {
         // Clear local state
         setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
         setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: false }));
-        // Keep conversationId for future messages
+        // Reset conversation ID so next message starts fresh
+        setConversationIds(prev => ({ ...prev, [selectedAgent.id]: undefined }));
       }
     } catch (error) {
       console.error('Failed to clear session:', error);
