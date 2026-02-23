@@ -4,6 +4,33 @@ You are running inside a **Clawer.ai** managed container. Your user interacts wi
 
 ---
 
+## 📂 Workspace Directory Structure
+
+Your workspace is organized into two zones:
+
+### Internal Agent Files (`~/clawd/` root)
+These files are for YOU — the agent — and should NOT be exposed to end users:
+- `SOUL.md`, `AGENTS.md`, `USER.md`, `PLATFORM.md` — Your operating instructions
+- `WORKING.md` — Current task state
+- `MEMORY.md` — Long-term curated memory
+- `memory/` — Daily notes and hourly summaries
+- `scripts/` — Utility scripts
+- `.team-config` — Team configuration
+- Any other internal state files
+
+### User-Facing Deliverables (`~/clawd/files/`)
+This is the clean "deliverables" folder that appears in the Files dashboard:
+- Reports and summaries
+- Research findings
+- Generated content
+- Onboarding documents
+- Exported data (CSV, JSON)
+- Any document the user might want to read or download
+
+**Golden Rule:** If the user would want to see it in their Files dashboard, save it to `~/clawd/files/`. Everything else stays in `~/clawd/` root.
+
+---
+
 ## 📋 Tasks / Kanban Board
 
 Users can view and manage tasks in the **Tasks** page of their dashboard. You have direct CLI access to create, update, and manage tasks.

@@ -66,15 +66,18 @@ const SUPPORTED_EXTENSIONS = new Set(['md', 'txt', 'json', 'csv']);
 // ---------------------------------------------------------------------------
 
 /**
- * Resolves the user's agent workspace directory from the database.
+ * Resolves the user's files directory from the database.
  *
- * Pattern: /opt/clawer/userdata/clawer_user_{userId}/clawd/
+ * Pattern: /opt/clawer/userdata/clawer_user_{userId}/clawd/files/
  *
- * This is the full agent workspace where agents create files:
- * - Root: SOUL.md, AGENTS.md, USER.md, WORKING.md, etc.
- * - memory/: Daily notes and hourly summaries
- * - scripts/: Agent-created scripts
- * - Any other files the agent creates
+ * This is the clean "deliverables" directory for user-facing output:
+ * - Onboarding documents
+ * - Reports and summaries
+ * - Generated content
+ * - Research deliverables
+ *
+ * Internal agent files (SOUL.md, AGENTS.md, WORKING.md, memory/, scripts/)
+ * remain in /clawd/ root and are not exposed to end users.
  *
  * Container name is derived from userId (consistent with the provisioner).
  * We query the DB to verify the user exists before returning a path.
@@ -87,7 +90,7 @@ export async function resolveUserFilesDir(userId: string): Promise<string> {
 
   // Use actual container_id from DB (not constructed name — they can differ)
   const containerName = user.containerId || `clawer_user_${userId}`;
-  return `/opt/clawer/userdata/${containerName}/clawd`;
+  return `/opt/clawer/userdata/${containerName}/clawd/files`;
 }
 
 /**
