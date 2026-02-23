@@ -11,6 +11,7 @@ import { TeamStatusPanel } from '@/components/dashboard/TeamStatusPanel';
 import { MorningBriefingCard } from '@/components/dashboard/MorningBriefingCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { GettingStartedCard } from '@/components/dashboard/GettingStartedCard';
+import { SecurityBadge } from '@/components/dashboard/SecurityBadge';
 import { trackEvent } from '@/lib/analytics';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { FREE_DAILY_LIMIT, PAID_DAILY_LIMIT } from '@/lib/constants';
@@ -118,6 +119,9 @@ export function DashboardHome({
 
           {/* RIGHT — Team status + Morning briefing + Quick actions (2/5 width on xl) */}
           <div className="xl:col-span-2 flex flex-col gap-5">
+
+            {/* Security badge */}
+            <SecurityBadge />
 
             {/* Team status */}
             <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">

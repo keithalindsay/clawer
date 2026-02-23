@@ -17,7 +17,7 @@ export const orchestratorAlerts = pgTable('orchestrator_alerts', {
   /** Shell script to execute for this check */
   checkScript: text('check_script').notNull(),
   
-  /** Cron schedule expression (e.g., "*/5 * * * *") */
+  /** Cron schedule expression (e.g., every 5 minutes) */
   schedule: text('schedule').notNull(),
   
   /** Action type: notify | auto | approve */

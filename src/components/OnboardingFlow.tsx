@@ -12,6 +12,7 @@ import {
   type OnboardingTemplate,
   type Question,
 } from "@/lib/onboarding-prompts";
+import { SecuritySetup } from "@/components/onboarding/SecuritySetup";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -76,7 +77,7 @@ const CHANNELS = [
   },
 ];
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const slideVariants = {
   enter: (direction: number) => ({ x: direction > 0 ? 80 : -80, opacity: 0 }),
@@ -252,7 +253,9 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   // Step 4 state
   const [preferredChannel, setPreferredChannel] = useState("web");
 
-  // Step 5 state
+  // Step 5 state (security setup - no state needed, handled internally)
+
+  // Step 6 state
   const [generationProgress, setGenerationProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState(PROGRESS_MESSAGES[0]);
   const [deliverable, setDeliverable] = useState<DeliverableResult | null>(null);
@@ -283,9 +286,9 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
     return answered >= 2;
   };
 
-  // Start generation when entering step 5
+  // Start generation when entering step 6
   useEffect(() => {
-    if (step === 5 && !isGenerating && !deliverable) {
+    if (step === 6 && !isGenerating && !deliverable) {
       startGeneration();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -667,14 +670,24 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
                     onClick={() => goTo(5)}
                     className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-medium transition-colors"
                   >
-                    Generate My {currentTemplate?.deliverableTitle?.split(" ").slice(-2).join(" ") || "Deliverable"} →
+                    Continue →
                   </button>
                 </div>
               </div>
             )}
 
-            {/* ─── Step 5: First Deliverable ─── */}
+            {/* ─── Step 5: Security Setup ─── */}
             {step === 5 && (
+              <div>
+                <SecuritySetup
+                  onComplete={() => goTo(6)}
+                  onSkip={() => goTo(6)}
+                />
+              </div>
+            )}
+
+            {/* ─── Step 6: First Deliverable ─── */}
+            {step === 6 && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">
                   🎉 Your agent is working...
