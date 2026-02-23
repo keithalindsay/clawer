@@ -145,5 +145,5 @@ node /usr/local/bin/api-server.js &
 API_PID=$!
 trap "kill $API_PID 2>/dev/null" EXIT
 
-# Start gateway
-exec openclaw gateway
+# Start gateway (foreground mode for containers)
+exec openclaw gateway run
