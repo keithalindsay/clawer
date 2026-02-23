@@ -32,6 +32,9 @@ export default async function AdminPage() {
             <Link href="/admin/users" className="text-gray-400 hover:text-white transition">
               Users
             </Link>
+            <Link href="/admin/health" className="text-gray-400 hover:text-white transition">
+              Health
+            </Link>
             <Link href="/admin/feedback" className="text-gray-400 hover:text-white transition">
               Feedback
             </Link>
