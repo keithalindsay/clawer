@@ -100,7 +100,7 @@ export function SkillsLibrary({ initialSkills }: SkillsLibraryProps) {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1">
               <Link
                 href="/dashboard"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-sm mb-2 inline-block"
@@ -108,9 +108,18 @@ export function SkillsLibrary({ initialSkills }: SkillsLibraryProps) {
                 ← Back to Dashboard
               </Link>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Skills Library</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Extend your agent's capabilities • {enabledCount} enabled
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-3">
+                Plugins that give your AI new abilities • {enabledCount} enabled
               </p>
+              
+              {/* Inline help */}
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-lg p-3 max-w-2xl">
+                <p className="text-xs text-orange-900 dark:text-orange-200 leading-relaxed">
+                  <strong>💡 What are skills?</strong> Skills are like apps for your AI — 
+                  they let your assistant search the web, check the weather, manage files, 
+                  or connect to other services. Enable the ones you need!
+                </p>
+              </div>
             </div>
           </div>
 

@@ -181,12 +181,23 @@ export function HooksPanel() {
       {/* Hooks list */}
       {hooks.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-          <div className="text-4xl mb-3">🪝</div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-1">No hooks configured</h3>
-          <p className="text-xs text-gray-400 max-w-sm mx-auto">
-            Hooks allow you to trigger actions on specific events.
-            Configure hooks in your container's openclaw.json.
+          <div className="text-5xl mb-3">🪝</div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">No hooks yet</h3>
+          <p className="text-sm text-gray-600 max-w-md mx-auto mb-4 leading-relaxed">
+            Hooks let your AI automatically react to events — like responding to messages 
+            or running tasks when files change.
           </p>
+          <p className="text-xs text-gray-500 max-w-sm mx-auto mb-4">
+            Think of them as "if this, then that" rules for your assistant.
+          </p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-w-lg mx-auto text-left">
+            <p className="text-xs font-medium text-gray-700 mb-2">💡 To add hooks:</p>
+            <ol className="text-xs text-gray-600 space-y-1 ml-4 list-decimal">
+              <li>Configure hooks in your agent's workspace</li>
+              <li>Edit the <code className="bg-gray-200 px-1 rounded font-mono">openclaw.json</code> file</li>
+              <li>Define event triggers and actions</li>
+            </ol>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

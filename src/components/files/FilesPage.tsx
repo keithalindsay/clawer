@@ -90,8 +90,11 @@ export function FilesPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">📂 Agent Files</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Files your AI agents have created and saved to your workspace.
+            <p className="text-sm text-gray-600 mt-1 mb-2">
+              Your AI's workspace — browse and edit files your assistant has created
+            </p>
+            <p className="text-xs text-gray-500">
+              When your AI researches topics, writes reports, or saves notes, they appear here automatically.
             </p>
           </div>
           <button

@@ -628,7 +628,10 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Task Board</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-gray-600 mt-1 mb-1">
+              Organize and delegate work to your AI agents
+            </p>
+            <p className="text-xs text-gray-500">
               {taskList.length} task{taskList.length !== 1 ? 's' : ''} total
               {executingIds.size > 0 && (
                 <span className="ml-2 text-blue-600">
@@ -708,7 +711,9 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
                   <div className="flex-1 p-3 space-y-3 overflow-y-auto" style={{ maxHeight: '70vh' }}>
                     {colTasks.length === 0 && (
                       <div className="text-center py-8 text-xs text-gray-400">
-                        {col.id === 'backlog' ? 'Add tasks to get started' : 'No tasks here'}
+                        {col.id === 'backlog' 
+                          ? 'Create tasks to delegate work to your AI agents' 
+                          : 'No tasks here'}
                       </div>
                     )}
                     {colTasks.map(task => (
@@ -742,14 +747,20 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             {sortedAll.length === 0 ? (
               <div className="py-16 text-center">
-                <p className="text-3xl mb-3">📋</p>
-                <p className="text-sm font-medium text-gray-700">No tasks yet</p>
-                <p className="text-xs text-gray-500 mt-1">Create your first task to get started</p>
+                <p className="text-5xl mb-4">📋</p>
+                <p className="text-lg font-semibold text-gray-700 mb-2">No tasks yet</p>
+                <p className="text-sm text-gray-600 max-w-md mx-auto mb-1 leading-relaxed">
+                  Tasks let you organize and track work for your AI agents. Assign tasks to specific 
+                  team members and watch them get completed automatically.
+                </p>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto mb-6">
+                  Think of it as a to-do list that your AI can actually <em>do</em>.
+                </p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="mt-4 px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-full transition-colors"
+                  className="mt-2 px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-full transition-colors"
                 >
-                  + Add Task
+                  + Create Your First Task
                 </button>
               </div>
             ) : (

@@ -153,8 +153,11 @@ export default async function MemoryPage() {
         {/* Hero */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Your Agent's Memory</h1>
-          <p className="text-gray-500 mt-1">
-            Everything your agent has learned about {userName}.
+          <p className="text-gray-600 mt-1 mb-2">
+            How your assistant remembers things between conversations
+          </p>
+          <p className="text-sm text-gray-500">
+            Everything your agent has learned about {userName} — preferences, past decisions, and important context.
           </p>
         </div>
 
