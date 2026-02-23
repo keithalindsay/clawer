@@ -100,21 +100,21 @@ export function SystemHealthPill() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">Container</span>
                 <span className={`font-medium capitalize ${
-                  health.details.containerStatus === 'running' ? 'text-green-600' :
-                  health.details.containerStatus === 'provisioning' ? 'text-yellow-600' : 'text-red-600'
+                  health?.details?.containerStatus === 'running' ? 'text-green-600' :
+                  health?.details?.containerStatus === 'provisioning' ? 'text-yellow-600' : 'text-red-600'
                 }`}>
-                  {health.details.containerStatus || 'unknown'}
+                  {health?.details?.containerStatus || 'unknown'}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">Model</span>
-                <span className={`font-medium ${health.details.modelConnected ? 'text-green-600' : 'text-red-600'}`}>
-                  {health.details.modelConnected ? 'Connected' : 'Disconnected'}
+                <span className={`font-medium ${health?.details?.modelConnected ? 'text-green-600' : 'text-red-600'}`}>
+                  {health?.details?.modelConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">Last sync</span>
-                <span className="text-gray-700">{fmt(health.details.lastSync)}</span>
+                <span className="text-gray-700">{fmt(health?.details?.lastSync)}</span>
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-100">
