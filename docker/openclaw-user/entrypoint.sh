@@ -94,7 +94,7 @@ fi
 cat > /home/user/.openclaw/openclaw.json << EOF
 {
   "models": {"providers": {${PROVIDERS}}},
-  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd", "compaction": {"mode": "default", "maxHistoryShare": 0.1, "memoryFlush": {"enabled": true}}${MEMORY_SEARCH_CONFIG}}},
+  "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd", "contextPruning": {"mode": "cache-ttl", "ttl": "6h", "keepLastAssistants": 5}, "compaction": {"mode": "default", "maxHistoryShare": 0.1, "reserveTokensFloor": 20000, "memoryFlush": {"enabled": true, "softThresholdTokens": 40000}}${MEMORY_SEARCH_CONFIG}}},
   "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}},
   "tools": {"exec": {"security": "full", "ask": "off"}, "web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}}
 }
