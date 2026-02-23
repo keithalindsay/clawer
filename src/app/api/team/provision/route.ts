@@ -3,6 +3,9 @@
  * 
  * POST /api/team/provision
  * Provisions a team for a user - creates agent workspace, SOUL.md, and session
+ * 
+ * Query params:
+ * - force=true: Re-provision even if team already exists
  */
 
 import { auth } from '@clerk/nextjs/server';
@@ -10,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
-import { provisionFullTeam as provisionTeam } from '@/lib/container/provision-team';
+import { provisionFullTeam, hasTeamProvisioned, getProvisionedAgents } from '@/lib/container/provision-team';
 import { getTeamConfig } from '@/lib/teams';
 
 export async function POST(req: NextRequest) {
@@ -77,42 +80,49 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if team already provisioned
-    const alreadyProvisioned = await hasTeamProvisioned(user.containerId);
-    if (alreadyProvisioned) {
-      return NextResponse.json(
-        {
-          error: 'team_already_provisioned',
-          message: 'Team already provisioned. Contact support to reset.',
-        },
-        { status: 409 }
-      );
+    const containerName = `clawer_user_${userId}`;
+    const force = req.nextUrl.searchParams.get('force') === 'true';
+    const alreadyProvisioned = await hasTeamProvisioned(containerName);
+    
+    if (alreadyProvisioned && !force) {
+      // Return existing agents instead of error
+      const agents = await getProvisionedAgents(containerName);
+      return NextResponse.json({
+        success: true,
+        teamTemplate: templateName,
+        agents: agents.filter(a => a !== 'main'),
+        message: 'Team already provisioned',
+        alreadyProvisioned: true,
+      });
     }
 
     // Provision the team
-    console.log('[team-provision] Provisioning team:', { userId, templateName, defaultAgentId });
+    console.log('[team-provision] Provisioning team:', { userId, templateName, defaultAgentId, force });
     
-    const result = await provisionTeam({
-      userId,
-      containerName: user.containerId,
-      templateName,
-      defaultAgentId,
-    });
-
-    if (!result.success) {
-      console.error('[team-provision] Failed:', result.error);
+    try {
+      await provisionFullTeam({
+        userId,
+        containerName,
+        templateName,
+        defaultAgentId,
+      });
+    } catch (error) {
+      console.error('[PROVISION ERROR] Failed to provision team:', error);
       return NextResponse.json(
-        { error: result.error || 'Provisioning failed' },
+        { error: error instanceof Error ? error.message : 'Provisioning failed' },
         { status: 500 }
       );
     }
 
-    console.log('[team-provision] Success:', { agentId: result.agentId });
+    // Get provisioned agents
+    const agents = await getProvisionedAgents(containerName);
+    console.log('[team-provision] Success:', { agents });
 
     return NextResponse.json({
       success: true,
       teamTemplate: templateName,
-      defaultAgent: result.agentId,
-      message: 'Team provisioned successfully',
+      agents: agents.filter(a => a !== 'main'),
+      message: force ? 'Team re-provisioned successfully' : 'Team provisioned successfully',
     });
 
   } catch (error: any) {
@@ -152,12 +162,15 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const provisioned = await hasTeamProvisioned(user.containerId);
+    const containerName = `clawer_user_${userId}`;
+    const provisioned = await hasTeamProvisioned(containerName);
+    const agents = provisioned ? await getProvisionedAgents(containerName) : [];
 
     return NextResponse.json({
       provisioned,
-      teamTemplate: user.teamTemplate || null,
+      teamTemplate: user.teamTemplate || 'lifeos',
       defaultAgent: user.defaultAgentId || null,
+      agents: agents.filter(a => a !== 'main'),
     });
 
   } catch (error: any) {
