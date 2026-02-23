@@ -44,19 +44,15 @@ fi
 # Override primary model if explicitly set
 [ -n "$PRIMARY_MODEL" ] && PRIMARY="$PRIMARY_MODEL"
 
-# ─── Shared Services (Ollama) ──────────────────────────────────────────────
-# Ollama runs as a shared container accessible via Docker DNS on clawer_shared network
+# Ollama provider
 OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
 HEARTBEAT_MODEL="${HEARTBEAT_MODEL:-ollama/qwen2.5:3b}"
 
-# Add Ollama as a provider for heartbeats and local inference
 OLLAMA_PROVIDER="\"ollama\":{\"baseUrl\":\"${OLLAMA_BASE_URL}\",\"api\":\"ollama\",\"models\":[{\"id\":\"qwen2.5:3b\",\"name\":\"Qwen2.5 3B (local)\",\"reasoning\":false,\"input\":[\"text\"],\"cost\":{\"input\":0,\"output\":0},\"contextWindow\":32768,\"maxTokens\":4096}]}"
 [ -n "$PROVIDERS" ] && PROVIDERS="${PROVIDERS},"
 PROVIDERS="${PROVIDERS}${OLLAMA_PROVIDER}"
 
-# ─── Memory search config (embeddings) ────────────────────────────────────
-# Priority: OpenAI (best quality) > Gemini > Ollama local (free) > disabled
-# Must be built before env vars are cleared
+# Memory search config
 MEMORY_SEARCH_CONFIG=""
 if [ -n "$OPENAI_KEY" ]; then
   MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"openai\",\"remote\":{\"apiKey\":\"${OPENAI_KEY}\"}}"
@@ -65,21 +61,19 @@ elif [ -n "$GEMINI_KEY" ]; then
   MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"gemini\",\"remote\":{\"apiKey\":\"${GEMINI_KEY}\"}}"
   echo "Memory search configured with provider: gemini"
 elif [ -n "$OLLAMA_BASE_URL" ]; then
-  # Use Ollama nomic-embed-text via OpenAI-compatible API
   MEMORY_SEARCH_CONFIG=", \"memorySearch\":{\"enabled\":true,\"provider\":\"openai\",\"model\":\"nomic-embed-text\",\"remote\":{\"baseUrl\":\"${OLLAMA_BASE_URL}/v1\",\"apiKey\":\"not-needed\"}}"
   echo "Memory search configured with provider: ollama (via OpenAI-compatible API)"
 else
   echo "WARNING: No embedding provider available — memory_search will be disabled"
 fi
 
-# Generate config file
+# Generate config file WITHOUT channels section (FIX for v2026.2.22)
 cat > /home/user/.openclaw/openclaw.json << EOF
 {
   "models": {"providers": {${PROVIDERS}}},
   "agents": {"defaults": {"model": {"primary": "${PRIMARY}", "fallbacks": [${FALLBACKS}]}, "workspace": "/home/user/clawd", "compaction": {"mode": "default", "maxHistoryShare": 0.1, "memoryFlush": {"enabled": true}}${MEMORY_SEARCH_CONFIG}}},
   "gateway": {"port": 8080, "mode": "local", "auth": {"token": "${GATEWAY_TOKEN}"}},
-  "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}},
-  "channels": {"whatsapp": {"dmPolicy": "open", "allowFrom": ["*"], "configWrites": false}, "telegram": {"dmPolicy": "open", "allowFrom": ["*"], "configWrites": false}}
+  "tools": {"web": {"search": {"enabled": true, "apiKey": "searxng-local-proxy"}, "fetch": {"enabled": true}}}
 }
 EOF
 
@@ -88,11 +82,7 @@ echo "OpenClaw config created. Primary model: ${PRIMARY}"
 # Clear sensitive env vars
 unset OPENAI_API_KEY GEMINI_API_KEY MINIMAX_API_KEY
 
-# Install default workspace files (copy-on-missing — never overwrites existing user files)
-# Runs every boot; safe because we check before copying each file.
-# AGENTS.md is now installed from defaults (stock OpenClaw instructions with memory management).
-# BRAIN.md is installed from defaults (active state dashboard — agent reads every session).
-# Team-specific content goes in team/AGENTS.md — see below.
+# Install default workspace files
 DEFAULTS_DIR="/opt/defaults"
 if [ -d "$DEFAULTS_DIR" ]; then
   for f in "$DEFAULTS_DIR"/*; do
@@ -104,9 +94,7 @@ if [ -d "$DEFAULTS_DIR" ]; then
   done
 fi
 
-# Install team-specific content to team/AGENTS.md (NOT the root AGENTS.md)
-# Root AGENTS.md stays as stock OpenClaw with memory/session instructions.
-# The stock AGENTS.md references team/AGENTS.md automatically.
+# Install team template
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
 TEAM_DIR="/opt/clawer-docker/teams/${TEAM_TEMPLATE}"
 mkdir -p /home/user/clawd/team
@@ -116,75 +104,22 @@ else
   echo "team/AGENTS.md already exists, skipping template install"
 fi
 
-# Ensure memory directory exists
 mkdir -p /home/user/clawd/memory
 
-# ─── Activate User Skills ─────────────────────────────────────────────────
-# Read skills.json and symlink enabled skills from /opt/skills/ to active directory
-SKILLS_CONFIG="/home/user/.openclaw/skills.json"
-SKILLS_DIR="/opt/skills"
-ACTIVE_SKILLS_DIR="/home/user/.openclaw/skills"
-
-# Create active skills directory
-mkdir -p "$ACTIVE_SKILLS_DIR"
-
-if [ -f "$SKILLS_CONFIG" ]; then
-  echo "Loading user skill preferences..."
-  
-  # Extract enabled skills (requires jq - should be in base image)
-  if command -v jq >/dev/null 2>&1; then
-    ENABLED_SKILLS=$(jq -r '.enabled[]' "$SKILLS_CONFIG" 2>/dev/null || echo "")
-    
-    # Clear old symlinks
-    rm -f "$ACTIVE_SKILLS_DIR"/*
-    
-    # Symlink each enabled skill
-    for skill in $ENABLED_SKILLS; do
-      SKILL_PATH="$SKILLS_DIR/$skill"
-      ACTIVE_PATH="$ACTIVE_SKILLS_DIR/$skill"
-      
-      if [ -d "$SKILL_PATH" ]; then
-        ln -sf "$SKILL_PATH" "$ACTIVE_PATH"
-        echo "  ✓ Activated skill: $skill"
-      else
-        echo "  ⚠ Skill not found in image: $skill"
-      fi
-    done
-  else
-    echo "  ⚠ jq not installed, skipping skill activation"
-  fi
-else
-  echo "No custom skill preferences found"
-  # Create default skills.json (empty enabled list for now)
-  cat > "$SKILLS_CONFIG" <<EOF
-{
-  "version": "1.0",
-  "enabled": [],
-  "metadata": {
-    "last_updated": "$(date -Iseconds)",
-    "synced_from_dashboard": false
-  }
-}
-EOF
-  echo "Created default skills.json"
-fi
-
-# Patch Brave search URL to use local SearXNG proxy
-# Default uses Docker DNS name (works when container is on clawer_shared network)
-# Override with SEARXNG_PROXY_URL env var for containers not on the shared network
+# Patch Brave search URL
 SEARXNG_PROXY_URL="${SEARXNG_PROXY_URL:-http://searxng-proxy:8889/res/v1/web/search}"
 for f in $(grep -rl "api.search.brave.com" /usr/local/lib/node_modules/openclaw/dist/ 2>/dev/null); do
     sed -i "s|https://api.search.brave.com/res/v1/web/search|${SEARXNG_PROXY_URL}|g" "$f"
 done
 export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
 
-# Initialize ClawSec skills if available
+# Initialize ClawSec
 [ -x /usr/local/bin/init_clawsec.sh ] && /usr/local/bin/init_clawsec.sh
 
-# Start API server in background
+# Start API server
 node /usr/local/bin/api-server.js &
 API_PID=$!
 trap "kill $API_PID 2>/dev/null" EXIT
 
-# Start gateway (foreground)
+# Start gateway
 exec openclaw gateway
