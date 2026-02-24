@@ -6,14 +6,15 @@ import { users } from '@/lib/db/schema/users';
 import { containerApi } from '@/lib/container-client';
 
 /**
- * Find the active OpenClaw session for a given agent and channel
+ * Find the active OpenClaw session for a given agent
  * 
- * OpenClaw transforms session keys to: agent:main:{channel}-{timestamp}
+ * OpenClaw transforms session keys to: agent:main:web-chat-{timestamp}
  * e.g., "agent:main:web-chat-1771880431560"
  * 
  * Instead of deriving the key, we list all sessions and find the right one.
+ * Returns the most recently updated session (sorted by updatedAt descending).
  */
-async function findSessionKey(port: number, agentId: string, channel: string = 'webchat'): Promise<string | null> {
+async function findSessionKey(port: number, agentId: string): Promise<string | null> {
   const sessionsResult = await containerApi.getSessions(port);
   
   if (sessionsResult.error || !sessionsResult.data?.sessions) {
@@ -21,15 +22,20 @@ async function findSessionKey(port: number, agentId: string, channel: string = '
     return null;
   }
 
-  // Find session matching: agent:main:{channel}-*
-  // The agentId parameter tells us which agent, but OpenClaw stores under "main"
-  const targetPrefix = `agent:main:${channel}-`;
-  
-  for (const session of sessionsResult.data.sessions) {
-    if (session.key.startsWith(targetPrefix)) {
-      console.log(`[history] Found session: ${session.key} for agent ${agentId}`);
-      return session.key;
-    }
+  // Find sessions matching: agent:main:web-chat-* (OpenClaw uses hyphenated "web-chat")
+  // Sort by updatedAt descending to get most recent
+  const webChatSessions = sessionsResult.data.sessions
+    .filter(s => s.key.startsWith('agent:main:web-chat-'))
+    .sort((a, b) => {
+      // Handle updatedAt as either ISO string or unix ms
+      const aTime = typeof a.updatedAt === 'string' ? new Date(a.updatedAt).getTime() : (a.updatedAt || 0);
+      const bTime = typeof b.updatedAt === 'string' ? new Date(b.updatedAt).getTime() : (b.updatedAt || 0);
+      return bTime - aTime;
+    });
+
+  if (webChatSessions.length > 0) {
+    console.log(`[history] Found session: ${webChatSessions[0].key} for agent ${agentId}`);
+    return webChatSessions[0].key;
   }
   
   // Also check custom-agent:* pattern for custom agents

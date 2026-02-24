@@ -8,7 +8,7 @@
 const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
-const path = require('path');
+const nodePath = require('path');
 
 const API_PORT = process.env.API_PORT || 8081;
 const GATEWAY_URL = process.env.GATEWAY_URL || 'ws://127.0.0.1:8080';
@@ -802,7 +802,7 @@ const server = http.createServer(async (req, res) => {
       
       try {
         // Read session history directly from JSONL file since gateway doesn't have sessions.history
-        const sessionsFile = path.join(sessionsDir, 'sessions.json');
+        const sessionsFile = nodePath.join(sessionsDir, 'sessions.json');
         let sessionFilePath = null;
         
         if (fs.existsSync(sessionsFile)) {
@@ -815,7 +815,7 @@ const server = http.createServer(async (req, res) => {
         
         // Also try: key = sessionId.jsonl
         if (!sessionFilePath) {
-          const sessionIdJsonl = path.join(sessionsDir, `${sessionKey}.jsonl`);
+          const sessionIdJsonl = nodePath.join(sessionsDir, `${sessionKey}.jsonl`);
           if (fs.existsSync(sessionIdJsonl)) {
             sessionFilePath = sessionIdJsonl;
           }
