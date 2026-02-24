@@ -235,6 +235,204 @@ Look for the transition point: runs go from OK summaries to confused responses.
 
 **Pipeline:** Push to `main` → GitHub Actions → rsync to server → `pnpm install && pnpm build` → PM2 restart
 
+### ⚠️ CRITICAL: Dockerfile Tarball Management
+
+**Problem:** The Dockerfile references a specific OpenClaw tarball (e.g., `openclaw-2026.2.22.tgz`). This file gets **deleted** during `docker system prune`. Rebuilds fail with `ENOENT: no such file or directory, access 'openclaw-*.tgz'`.
+
+**The Version Mismatch Trap:** The Dockerfile in git typically references an older version (e.g., `openclaw-2026.2.18.tgz`) but the server uses a newer version (e.g., `openclaw-2026.2.22.tgz`). After `git pull`, you MUST patch the Dockerfile before building.
+
+**Before every Docker build:**
+```bash
+# 1. Check tarball exists
+ls docker/openclaw-user/openclaw-*.tgz
+
+# 2. If missing, download it
+cd docker/openclaw-user && npm pack openclaw@2026.2.22
+
+# 3. CRITICAL: Fix version mismatch after git pull
+sed -i "s/openclaw-2026.2.18.tgz/openclaw-2026.2.22.tgz/g" docker/openclaw-user/Dockerfile
+
+# 4. Verify Dockerfile matches available tarball
+grep "openclaw-.*\.tgz" docker/openclaw-user/Dockerfile
+ls docker/openclaw-user/openclaw-*.tgz
+# ☝️ These MUST match
+```
+
+**Why this happens:** `docker system prune` removes build cache AND the context directory's temporary files. The tarball is in `.dockerignore` exceptions but still gets cleaned up.
+
+**Long-term fix idea:** Change Dockerfile to `RUN npm install -g openclaw@2026.2.22` instead of `COPY` + `npm install -g` from tarball. Trade-off: slower builds (downloads from npm every time) vs. current fragility.
+
+### Git Conflicts on Server
+
+**Problem:** Deploy subagents sometimes run `git stash` on the server, which causes conflicts on the next `git pull`. Server should **never have local changes** — all changes go through git.
+
+**Before pulling code on server:**
+```bash
+# Discard any local changes (recommended)
+cd /opt/clawer && git checkout -- . && git pull
+
+# OR: Hard reset (nuclear option)
+cd /opt/clawer && git reset --hard origin/main && git pull
+```
+
+**Prevention:** Never manually edit files on the server. If you need to test a change, make it locally and push.
+
+### Full Deploy Checklist
+
+#### For Next.js changes only:
+```bash
+# 1. Local: Push to main
+cd ~/projects/clawer && git push
+
+# 2. Server: Pull and rebuild
+ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer && git checkout -- . && git pull && npm run build && pm2 restart clawer'
+
+# 3. Verify
+ssh root@YOUR_DOCKER_HOST 'pm2 status clawer && pm2 logs clawer --lines 5 --nostream'
+```
+
+#### For Docker/container changes:
+```bash
+# 1. Local: Push to main
+cd ~/projects/clawer && git push
+
+# 2. SSH to server
+ssh root@YOUR_DOCKER_HOST
+
+# 3. Pull code (discard any server-side changes)
+cd /opt/clawer && git checkout -- . && git pull
+
+# 4. Check tarball exists
+ls docker/openclaw-user/openclaw-*.tgz
+
+# 5. If missing, download it
+cd docker/openclaw-user && npm pack openclaw@2026.2.22 && cd ../..
+
+# 6. Fix Dockerfile version mismatch (CRITICAL after git pull)
+sed -i "s/openclaw-2026.2.18.tgz/openclaw-2026.2.22.tgz/g" docker/openclaw-user/Dockerfile
+
+# 7. Verify Dockerfile and tarball match
+grep "openclaw-.*\.tgz" docker/openclaw-user/Dockerfile
+ls docker/openclaw-user/openclaw-*.tgz
+
+# 8. Build new image (increment version number)
+docker build -t clawer-openclaw:v2026.2.32 docker/openclaw-user/
+
+# 9. For EACH container (example: clawer_user_39PgWfJYYrb2T36BqfnRgtwlsfM):
+CONTAINER="clawer_user_39PgWfJYYrb2T36BqfnRgtwlsfM"
+
+# 10. Stop and remove old container
+docker stop $CONTAINER && docker rm $CONTAINER
+
+# 11. Fix volume permissions (container runs as uid 1000)
+chown -R 1000:1000 /opt/clawer/userdata/$CONTAINER/
+
+# 12. Ensure files directory exists
+mkdir -p /opt/clawer/userdata/$CONTAINER/clawd/files
+
+# 13. Recreate container with new image (copy docker run command from provisioner.ts or previous run)
+# Example (adjust env vars, port, volumes as needed):
+docker run -d \
+  --name $CONTAINER \
+  --restart unless-stopped \
+  --read-only \
+  --tmpfs /tmp:rw,noexec,nosuid,size=100m \
+  --cap-drop ALL \
+  --cap-add CHOWN,SETUID,SETGID,DAC_OVERRIDE \
+  --security-opt no-new-privileges \
+  --memory 2g \
+  --pids-limit 256 \
+  -p 127.0.0.1:4010:8081 \
+  -e USER_ID=user_39PgWfJYYrb2T36BqfnRgtwlsfM \
+  -e TEAM_TEMPLATE=lifeos \
+  -e MINIMAX_API_KEY=... \
+  -e OPENAI_API_KEY=... \
+  -e GEMINI_API_KEY=... \
+  -e GATEWAY_TOKEN=... \
+  -v /opt/clawer-docker/entrypoint.sh:/entrypoint.sh:ro \
+  -v /opt/clawer/userdata/$CONTAINER/.openclaw:/home/user/.openclaw \
+  -v /opt/clawer/userdata/$CONTAINER/clawd:/home/user/clawd \
+  --network clawer_shared \
+  --health-cmd 'node -e "fetch(\"http://localhost:8081/health\").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"' \
+  --health-interval 30s \
+  --health-timeout 10s \
+  --health-retries 3 \
+  clawer-openclaw:v2026.2.32
+
+# 14. Wait 45 seconds for gateway warmup
+sleep 45
+
+# 15. Test the container
+curl -s -X POST http://localhost:4010/api/chat \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <GATEWAY_TOKEN>" \
+  -d '{"message":"hello"}' \
+  --max-time 30
+
+# 16. Repeat steps 9-15 for each container
+```
+
+#### After all containers updated:
+```bash
+# Gateway token auto-sync should handle this, but verify:
+/opt/clawer/scripts/sync-gateway-tokens.sh
+
+# Check all containers healthy
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep clawer_
+```
+
+### Current Image Versions
+
+| Version | OpenClaw | Changes | Date |
+|---------|----------|---------|------|
+| `v2026.2.32` | 2026.2.22 | Context pruning, memory flush, resilient entrypoint (mkdir 2>/dev/null) | 2026-02-23 |
+| `v2026.2.19` | 2026.2.19 | memorySearch config fix, base hardening | 2026-02-20 |
+
+**Container security flags (all versions since v2026.2.19):**
+- `--read-only` filesystem (tmpfs for /tmp only)
+- `--cap-drop ALL` + minimal caps (CHOWN, SETUID, SETGID, DAC_OVERRIDE)
+- `--security-opt no-new-privileges`
+- `--memory 2g --pids-limit 256`
+
+### Volume Permission Dance
+
+**CRITICAL:** After ANY container recreation (version update, docker rm, server reboot), you MUST fix volume permissions. Containers run as UID 1000 (`node` user), but volumes may be owned by root or other UIDs.
+
+**Symptoms of permission errors:**
+- Container crash loop with `EACCES: permission denied` in logs
+- Gateway fails to start
+- `openclaw.json` not writable
+
+**Fix (run BEFORE starting container):**
+```bash
+CONTAINER="clawer_user_XXXXX"
+chown -R 1000:1000 /opt/clawer/userdata/$CONTAINER/
+mkdir -p /opt/clawer/userdata/$CONTAINER/clawd/files  # files directory must exist
+```
+
+**Why this happens:** `docker run` creates volume mount points as root. The container's entrypoint tries to write config files but lacks permission.
+
+### Entrypoint Resilience
+
+**Problem:** If the entrypoint.sh crashes during startup (permission errors, missing directories), Docker's restart policy creates an infinite crash loop. Containers become unmanageable.
+
+**Solution:** All `mkdir` commands in entrypoint.sh should be **idempotent and non-fatal**:
+
+```bash
+# Bad (crashes if dir exists or permission denied)
+mkdir /home/user/clawd/files
+
+# Good (succeeds even if dir exists, doesn't crash on permission errors)
+mkdir -p /home/user/clawd/files 2>/dev/null || true
+```
+
+**Current state:** As of v2026.2.32, entrypoint.sh uses the resilient pattern for all directory creation. If you see crash loops with mkdir errors, the image is outdated.
+
+**Entrypoint config regeneration:** The entrypoint **always regenerates** `openclaw.json` on every container start from env vars. This means:
+- ✅ Config changes go in entrypoint.sh or env vars, never inside the container
+- ✅ Changes to entrypoint.sh take effect on next container restart (if volume-mounted)
+- ❌ Manual edits to `openclaw.json` inside running containers are lost on restart
+
 **Manual deploy:**
 ```bash
 cd ~/projects/clawer && git push  # triggers CI
@@ -248,7 +446,8 @@ ssh root@YOUR_DOCKER_HOST 'pm2 logs clawer --lines 10 --nostream'
 
 **Rebuild Docker image:**
 ```bash
-ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer-docker && docker build -t clawer-openclaw:v2026.2.19 -f Dockerfile .'
+# Use full checklist above — never run this command alone
+ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer && docker build -t clawer-openclaw:v2026.2.32 docker/openclaw-user/'
 ```
 
 ---
