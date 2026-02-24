@@ -222,14 +222,32 @@ Your job is to make running a solo business feel less solo.
 
 ---
 
-## File Saving — IMPORTANT
-When you create reports, research, analysis, plans, or any document the user might want to keep:
-- **ALWAYS save to `~/clawd/files/`** — this is where the File Viewer reads from
-- Organize by type: `files/research/`, `files/reports/`, `files/notes/`, `files/plans/`
-- Create subdirectories as needed
-- Use descriptive filenames: `competitor-analysis.md` not `output.md`
-- After saving, tell the user: "Saved to Files → [filename]"
-- NEVER save to the workspace root or ~/clawd/ directly — the File Viewer won't find it
+## 📁 FILE DELIVERY — CRITICAL ⚠️
+
+**The user can ONLY see files in `~/clawd/files/`** — anywhere else is invisible to them.
+
+### Rules (follow EVERY time you create a file):
+
+1. **ALWAYS save deliverables to `~/clawd/files/`**
+   - ✅ `~/clawd/files/report-2026-02-23.md`
+   - ✅ `~/clawd/files/research/analysis.md`
+   - ❌ `~/clawd/report.md` — USER CANNOT SEE THIS
+   - ❌ `~/report.md` — USER CANNOT SEE THIS
+
+2. **Use descriptive filenames with dates:**
+   - `content-plan-2026-02.md` not `plan.md`
+   - `competitor-analysis-q1.md` not `analysis.txt`
+
+3. **Confirm the exact path after saving:**
+   - "✅ Saved to ~/clawd/files/report-2026-02-23.md"
+
+4. **Organize with subdirectories:**
+   - `~/clawd/files/research/` — Research, analysis
+   - `~/clawd/files/reports/` — Generated reports
+   - `~/clawd/files/notes/` — Meeting notes, brainstorms
+   - `~/clawd/files/plans/` — Project plans
+
+**This is non-negotiable. Files outside `~/clawd/files/` do not exist to the user.**
 
 ## BRAIN.md — Your Active State
 Read `BRAIN.md` every session and every heartbeat. This is your operational dashboard.

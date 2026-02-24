@@ -14,6 +14,153 @@ const API_PORT = process.env.API_PORT || 8081;
 const GATEWAY_URL = process.env.GATEWAY_URL || 'ws://127.0.0.1:8080';
 const GATEWAY_TOKEN = process.env.GATEWAY_TOKEN || '';
 
+// ─── File Delivery System ───────────────────────────────────────────────────
+// Automatically sync agent-created files to ~/clawd/files/ so they appear in dashboard
+const DELIVERABLE_EXTS = new Set(['.md', '.txt', '.pdf', '.csv', '.json', '.html', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.doc', '.docx', '.xls', '.xlsx']);
+const TARGET_DIR = '/home/user/clawd/files';
+const SCAN_DIRS = ['/home/user/clawd', '/home/user'];
+// Files to always ignore
+const IGNORE_FILES = new Set(['.bashrc', '.profile', '.bash_history', '.gitconfig', '.npmrc', '.yarnrc']);
+const IGNORE_DIRS = new Set(['.openclaw', '.config', '.cache', '.local', '.npm', '.yarn', 'node_modules', '.git']);
+
+// Track known files to detect new ones
+let knownFiles = new Map(); // path -> mtime
+let lastScanTime = 0;
+
+function isDeliverableFile(filename) {
+  const ext = nodePath.extname(filename).toLowerCase();
+  return DELIVERABLE_EXTS.has(ext) && !IGNORE_FILES.has(filename);
+}
+
+function shouldScanDir(dirPath) {
+  const dirName = nodePath.basename(dirPath);
+  return !IGNORE_DIRS.has(dirName) && !dirName.startsWith('.');
+}
+
+async function snapshotFiles() {
+  // Take a snapshot of current deliverable files before chat
+  const snapshot = new Map();
+  const scanTime = Date.now();
+  
+  for (const scanDir of SCAN_DIRS) {
+    try {
+      await scanDirRecursive(scanDir, snapshot, 2); // Max depth 2
+    } catch (e) {
+      // Directory might not exist
+    }
+  }
+  
+  lastScanTime = scanTime;
+  return snapshot;
+}
+
+async function scanDirRecursive(dir, snapshot, maxDepth, currentDepth = 0) {
+  if (currentDepth > maxDepth) return;
+  if (!shouldScanDir(dir)) return;
+  
+  // Skip the target directory to avoid re-syncing
+  if (dir === TARGET_DIR || dir.startsWith(TARGET_DIR + '/')) return;
+  
+  try {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = nodePath.join(dir, entry.name);
+      
+      if (entry.isDirectory() && shouldScanDir(entry.name)) {
+        await scanDirRecursive(fullPath, snapshot, maxDepth, currentDepth + 1);
+      } else if (entry.isFile() && isDeliverableFile(entry.name)) {
+        try {
+          const stat = await fs.promises.stat(fullPath);
+          snapshot.set(fullPath, stat.mtimeMs);
+        } catch (e) {
+          // File might have been deleted
+        }
+      }
+    }
+  } catch (e) {
+    // Directory read failed
+  }
+}
+
+async function syncDeliverables(beforeSnapshot) {
+  // After chat, find new/modified files and copy to ~/clawd/files/
+  const syncedFiles = [];
+  
+  // Ensure target directory exists
+  try {
+    await fs.promises.mkdir(TARGET_DIR, { recursive: true });
+  } catch (e) {
+    console.error('[sync] Failed to create target dir:', e.message);
+    return syncedFiles;
+  }
+  
+  for (const scanDir of SCAN_DIRS) {
+    try {
+      await findAndSyncNewFiles(scanDir, beforeSnapshot, syncedFiles, 2);
+    } catch (e) {
+      // Directory might not exist
+    }
+  }
+  
+  if (syncedFiles.length > 0) {
+    console.log('[sync] Synced', syncedFiles.length, 'files to ~/clawd/files/:', syncedFiles);
+  }
+  
+  return syncedFiles;
+}
+
+async function findAndSyncNewFiles(dir, beforeSnapshot, syncedFiles, maxDepth, currentDepth = 0) {
+  if (currentDepth > maxDepth) return;
+  if (!shouldScanDir(dir)) return;
+  if (dir === TARGET_DIR || dir.startsWith(TARGET_DIR + '/')) return;
+  
+  try {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = nodePath.join(dir, entry.name);
+      
+      if (entry.isDirectory() && shouldScanDir(entry.name)) {
+        await findAndSyncNewFiles(fullPath, beforeSnapshot, syncedFiles, maxDepth, currentDepth + 1);
+      } else if (entry.isFile() && isDeliverableFile(entry.name)) {
+        try {
+          const stat = await fs.promises.stat(fullPath);
+          const prevMtime = beforeSnapshot.get(fullPath);
+          
+          // File is new or modified since snapshot
+          if (!prevMtime || stat.mtimeMs > prevMtime) {
+            // Copy to target dir, preserving filename
+            const targetPath = nodePath.join(TARGET_DIR, entry.name);
+            
+            // Check if file already exists at target with same content
+            let shouldCopy = true;
+            try {
+              const targetStat = await fs.promises.stat(targetPath);
+              // If target exists and is same size, skip (avoid duplicates)
+              if (targetStat.size === stat.size) {
+                shouldCopy = false;
+              }
+            } catch (e) {
+              // Target doesn't exist, should copy
+            }
+            
+            if (shouldCopy) {
+              await fs.promises.copyFile(fullPath, targetPath);
+              syncedFiles.push(entry.name);
+              console.log('[sync] Copied', fullPath, '->', targetPath);
+            }
+          }
+        } catch (e) {
+          console.error('[sync] Failed to sync file:', fullPath, e.message);
+        }
+      }
+    }
+  } catch (e) {
+    // Directory read failed
+  }
+}
+
 // ─── Event Store (for Command Center activity feed) ────────────────────────
 const eventStore = [];
 const MAX_EVENTS = 500; // circular buffer
@@ -652,6 +799,9 @@ const server = http.createServer(async (req, res) => {
       }
       
       try {
+        // Snapshot files before chat to detect new deliverables
+        const fileSnapshot = await snapshotFiles();
+        
         // Use the gateway's chat.send endpoint which waits for response
         // Use unique session key per request to avoid stream mixing
         const idempotencyKey = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -696,6 +846,12 @@ const server = http.createServer(async (req, res) => {
             || chatResult.payload?.response
             || (typeof chatResult.payload === 'string' ? chatResult.payload : null)
             || 'Response received';
+          
+          // Sync any new deliverable files to ~/clawd/files/ (async, don't block response)
+          // Run after response to not slow down the UX
+          syncDeliverables(fileSnapshot).catch(e => {
+            console.error('[api] File sync error:', e.message);
+          });
           
           // Build response with routing metadata if available
           const response = { content };

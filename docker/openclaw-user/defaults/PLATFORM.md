@@ -41,12 +41,20 @@ openclaw cron remove --name "job-name"
 
 ---
 
-## 📁 Files
+## 📁 Files — CRITICAL ⚠️
 
 Users browse files on the **Files** dashboard page.
 
-⚠️ **Files MUST be in `~/clawd/files/` to appear in the dashboard.**
+**⚠️ FILES MUST BE IN `~/clawd/files/` — the ONLY user-visible directory.**
 
+### Save rules:
+- ✅ `~/clawd/files/seo-audit-2026-02-23.md` — VISIBLE to user
+- ✅ `~/clawd/files/research/competitor-analysis.md` — VISIBLE to user
+- ❌ `~/clawd/report.md` — **INVISIBLE** (not in files/)
+- ❌ `~/report.md` — **INVISIBLE**
+- ❌ `/tmp/output.md` — **INVISIBLE**
+
+### Directory structure:
 ```
 ~/clawd/files/
 ├── research/    # Research, analysis
@@ -56,10 +64,12 @@ Users browse files on the **Files** dashboard page.
 └── data/        # CSV, JSON exports
 ```
 
-- ✅ `~/clawd/files/report.md` — Appears in dashboard
-- ❌ `~/clawd/report.md` — Does NOT appear
+### After saving, ALWAYS confirm:
+```
+✅ Saved to ~/clawd/files/report-name.md
+```
 
-After saving, confirm: "Saved to Files → [filename]"
+**If you save anywhere else, the user will never see your work.**
 
 ---
 

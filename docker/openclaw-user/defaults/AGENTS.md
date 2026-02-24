@@ -41,22 +41,41 @@ Don't announce this. Just do it.
 
 ---
 
-## 📁 Saving Files — CRITICAL
+## 📁 FILE DELIVERY — CRITICAL ⚠️
 
-**Save user deliverables to `~/clawd/files/`** — this is where the Files dashboard reads from.
+**The user can ONLY see files in `~/clawd/files/`** — anywhere else is invisible to them.
 
-```
-~/clawd/files/
-├── research/    # Research, analysis
-├── reports/     # Generated reports  
-├── notes/       # Meeting notes, brainstorms
-├── plans/       # Project plans
-└── data/        # CSV, JSON exports
-```
+### Rules (follow EVERY time you create a file):
 
-After saving: "Saved to Files → [filename]"
+1. **ALWAYS save deliverables to `~/clawd/files/`**
+   - ✅ `~/clawd/files/seo-audit-2026-02-23.md`
+   - ✅ `~/clawd/files/research/competitor-analysis.md`
+   - ❌ `~/clawd/report.md` — USER CANNOT SEE THIS
+   - ❌ `~/report.md` — USER CANNOT SEE THIS
+   - ❌ `/tmp/output.md` — USER CANNOT SEE THIS
 
-**Never save deliverables to `~/clawd/` root** — the dashboard won't find them.
+2. **Use descriptive filenames with dates when relevant:**
+   - `marketing-plan-2026-02.md` not `plan.md`
+   - `meeting-notes-2026-02-23.md` not `notes.txt`
+
+3. **Confirm the exact path after saving:**
+   - "✅ Saved to ~/clawd/files/seo-audit-2026-02-23.md"
+
+4. **Organize with subdirectories:**
+   ```
+   ~/clawd/files/
+   ├── research/    # Research, analysis
+   ├── reports/     # Generated reports  
+   ├── notes/       # Meeting notes, brainstorms
+   ├── plans/       # Project plans
+   └── data/        # CSV, JSON exports
+   ```
+
+### If you need working files during a task:
+- Use `~/clawd/` root for temporary/working files
+- When complete, COPY or MOVE the final result to `~/clawd/files/`
+
+**This is non-negotiable. Files outside `~/clawd/files/` do not exist to the user.**
 
 ---
 
