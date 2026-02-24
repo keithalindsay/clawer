@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Task } from '@/lib/db/schema/tasks';
 import type { TeamMember } from '@/lib/teams';
 import { autoAssignAgent } from '@/lib/agent-matcher';
+import { TaskDetailPanel } from './TaskDetailPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -124,151 +125,107 @@ function ExecuteButton({
   );
 }
 
-// ─── TaskCard (Kanban) ────────────────────────────────────────────────────────
+// ─── TaskCard (Kanban) - Compact version ──────────────────────────────────────
 
 function TaskCard({
   task,
   member,
-  teamMembers,
   onDragStart,
-  onExecute,
-  onDelete,
-  onMove,
-  onAssignAgent,
+  onClick,
   executing,
 }: {
   task: Task;
   member?: TeamMember;
-  teamMembers: TeamMember[];
   onDragStart: (id: string) => void;
-  onExecute: (id: string) => void;
-  onDelete: (id: string) => void;
-  onMove: (id: string, status: Status) => void;
-  onAssignAgent: (id: string, agentId: string) => void;
+  onClick: () => void;
   executing: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [showAgentMenu, setShowAgentMenu] = useState(false);
   const running = task.status === 'running' || executing;
+  const isDone = task.status === 'done';
+  const isFailed = task.status === 'failed';
+  
+  // Truncate title to ~60 chars
+  const truncatedTitle = task.title.length > 60 
+    ? task.title.slice(0, 57) + '…' 
+    : task.title;
 
   return (
     <div
       draggable
-      onDragStart={() => onDragStart(task.id)}
-      className="bg-white rounded-lg border border-gray-200 p-3 cursor-grab active:cursor-grabbing select-none hover:border-gray-300 hover:shadow-sm transition-all"
+      onDragStart={(e) => {
+        e.stopPropagation();
+        onDragStart(task.id);
+      }}
+      onClick={onClick}
+      className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer select-none hover:border-gray-300 hover:shadow-md transition-all group"
       style={running ? { borderColor: '#93c5fd', boxShadow: '0 0 0 2px #bfdbfe' } : {}}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-medium text-gray-900 leading-snug flex-1">{task.title}</p>
-        <button
-          onClick={() => onDelete(task.id)}
-          title="Delete task"
-          className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors text-xs flex-shrink-0"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Badges */}
-      <div className="flex items-center gap-2 flex-wrap mb-2">
+      {/* Top row: Priority + Status indicator */}
+      <div className="flex items-center justify-between gap-2 mb-2">
         {priorityBadge(task.priority)}
         
-        {/* Agent selector */}
-        <div className="relative">
-          <button
-            onClick={() => setShowAgentMenu(v => !v)}
-            className="text-[11px] text-gray-700 flex items-center gap-1 hover:bg-gray-50 px-1.5 py-0.5 rounded transition-colors border border-transparent hover:border-gray-200"
-            title={member ? 'Change agent' : 'Assign agent'}
-          >
-            <span>{member?.emoji || '🤖'}</span>
-            <span>{member ? member.name : 'Auto-assign'}</span>
-            <span className="text-[9px] opacity-50">▼</span>
-          </button>
-          
-          {showAgentMenu && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowAgentMenu(false)} />
-              <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                <div className="px-2 py-1 text-[10px] text-gray-400 uppercase tracking-wide font-medium">
-                  Assign to:
-                </div>
-                {teamMembers.map(agent => (
-                  <button
-                    key={agent.id}
-                    onClick={() => {
-                      onAssignAgent(task.id, agent.id);
-                      setShowAgentMenu(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${
-                      member?.id === agent.id ? 'bg-orange-50 text-orange-700 font-medium' : ''
-                    }`}
-                  >
-                    <span>{agent.emoji || '🤖'}</span>
-                    <span>{agent.name}</span>
-                    {member?.id === agent.id && <span className="ml-auto text-[10px]">✓</span>}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        {/* Status indicator */}
+        {running && (
+          <span className="flex items-center gap-1 text-[10px] text-blue-600 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            Running
+          </span>
+        )}
+        {isDone && (
+          <span className="flex items-center gap-1 text-[10px] text-green-600 font-medium">
+            <span className="text-green-500">✓</span>
+            Done
+          </span>
+        )}
+        {isFailed && (
+          <span className="flex items-center gap-1 text-[10px] text-red-600 font-medium">
+            <span className="text-red-500">✕</span>
+            Failed
+          </span>
+        )}
       </div>
 
-      {/* Description */}
-      {task.description && (
-        <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-2">{task.description}</p>
-      )}
+      {/* Agent row */}
+      <div className="flex items-center gap-1.5 mb-2 text-[11px] text-gray-600">
+        <span className="text-base">{member?.emoji || '🤖'}</span>
+        <span className="truncate">{member?.name || 'Unassigned'}</span>
+      </div>
 
-      {/* Result (done) */}
-      {task.status === 'done' && task.result && (
-        <div className="mb-2">
-          <p className={`text-xs text-gray-700 leading-relaxed ${!expanded ? 'line-clamp-3' : ''}`}>
-            {task.result}
+      {/* Title */}
+      <p className="text-sm font-medium text-gray-900 leading-snug mb-2">
+        {truncatedTitle}
+      </p>
+
+      {/* Result preview (done tasks only) */}
+      {isDone && task.result && (
+        <div className="bg-green-50 rounded px-2 py-1.5 mb-2">
+          <p className="text-[11px] text-green-700 line-clamp-2 leading-relaxed">
+            {task.result.slice(0, 100)}{task.result.length > 100 ? '…' : ''}
           </p>
-          {task.result.length > 150 && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-            >
-              {expanded ? 'Show less' : 'Show more'}
-            </button>
-          )}
         </div>
       )}
 
-      {/* Error (failed) */}
-      {task.status === 'failed' && task.error && (
-        <p className="text-xs text-red-600 leading-relaxed line-clamp-2 mb-2">{task.error}</p>
+      {/* Error preview (failed tasks only) */}
+      {isFailed && task.error && (
+        <div className="bg-red-50 rounded px-2 py-1.5 mb-2">
+          <p className="text-[11px] text-red-600 line-clamp-1 leading-relaxed">
+            {task.error.slice(0, 80)}{task.error.length > 80 ? '…' : ''}
+          </p>
+        </div>
       )}
 
-      {/* Execute button */}
-      <div className="mb-2">
-        <ExecuteButton task={task} onExecute={onExecute} executing={executing} />
+      {/* Timestamp */}
+      <div className="text-[10px] text-gray-400">
+        {task.completedAt ? (
+          <span>Completed {fmtDateTime(task.completedAt)}</span>
+        ) : (
+          <span>Created {fmtDateTime(task.createdAt)}</span>
+        )}
       </div>
 
-      {/* Timestamps */}
-      <div className="text-[10px] text-gray-400 space-y-0.5">
-        {task.createdAt && <div>Created {fmtDateTime(task.createdAt)}</div>}
-        {task.completedAt && <div>Completed {fmtDateTime(task.completedAt)}</div>}
-      </div>
-
-      {/* Quick-move buttons */}
-      <div className="mt-2 flex gap-1 flex-wrap">
-        {(['backlog', 'queued', 'running', 'done', 'failed'] as Status[]).map(s => {
-          if (s === task.status) return null;
-          const col = COLUMNS.find(c => c.id === s)!;
-          return (
-            <button
-              key={s}
-              onClick={() => onMove(task.id, s)}
-              className="text-[10px] px-1.5 py-0.5 rounded border transition-colors hover:opacity-80"
-              style={{ borderColor: col.color, color: col.color, background: col.bg }}
-            >
-              → {col.label}
-            </button>
-          );
-        })}
+      {/* Hover hint */}
+      <div className="mt-2 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[10px] text-gray-400">Click to view details →</span>
       </div>
     </div>
   );
@@ -284,6 +241,7 @@ function ListRow({
   onDelete,
   onMove,
   onAssignAgent,
+  onClick,
   executing,
 }: {
   task: Task;
@@ -293,13 +251,14 @@ function ListRow({
   onDelete: (id: string) => void;
   onMove: (id: string, status: Status) => void;
   onAssignAgent: (id: string, agentId: string) => void;
+  onClick: () => void;
   executing: boolean;
 }) {
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const [showAgentMenu, setShowAgentMenu] = useState(false);
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={onClick}>
       {/* Task title + description */}
       <td className="px-4 py-3 max-w-xs">
         <div className="text-sm font-medium text-gray-900 truncate">{task.title}</div>
@@ -309,7 +268,7 @@ function ListRow({
       </td>
 
       {/* Agent */}
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="relative inline-block">
           <button
             onClick={() => setShowAgentMenu(v => !v)}
@@ -356,7 +315,7 @@ function ListRow({
       </td>
 
       {/* Status */}
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="relative inline-block">
           <button
             onClick={() => setShowMoveMenu(v => !v)}
@@ -395,7 +354,7 @@ function ListRow({
       </td>
 
       {/* Actions */}
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
           <ExecuteButton task={task} onExecute={onExecute} executing={executing} />
           <button
@@ -583,7 +542,20 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [executingIds, setExecutingIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<ViewMode>('kanban');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const dragIdRef = useRef<string | null>(null);
+
+  // Keep selected task in sync with latest data
+  useEffect(() => {
+    if (selectedTask) {
+      const updated = taskList.find(t => t.id === selectedTask.id);
+      if (updated && updated !== selectedTask) {
+        setSelectedTask(updated);
+      } else if (!updated) {
+        setSelectedTask(null);
+      }
+    }
+  }, [taskList, selectedTask]);
 
   // ── Drag & Drop ──
   const handleDragStart = useCallback((id: string) => {
@@ -909,12 +881,8 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
                         key={task.id}
                         task={task}
                         member={getMember(task.assignedTo)}
-                        teamMembers={teamMembers}
                         onDragStart={handleDragStart}
-                        onExecute={handleExecute}
-                        onDelete={handleDelete}
-                        onMove={handleMove}
-                        onAssignAgent={handleAssignAgent}
+                        onClick={() => setSelectedTask(task)}
                         executing={executingIds.has(task.id)}
                       />
                     ))}
@@ -977,6 +945,7 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
                         onDelete={handleDelete}
                         onMove={handleMove}
                         onAssignAgent={handleAssignAgent}
+                        onClick={() => setSelectedTask(task)}
                         executing={executingIds.has(task.id)}
                       />
                     ))}
@@ -996,6 +965,22 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
           onCreate={handleCreate}
         />
       )}
+
+      {/* Task Detail Panel */}
+      <TaskDetailPanel
+        task={selectedTask}
+        member={selectedTask ? getMember(selectedTask.assignedTo) : undefined}
+        onClose={() => setSelectedTask(null)}
+        onExecute={(id) => {
+          handleExecute(id);
+          // Keep panel open to show running state
+        }}
+        onDelete={(id) => {
+          handleDelete(id);
+          setSelectedTask(null);
+        }}
+        executing={selectedTask ? executingIds.has(selectedTask.id) : false}
+      />
     </div>
   );
 }
