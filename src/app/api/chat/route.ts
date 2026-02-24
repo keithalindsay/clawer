@@ -264,6 +264,9 @@ export async function POST(req: NextRequest) {
     // Format: agent:<agentId>:main routes to agent's isolated workspace
     const finalSessionKey = context || sessionKey;
 
+    // Pass agentId explicitly so container can create agent-specific sessions
+    const effectiveAgentId = agentId || 'default';
+    
     const result = await containerApi.chat(
       targetPort,
       sanitizedMessage,
@@ -274,7 +277,8 @@ export async function POST(req: NextRequest) {
         tier: routing.tier,
         confidence: routing.confidence,
       },
-      targetToken
+      targetToken,
+      effectiveAgentId
     );
 
     if (result.error) {

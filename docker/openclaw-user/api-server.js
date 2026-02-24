@@ -595,7 +595,7 @@ const server = http.createServer(async (req, res) => {
       await new Promise(resolve => req.on('end', resolve));
       const body = Buffer.concat(chunks).toString();
       console.log('[api] body:', body);
-      const { message, context, settings } = JSON.parse(body || '{}');
+      const { message, context, settings, agentId } = JSON.parse(body || '{}');
       
       if (!message) {
         console.log('[api] no message in body');
@@ -603,7 +603,7 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'Message required' }));
         return;
       }
-      console.log('[api] message:', message);
+      console.log('[api] message:', message, 'agentId:', agentId);
       
       // Extract routing info from settings
       const routingModel = settings?.model;
@@ -655,7 +655,20 @@ const server = http.createServer(async (req, res) => {
         // Use the gateway's chat.send endpoint which waits for response
         // Use unique session key per request to avoid stream mixing
         const idempotencyKey = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const sessionKey = context || `web-chat-${Date.now()}`;
+        
+        // Build session key that includes agentId for per-agent session isolation
+        // Format: web-chat-{agentId}-{timestamp} so each agent gets separate sessions
+        // Use provided context if it already has an agent-specific prefix, otherwise build one
+        const effectiveAgentId = agentId || 'default';
+        let sessionKey;
+        if (context && context.includes(effectiveAgentId)) {
+          // Context already includes agent ID (e.g., from history resumption)
+          sessionKey = context;
+        } else {
+          // Build new agent-specific session key
+          sessionKey = `web-chat-${effectiveAgentId}-${Date.now()}`;
+        }
+        console.log('[api] sessionKey:', sessionKey, 'for agent:', effectiveAgentId);
         
         // Build the full message with system context if provided
         const fullMessage = systemPrompt 
@@ -792,11 +805,12 @@ const server = http.createServer(async (req, res) => {
       req.on('data', chunk => chunks.push(chunk));
       await new Promise(resolve => req.on('end', resolve));
       const body = Buffer.concat(chunks).toString();
-      const { sessionKey, limit = 50, offset = 0 } = JSON.parse(body || '{}');
+      const { sessionKey, agentId, limit = 50, offset = 0 } = JSON.parse(body || '{}');
       
-      if (!sessionKey) {
+      // Either sessionKey or agentId is required
+      if (!sessionKey && !agentId) {
         res.writeHead(400);
-        res.end(JSON.stringify({ error: 'sessionKey required' }));
+        res.end(JSON.stringify({ error: 'sessionKey or agentId required' }));
         return;
       }
       
@@ -804,17 +818,35 @@ const server = http.createServer(async (req, res) => {
         // Read session history directly from JSONL file since gateway doesn't have sessions.history
         const sessionsFile = nodePath.join(sessionsDir, 'sessions.json');
         let sessionFilePath = null;
+        let resolvedSessionKey = sessionKey;
         
         if (fs.existsSync(sessionsFile)) {
           const sessionsData = JSON.parse(fs.readFileSync(sessionsFile, 'utf-8'));
-          const session = sessionsData[sessionKey];
-          if (session?.sessionFile) {
-            sessionFilePath = session.sessionFile;
+          
+          if (sessionKey) {
+            // Direct session key lookup
+            const session = sessionsData[sessionKey];
+            if (session?.sessionFile) {
+              sessionFilePath = session.sessionFile;
+            }
+          } else if (agentId) {
+            // Find most recent session for this agent
+            // Pattern: agent:main:web-chat-{agentId}-{timestamp}
+            const agentSessions = Object.entries(sessionsData)
+              .filter(([key]) => key.includes(`web-chat-${agentId}-`))
+              .map(([key, session]) => ({ key, session }))
+              .sort((a, b) => (b.session.updatedAt || 0) - (a.session.updatedAt || 0));
+            
+            if (agentSessions.length > 0) {
+              resolvedSessionKey = agentSessions[0].key;
+              sessionFilePath = agentSessions[0].session.sessionFile;
+              console.log('[api] Found session for agent', agentId, ':', resolvedSessionKey);
+            }
           }
         }
         
         // Also try: key = sessionId.jsonl
-        if (!sessionFilePath) {
+        if (!sessionFilePath && sessionKey) {
           const sessionIdJsonl = nodePath.join(sessionsDir, `${sessionKey}.jsonl`);
           if (fs.existsSync(sessionIdJsonl)) {
             sessionFilePath = sessionIdJsonl;
@@ -824,11 +856,11 @@ const server = http.createServer(async (req, res) => {
         if (!sessionFilePath) {
           res.writeHead(200);
           res.end(JSON.stringify({
-            sessionKey,
+            sessionKey: resolvedSessionKey,
             messages: [],
             totalMessages: 0,
             hasMore: false,
-            error: 'Session not found',
+            error: agentId ? `No session found for agent: ${agentId}` : 'Session not found',
           }));
           return;
         }
@@ -871,7 +903,7 @@ const server = http.createServer(async (req, res) => {
         
         res.writeHead(200);
         res.end(JSON.stringify({
-          sessionKey,
+          sessionKey: resolvedSessionKey,
           messages: paginatedMessages,
           totalMessages,
           hasMore: offset + limit < totalMessages,

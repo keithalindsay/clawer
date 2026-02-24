@@ -193,11 +193,11 @@ export const containerApi = {
     model?: string;
     tier?: string;
     confidence?: number;
-  }, explicitToken?: string) => {
+  }, explicitToken?: string, agentId?: string) => {
     const token = explicitToken || await getGatewayToken(port);
     return containerRequest<ChatResponse>(port, '/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, context, settings }),
+      body: JSON.stringify({ message, context, settings, agentId }),
     }, token || undefined);
   },
 
@@ -241,12 +241,13 @@ export const containerApi = {
   /**
    * POST /api/sessions/history
    * Get session history from OpenClaw
+   * Can use either sessionKey (direct lookup) or agentId (finds most recent session)
    * Response: { sessionKey, messages, totalMessages, hasMore, metadata }
    */
   getSessionHistory: async (
     port: number,
-    sessionKey: string,
-    options?: { limit?: number; offset?: number }
+    sessionKey: string | null,
+    options?: { limit?: number; offset?: number; agentId?: string }
   ) => {
     const token = await getGatewayToken(port);
     return containerRequest<{
@@ -271,6 +272,7 @@ export const containerApi = {
         method: 'POST',
         body: JSON.stringify({
           sessionKey,
+          agentId: options?.agentId,
           limit: options?.limit || 50,
           offset: options?.offset || 0,
         }),
