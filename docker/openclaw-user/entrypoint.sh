@@ -125,14 +125,14 @@ fi
 # Install team template
 TEAM_TEMPLATE="${TEAM_TEMPLATE:-lifeos}"
 TEAM_DIR="/opt/clawer-docker/teams/${TEAM_TEMPLATE}"
-mkdir -p /home/user/clawd/team
+mkdir -p /home/user/clawd/team 2>/dev/null || true
 if [ -d "$TEAM_DIR" ] && [ ! -f /home/user/clawd/team/AGENTS.md ]; then
   cp "$TEAM_DIR/AGENTS.md" /home/user/clawd/team/AGENTS.md 2>/dev/null && echo "Team template installed to team/AGENTS.md: ${TEAM_TEMPLATE}"
 else
   echo "team/AGENTS.md already exists, skipping template install"
 fi
 
-mkdir -p /home/user/clawd/memory
+mkdir -p /home/user/clawd/memory 2>/dev/null || true
 
 # Brave search URL patching moved to Dockerfile build time (for read-only filesystem)
 export BRAVE_API_KEY="${BRAVE_API_KEY:-searxng-local-proxy}"
