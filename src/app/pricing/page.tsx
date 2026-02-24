@@ -48,6 +48,7 @@ export default function PricingPage() {
         "Custom skills from curated marketplace",
         "WhatsApp + Telegram + Slack",
         "Smart model routing",
+        "10GB dedicated storage",
         "Priority email support",
         "✅ Verified templates — security-scanned",
       ],

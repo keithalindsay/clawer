@@ -18,7 +18,7 @@ export default function PricingSection() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            One plan. Everything included. Scale as you grow.
+            Start free, upgrade when ready. No surprises.
           </p>
         </motion.div>
 
@@ -53,6 +53,7 @@ export default function PricingSection() {
 
             <ul className="space-y-3 mb-8">
               {[
+                '500 messages per day',
                 'All channels (WhatsApp, Telegram, Discord, Slack)',
                 'Pre-built AI team configurations',
                 'Automated tasks & scheduling',
@@ -60,7 +61,7 @@ export default function PricingSection() {
                 'File access & desktop viewer',
                 'Curated skills marketplace',
                 '10GB storage',
-                'Email support',
+                'Priority email support',
               ].map((feature) => (
                 <li key={feature} className="flex items-start gap-3">
                   <svg
@@ -89,7 +90,7 @@ export default function PricingSection() {
             </Link>
 
             <p className="text-center text-xs text-gray-500 mt-3">
-              100 free messages included. No credit card required.
+              Start with 100 free messages — no credit card required. Pro includes 500 messages/day.
             </p>
           </motion.div>
 

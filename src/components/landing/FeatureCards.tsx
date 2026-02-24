@@ -36,7 +36,7 @@ const FEATURES = [
   {
     icon: '🔐',
     title: 'Security First',
-    description: 'Isolated Docker containers. BYOK option. Your data never leaves your control. SOC 2 compliant.',
+    description: 'Isolated Docker containers. BYOK option. Your data never leaves your control. Security-first architecture with SOC 2 aligned practices.',
     color: 'bg-rose-100',
   },
 ];

@@ -278,8 +278,9 @@ export default function OpenClawSecurityPost() {
 
             <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-3">6. Compliance-Ready</h3>
             <p className="text-gray-700 mb-6">
-              Need SOC 2? GDPR compliance? Data residency guarantees? We handle that. Self-hosted
-              OpenClaw? You're on your own.
+              Working toward SOC 2 compliance (in progress, expected Q2 2026). We follow
+              security-first practices and SOC 2 aligned architecture. Self-hosted OpenClaw? You're
+              on your own for compliance.
             </p>
 
             <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-4">
