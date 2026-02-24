@@ -21,6 +21,51 @@ interface Message {
   timestamp: Date;
 }
 
+/**
+ * Clean message content by stripping internal tags and metadata
+ * that should never be shown to users.
+ */
+function cleanMessageContent(content: string): string {
+  if (!content) return content;
+  
+  let cleaned = content;
+  
+  // Strip OpenClaw envelope metadata block
+  // Pattern: "Conversation info (untrusted metadata):\n```json\n{...}\n```\n\n"
+  cleaned = cleaned.replace(
+    /Conversation info \(untrusted metadata\):\s*```json\s*\{[\s\S]*?\}\s*```\s*/gi,
+    ''
+  );
+  
+  // Strip timestamp prefix like "[Tue 2026-02-24 00:51 UTC]" or "[Mon 2026-02-23 19:10 CST]"
+  cleaned = cleaned.replace(
+    /^\s*\[[A-Za-z]{3}\s+\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\s*[A-Z]{2,4}\]\s*/i,
+    ''
+  );
+  
+  // Strip [thinking] blocks - everything from [thinking] to the start of non-thinking content
+  // Pattern matches: [thinking] ... followed by newlines until actual content
+  cleaned = cleaned.replace(
+    /\[thinking\][\s\S]*?(?=\n\n[^\[\n]|\n[A-Z]|<final>|$)/gi,
+    ''
+  );
+  
+  // Strip <thinking>...</thinking> XML blocks
+  cleaned = cleaned.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+  
+  // Strip <final> and </final> wrapper tags
+  cleaned = cleaned.replace(/<\/?final>/gi, '');
+  
+  // Strip any remaining thinking-related tags
+  cleaned = cleaned.replace(/<\/?think>/gi, '');
+  
+  // Clean up excessive whitespace left behind
+  cleaned = cleaned.replace(/^\s+/, '').replace(/\s+$/, '');
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  
+  return cleaned;
+}
+
 /** Template-specific first prompts shown in the empty chat state */
 const TEMPLATE_WELCOME_PROMPTS: Record<string, string[]> = {
   lifeos: [
@@ -129,9 +174,10 @@ export function DashboardWorkspace({
       .then(data => {
         const loaded: Message[] = (data.messages || []).map((m: { role: 'user' | 'assistant'; content: string; timestamp: string }) => ({
           role: m.role,
-          content: m.content,
+          // Clean assistant messages on load to strip internal tags/metadata
+          content: m.role === 'assistant' ? cleanMessageContent(m.content) : m.content,
           timestamp: new Date(m.timestamp),
-        }));
+        })).filter((m: Message) => m.content.trim()); // Remove empty messages after cleaning
         setChatHistory(prev => ({ ...prev, [selectedAgent.id]: loaded }));
         setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
       })
@@ -245,6 +291,13 @@ export function DashboardWorkspace({
   const clearSession = async () => {
     if (!selectedAgent) return;
     
+    // Immediately close dialog and clear UI for instant feedback
+    setShowClearDialog(false);
+    setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
+    // Keep historyLoaded as TRUE to prevent re-fetching old messages
+    // The session will be fresh on the server side after /new
+    setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: true }));
+    
     try {
       // Send /new to OpenClaw to start a fresh session
       // This resets the agent's context and reloads workspace files (AGENTS.md, etc.)
@@ -256,15 +309,9 @@ export function DashboardWorkspace({
           agentId: selectedAgent.id,
         }),
       });
-      
-      // Clear local state
-      setChatHistory(prev => ({ ...prev, [selectedAgent.id]: [] }));
-      // Reset history loaded flag so next visit re-fetches (will be empty after /new)
-      setHistoryLoaded(prev => ({ ...prev, [selectedAgent.id]: false }));
     } catch (error) {
       console.error('Failed to clear session:', error);
-    } finally {
-      setShowClearDialog(false);
+      // Even if server fails, keep the UI cleared - user can refresh to reload
     }
   };
 
@@ -485,20 +532,29 @@ export function DashboardWorkspace({
                     </div>
                   </div>
                 )}
-                {messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                        msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'
-                      }`}
-                      style={msg.role === 'user'
-                        ? { background: '#2563eb', color: '#ffffff' }
-                        : { background: '#f1f5f9', color: '#0f172a' }}
-                    >
-                      {msg.content}
+                {messages.map((msg, i) => {
+                  const displayContent = msg.role === 'assistant' 
+                    ? cleanMessageContent(msg.content) 
+                    : msg.content;
+                  
+                  // Skip rendering if content is empty after cleaning
+                  if (!displayContent.trim()) return null;
+                  
+                  return (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                          msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'
+                        }`}
+                        style={msg.role === 'user'
+                          ? { background: '#2563eb', color: '#ffffff' }
+                          : { background: '#f1f5f9', color: '#0f172a' }}
+                      >
+                        {displayContent}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {loading && (
                   <div className="flex justify-start">
                     <div className="px-4 py-3 rounded-2xl rounded-bl-md" style={{ background: '#f1f5f9' }}>
