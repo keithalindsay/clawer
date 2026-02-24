@@ -130,16 +130,23 @@ function ExecuteButton({
 function TaskCard({
   task,
   member,
+  teamMembers,
   onDragStart,
   onClick,
+  onExecute,
+  onAssignAgent,
   executing,
 }: {
   task: Task;
   member?: TeamMember;
+  teamMembers: TeamMember[];
   onDragStart: (id: string) => void;
   onClick: () => void;
+  onExecute: (id: string) => void;
+  onAssignAgent: (id: string, agentId: string) => void;
   executing: boolean;
 }) {
+  const [showAgentMenu, setShowAgentMenu] = useState(false);
   const running = task.status === 'running' || executing;
   const isDone = task.status === 'done';
   const isFailed = task.status === 'failed';
@@ -185,10 +192,44 @@ function TaskCard({
         )}
       </div>
 
-      {/* Agent row */}
-      <div className="flex items-center gap-1.5 mb-2 text-[11px] text-gray-600">
-        <span className="text-base">{member?.emoji || '🤖'}</span>
-        <span className="truncate">{member?.name || 'Unassigned'}</span>
+      {/* Agent selector */}
+      <div className="relative mb-2" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => setShowAgentMenu(v => !v)}
+          className="text-[11px] text-gray-700 flex items-center gap-1.5 hover:bg-gray-50 px-1.5 py-0.5 rounded transition-colors border border-transparent hover:border-gray-200"
+          title={member ? 'Change agent' : 'Assign agent'}
+        >
+          <span className="text-base">{member?.emoji || '🤖'}</span>
+          <span className="truncate">{member ? member.name : 'Auto-assign'}</span>
+          <span className="text-[9px] opacity-50">▼</span>
+        </button>
+        
+        {showAgentMenu && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setShowAgentMenu(false)} />
+            <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+              <div className="px-2 py-1 text-[10px] text-gray-400 uppercase tracking-wide font-medium">
+                Assign to:
+              </div>
+              {teamMembers.map(agent => (
+                <button
+                  key={agent.id}
+                  onClick={() => {
+                    onAssignAgent(task.id, agent.id);
+                    setShowAgentMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${
+                    member?.id === agent.id ? 'bg-orange-50 text-orange-700 font-medium' : ''
+                  }`}
+                >
+                  <span>{agent.emoji || '🤖'}</span>
+                  <span>{agent.name}</span>
+                  {member?.id === agent.id && <span className="ml-auto text-[10px]">✓</span>}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Title */}
@@ -214,6 +255,11 @@ function TaskCard({
         </div>
       )}
 
+      {/* Execute button */}
+      <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+        <ExecuteButton task={task} onExecute={onExecute} executing={executing} />
+      </div>
+
       {/* Timestamp */}
       <div className="text-[10px] text-gray-400">
         {task.completedAt ? (
@@ -221,11 +267,6 @@ function TaskCard({
         ) : (
           <span>Created {fmtDateTime(task.createdAt)}</span>
         )}
-      </div>
-
-      {/* Hover hint */}
-      <div className="mt-2 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="text-[10px] text-gray-400">Click to view details →</span>
       </div>
     </div>
   );
@@ -881,8 +922,11 @@ export function TaskBoard({ initialTasks, teamMembers }: TaskBoardProps) {
                         key={task.id}
                         task={task}
                         member={getMember(task.assignedTo)}
+                        teamMembers={teamMembers}
                         onDragStart={handleDragStart}
                         onClick={() => setSelectedTask(task)}
+                        onExecute={handleExecute}
+                        onAssignAgent={handleAssignAgent}
                         executing={executingIds.has(task.id)}
                       />
                     ))}
