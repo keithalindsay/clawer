@@ -7,6 +7,8 @@
 - [x] `/blog/best-openclaw-hosting` — "Best OpenClaw Hosting in 2026: Honest Comparison" (Feb 17)
 - [x] `/blog/managed-openclaw-hosting` — "Managed OpenClaw Hosting: Stop Wrestling with Docker" (existing)
 - [x] `/blog/openclaw-security-guide` — "OpenClaw Security: Why 42,000+ Instances Are Exposed" (existing)
+- [x] `/blog/openclaw-security` — "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous" (Feb 9)
+- [x] `/blog/openclaw-clawhub-malware-security` — "341 Malicious Skills on ClawHub: Protect Your Agent" (Feb 23)
 
 ## Queue (Priority Order)
 
@@ -121,6 +123,78 @@
     - **Word count:** 2,000-3,000
     - **Priority:** 🟡 Cluster post, trust building
 
+### Week 3-4: Viral Potential (Researched 2026-02-23)
+
+11. [ ] `/blog/openclaw-cve-2026-exposed`
+    - **Title:** "CVE-2026-25253: Why 42,000 OpenClaw Users Were Exposed"
+    - **Target keywords:** openclaw security, openclaw CVE, openclaw port 18789
+    - **Angle:** Fresh CVE, 1.5M leaked tokens, security firms covering it. Report facts, position Clawer as the fix. Time-sensitive.
+    - **Word count:** 3,000-4,000
+    - **Priority:** 🔴
+
+12. [ ] `/blog/openclaw-clawhub-skill-audit`
+    - **Title:** "We Audited 1,000 ClawHub Skills So You Don't Have To"
+    - **Target keywords:** clawhub malware, openclaw plugin security, openclaw skill audit
+    - **Angle:** #1 downloaded skill was wallet-stealing malware. 41% have vulnerabilities. Shareable safety content.
+    - **Word count:** 3,000-4,000
+    - **Priority:** 🔴
+
+13. [ ] `/blog/openclaw-diy-vs-hosted`
+    - **Title:** "OpenClaw DIY vs Hosted: The Honest Comparison"
+    - **Target keywords:** openclaw hosting cost, openclaw managed, clawer.ai vs openclaw
+    - **Angle:** "$4-8/mo VPS" quote being widely recited. Direct conversion content for people actively evaluating.
+    - **Word count:** 2,500-3,500
+    - **Priority:** 🔴
+
+14. [ ] `/blog/ai-agent-business-140-month`
+    - **Title:** "How to Run Your Entire Business on AI Agents for $140/Month"
+    - **Target keywords:** openclaw business automation, ai agent business, openclaw trading bot
+    - **Angle:** Specific dollar amounts + specific workflows. Content + trading + YouTube for $140/mo. Extremely shareable.
+    - **Word count:** 3,000-4,000
+    - **Priority:** 🔴
+
+15. [ ] `/blog/openclaw-multi-agent-team-guide`
+    - **Title:** "What Multi-Agent OpenClaw Actually Means (And How to Build Your First Team)"
+    - **Target keywords:** openclaw multi agent, openclaw team, openclaw subagents
+    - **Angle:** Huge content gap. Multiple people publicly confused. We own multi-agent. Fill the void.
+    - **Word count:** 3,000-4,000
+    - **Priority:** 🔴
+
+16. [ ] `/blog/openclaw-telegram-vs-whatsapp`
+    - **Title:** "Telegram vs WhatsApp: Which Channel Won't Get You Banned"
+    - **Target keywords:** openclaw telegram, openclaw whatsapp ban
+    - **Angle:** Real user got WhatsApp banned chatting with their own agent. Drama + utility.
+    - **Word count:** 2,500-3,000
+    - **Priority:** 🟡
+
+17. [ ] `/blog/openclaw-agents-md-deep-dive`
+    - **Title:** "The 7 Files That Make OpenClaw Actually Smart"
+    - **Target keywords:** openclaw agents.md, openclaw config, openclaw memory
+    - **Angle:** Developer reference content. Bookmark-worthy 7-file breakdown. Strong SEO.
+    - **Word count:** 3,000-4,000
+    - **Priority:** 🟡
+
+18. [ ] `/blog/openclaw-human-use-cases`
+    - **Title:** "The 10 Most Human OpenClaw Uses (Nothing to Do With Productivity)"
+    - **Target keywords:** openclaw use cases, openclaw ideas, what can openclaw do
+    - **Angle:** Emotional angle — guy built cron job to send mom cartoons. Counters security fear narrative.
+    - **Word count:** 2,500-3,000
+    - **Priority:** 🟡
+
+19. [ ] `/blog/openclaw-honest-review-2026`
+    - **Title:** "OpenClaw Is Sloppy Right Now. Here's Why That's Exciting."
+    - **Target keywords:** openclaw review, openclaw problems, is openclaw worth it
+    - **Angle:** Honest thought leadership. "Like Claude Code a year ago" quote. Builds trust.
+    - **Word count:** 2,500-3,000
+    - **Priority:** 🟡
+
+20. [ ] `/blog/apple-winning-ai-race`
+    - **Title:** "Why Apple Is Winning the AI Race (And It Has Nothing to Do With Apple Intelligence)"
+    - **Target keywords:** mac mini openclaw, openclaw local model, apple ai agent
+    - **Angle:** Mac Mini shortage for local AI. Finance + tech crossover audience.
+    - **Word count:** 2,500-3,000
+    - **Priority:** 🟡
+
 ## After the Queue
 
 Once all 10 are published, the nightly agent switches to **timely/trending content:**
@@ -134,4 +208,4 @@ Research via ~/clawd/scripts/search.sh for trending OpenClaw discussions.
 
 ---
 
-*Last updated: February 17, 2026*
+*Last updated: February 23, 2026*
