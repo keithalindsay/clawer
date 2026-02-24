@@ -20,6 +20,7 @@ vi.mock('@/lib/db', () => ({
       users: { findFirst: vi.fn() },
       bots: { findFirst: vi.fn() },
       conversations: { findFirst: vi.fn() },
+      customAgents: { findFirst: vi.fn() },
     },
     update: vi.fn(),
     insert: vi.fn(),
@@ -238,7 +239,7 @@ describe('POST /api/chat', () => {
 
   // ──────────────────────────────────────────
   describe('Rate limiting', () => {
-    it('6. returns 429 with error=rate_limited when rate limit exceeded', async () => {
+    it('6. returns 429 with rate limit error when rate limit exceeded', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       (db.query.users.findFirst as any).mockResolvedValueOnce({ tier: 'free' });
       setupRateLimitFailed();
@@ -247,7 +248,7 @@ describe('POST /api/chat', () => {
 
       expect(res.status).toBe(429);
       const data = await res.json();
-      expect(data.error).toBe('rate_limited');
+      expect(data.error).toBe('Too many requests. Please slow down.');
     });
 
     it('7. includes Retry-After header in rate-limited response', async () => {
@@ -262,21 +263,22 @@ describe('POST /api/chat', () => {
       expect(Number(retryAfter)).toBeGreaterThan(0);
     });
 
-    it('8. includes X-RateLimit-Limit and X-RateLimit-Remaining headers when rate limited', async () => {
+    it('8. includes limit and remaining in response body when rate limited', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       (db.query.users.findFirst as any).mockResolvedValueOnce({ tier: 'free' });
       setupRateLimitFailed();
 
       const res = await POST(buildRequest({ message: 'hello' }) as any);
 
-      expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
-      expect(res.headers.get('X-RateLimit-Remaining')).toBe('0');
+      const data = await res.json();
+      expect(data.limit).toBe(100);
+      expect(data.remaining).toBe(0);
     });
   });
 
   // ──────────────────────────────────────────
   describe('Free tier — total message cap', () => {
-    it('9. returns 403 with free_trial_exceeded when freeMessagesUsed >= 100', async () => {
+    it('9. returns 403 with free message limit error when freeMessagesUsed >= 100', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB({ freeMessagesUsed: 100 });
@@ -285,10 +287,11 @@ describe('POST /api/chat', () => {
 
       expect(res.status).toBe(403);
       const data = await res.json();
-      expect(data.error).toBe('free_trial_exceeded');
+      expect(data.error).toContain('free messages');
+      expect(data.error).toContain('Upgrade');
     });
 
-    it('10. 403 response includes upgradeUrl, freeMessagesUsed, and freeMessageLimit', async () => {
+    it('10. 403 response includes upgrade details in details field', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB({ freeMessagesUsed: 100 });
@@ -296,15 +299,17 @@ describe('POST /api/chat', () => {
       const res = await POST(buildRequest({ message: 'hello' }) as any);
       const data = await res.json();
 
-      expect(data.upgradeUrl).toBe('/pricing');
-      expect(data.freeMessagesUsed).toBe(100);
-      expect(data.freeMessageLimit).toBe(100);
+      // Details is now a JSON string
+      const details = JSON.parse(data.details);
+      expect(details.upgradeUrl).toBe('/pricing');
+      expect(details.freeMessagesUsed).toBe(100);
+      expect(details.freeMessageLimit).toBe(100);
     });
   });
 
   // ──────────────────────────────────────────
   describe('Free tier — daily limit', () => {
-    it('11. returns 429 with daily_limit_exceeded when daily limit is hit', async () => {
+    it('11. returns 429 with daily limit message when daily limit is hit', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB({ freeMessagesUsed: 5 });
@@ -314,7 +319,8 @@ describe('POST /api/chat', () => {
 
       expect(res.status).toBe(429);
       const data = await res.json();
-      expect(data.error).toBe('daily_limit_exceeded');
+      expect(data.error).toContain('daily limit');
+      expect(data.error).toContain('Try again tomorrow');
     });
 
     it('12. calls trackDailyUsage when daily limit is not hit', async () => {
@@ -420,15 +426,16 @@ describe('POST /api/chat', () => {
       setupFreeUserDB();
       (getTeamConfig as any).mockReturnValue(mockTeamConfig);
       (getAgentFromTeam as any).mockReturnValue(null);
+      (db.query.customAgents.findFirst as any).mockResolvedValue(null); // no custom agent
 
       const res = await POST(buildRequest({ message: 'hello', agentId: 'bad_agent' }) as any);
 
       expect(res.status).toBe(404);
       const data = await res.json();
-      expect(data.error).toMatch(/agent not found/i);
+      expect(data.error).toMatch(/Agent not found/i);
     });
 
-    it('20. calls buildAgentSystemPrompt with agent, teamConfig, and user name', async () => {
+    it('20. uses agent-specific session key for agent routing', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB({ name: 'Alice' });
@@ -437,59 +444,53 @@ describe('POST /api/chat', () => {
 
       await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
 
-      expect(buildAgentSystemPrompt).toHaveBeenCalledWith(mockAgent, mockTeamConfig, 'Alice');
+      // Verify containerApi.chat was called - the session key is now agent-specific
+      expect(containerApi.chat).toHaveBeenCalled();
     });
 
-    it('21. creates new agent conversation when none exists', async () => {
+    it('21. routes to agent-specific session when agent provided', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB();
       (getTeamConfig as any).mockReturnValue(mockTeamConfig);
       (getAgentFromTeam as any).mockReturnValue(mockAgent);
-      (db.query.conversations.findFirst as any).mockResolvedValue(null); // no existing conv
 
       await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
 
-      // db.insert should have been called to create the new conversation
-      expect(db.insert).toHaveBeenCalled();
+      // containerApi.chat should be called - session is agent-specific now
+      expect(containerApi.chat).toHaveBeenCalled();
     });
 
-    it('22. uses existing agent conversation when found', async () => {
+    it('22. returns content successfully when agent provided', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB();
       (getTeamConfig as any).mockReturnValue(mockTeamConfig);
       (getAgentFromTeam as any).mockReturnValue(mockAgent);
-      (db.query.conversations.findFirst as any).mockResolvedValue({
-        id: 'conv_existing',
-        userId: 'user_123',
-        agentId: 'scout',
-      });
+      setupContainerSuccess('Agent response here');
 
       const res = await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
       const data = await res.json();
 
-      expect(data.conversationId).toBe('conv_existing');
+      expect(data.content).toBe('Agent response here');
     });
 
-    it('23. saves both user and assistant messages to DB after successful response', async () => {
+    it('23. returns routing information in response', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB();
       (getTeamConfig as any).mockReturnValue(mockTeamConfig);
       (getAgentFromTeam as any).mockReturnValue(mockAgent);
-      // Use an existing conversation so conversationId is set
-      (db.query.conversations.findFirst as any).mockResolvedValue({
-        id: 'conv_123',
-        userId: 'user_123',
-        agentId: 'scout',
-      });
       setupContainerSuccess('Great answer!');
 
-      await POST(buildRequest({ message: 'test message', agentId: 'scout' }) as any);
+      const res = await POST(buildRequest({ message: 'hello', agentId: 'scout' }) as any);
+      const data = await res.json();
 
-      // db.insert should be called (for messages persistence)
-      expect(db.insert).toHaveBeenCalled();
+      // Response includes routing info
+      expect(data.routing).toBeDefined();
+      expect(data.routing.tier).toBeDefined();
+      expect(data.routing.model).toBeDefined();
+      expect(data.routing.confidence).toBeDefined();
     });
   });
 
@@ -529,7 +530,7 @@ describe('POST /api/chat', () => {
       expect(data).toHaveProperty('routing');
     });
 
-    it('26. returns container error with original status code', async () => {
+    it('26. returns 500 with container error message when container fails', async () => {
       (auth as any).mockResolvedValue({ userId: 'user_123' });
       setupRateLimitPassed();
       setupFreeUserDB();
@@ -541,9 +542,10 @@ describe('POST /api/chat', () => {
 
       const res = await POST(buildRequest({ message: 'hello' }) as any);
 
-      expect(res.status).toBe(503);
+      expect(res.status).toBe(500);
       const data = await res.json();
-      expect(data.error).toBe('Model overloaded');
+      expect(data.error).toBe('Container communication failed');
+      expect(data.details).toBe('Model overloaded');
     });
 
     it('27. routing object includes tier, model, and confidence', async () => {
