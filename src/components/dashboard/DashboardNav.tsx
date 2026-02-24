@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/agent', label: 'Agent' },
   { href: '/dashboard/memory', label: 'Memory' },
   { href: '/dashboard/crons', label: 'Crons' },
+  { href: '/dashboard/launch-engine', label: '🚀 Launch Engine' },
   { href: '/dashboard/settings', label: 'Settings' },
 ];
 
