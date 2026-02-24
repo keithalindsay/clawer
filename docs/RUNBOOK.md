@@ -2,7 +2,7 @@
 
 **Purpose:** Quick-reference troubleshooting guide for agents and operators. When something breaks, start here.
 
-**Last updated:** 2026-02-20
+**Last updated:** 2026-02-23
 
 ---
 
@@ -22,7 +22,7 @@ Each container:
 - **Server:** `root@YOUR_DOCKER_HOST`
 - **App:** PM2 process `clawer`, Next.js 16, port 3000
 - **DB:** PostgreSQL `clawer:YOUR_DB_PASSWORD@localhost:5432/clawer`
-- **Containers:** Docker, image `clawer-openclaw:v2026.2.19`
+- **Containers:** Docker, image `clawer-openclaw:v2026.2.35`
 - **Shared services:** Ollama, SearXNG, SearXNG proxy — all on `clawer_shared` Docker network
 - **DNS/SSL:** Caddy reverse proxy, certs auto-managed
 - **Auth:** Clerk
@@ -235,6 +235,21 @@ Look for the transition point: runs go from OK summaries to confused responses.
 
 **Pipeline:** Push to `main` → GitHub Actions → rsync to server → `pnpm install && pnpm build` → PM2 restart
 
+### Orchestrator Deploy Script
+
+The orchestrator at `/opt/orchestrator/scripts/deploy.sh` (on `root@YOUR_DOCKER_HOST`) automates rolling container updates.
+
+**Key setting: `WARMUP_SECONDS`**
+- Set to **75** (increased from 45 on 2026-02-23)
+- OpenClaw gateway needs ~60-75s to initialize before the api-server connects
+- Health check: `curl -sf http://127.0.0.1:PORT/api/health` — this hits the **api-server** (port 8081), **not Next.js**
+- If health check fails with "Gateway not connected" in container logs → warmup is too short, increase `WARMUP_SECONDS`
+
+```bash
+# Verify current warmup setting on server
+ssh root@YOUR_DOCKER_HOST 'grep WARMUP_SECONDS /opt/orchestrator/scripts/deploy.sh'
+```
+
 ### ⚠️ CRITICAL: Dockerfile Tarball Management
 
 **Problem:** The Dockerfile references a specific OpenClaw tarball (e.g., `openclaw-2026.2.22.tgz`). This file gets **deleted** during `docker system prune`. Rebuilds fail with `ENOENT: no such file or directory, access 'openclaw-*.tgz'`.
@@ -246,11 +261,14 @@ Look for the transition point: runs go from OK summaries to confused responses.
 # 1. Check tarball exists
 ls docker/openclaw-user/openclaw-*.tgz
 
-# 2. If missing, download it
-cd docker/openclaw-user && npm pack openclaw@2026.2.22
+# 2. If missing, download it (use latest openclaw version — currently 2026.2.22)
+cd docker/openclaw-user && npm pack openclaw@2026.2.22 && cd ../..
 
 # 3. CRITICAL: Fix version mismatch after git pull
-sed -i "s/openclaw-2026.2.18.tgz/openclaw-2026.2.22.tgz/g" docker/openclaw-user/Dockerfile
+# After git pull the Dockerfile may reference an old version; patch it to match the tarball you have
+OLD_VER=$(grep -oP 'openclaw-\K[\d.]+(?=\.tgz)' docker/openclaw-user/Dockerfile | head -1)
+NEW_VER="2026.2.22"
+sed -i "s/openclaw-${OLD_VER}.tgz/openclaw-${NEW_VER}.tgz/g" docker/openclaw-user/Dockerfile
 
 # 4. Verify Dockerfile matches available tarball
 grep "openclaw-.*\.tgz" docker/openclaw-user/Dockerfile
@@ -264,18 +282,18 @@ ls docker/openclaw-user/openclaw-*.tgz
 
 ### Git Conflicts on Server
 
-**Problem:** Deploy subagents sometimes run `git stash` on the server, which causes conflicts on the next `git pull`. Server should **never have local changes** — all changes go through git.
+**Problem:** Deploy subagents sometimes run `git stash` on the server, which causes conflicts on the next `git pull`. A subtler source of conflicts: the deploy process itself runs `sed -i` to patch the Dockerfile with the current tarball version — this leaves uncommitted local changes that block the next `git pull`.
 
 **Before pulling code on server:**
 ```bash
-# Discard any local changes (recommended)
-cd /opt/clawer && git checkout -- . && git pull
+# Discard any local changes (recommended) — git clean -fd removes untracked files too
+cd /opt/clawer && git checkout -- . && git clean -fd && git pull
 
 # OR: Hard reset (nuclear option)
-cd /opt/clawer && git reset --hard origin/main && git pull
+cd /opt/clawer && git reset --hard origin/main && git clean -fd && git pull
 ```
 
-**Prevention:** Never manually edit files on the server. If you need to test a change, make it locally and push.
+**Prevention:** Never manually edit files on the server. If you need to test a change, make it locally and push. Always use `git checkout -- . && git clean -fd` before `git pull` to discard runtime `sed` edits.
 
 ### Full Deploy Checklist
 
@@ -285,7 +303,7 @@ cd /opt/clawer && git reset --hard origin/main && git pull
 cd ~/projects/clawer && git push
 
 # 2. Server: Pull and rebuild
-ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer && git checkout -- . && git pull && npm run build && pm2 restart clawer'
+ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer && git checkout -- . && git clean -fd && git pull && npm run build && pm2 restart clawer'
 
 # 3. Verify
 ssh root@YOUR_DOCKER_HOST 'pm2 status clawer && pm2 logs clawer --lines 5 --nostream'
@@ -299,8 +317,8 @@ cd ~/projects/clawer && git push
 # 2. SSH to server
 ssh root@YOUR_DOCKER_HOST
 
-# 3. Pull code (discard any server-side changes)
-cd /opt/clawer && git checkout -- . && git pull
+# 3. Pull code (discard any server-side changes, including runtime sed edits to Dockerfile)
+cd /opt/clawer && git checkout -- . && git clean -fd && git pull
 
 # 4. Check tarball exists
 ls docker/openclaw-user/openclaw-*.tgz
@@ -308,15 +326,16 @@ ls docker/openclaw-user/openclaw-*.tgz
 # 5. If missing, download it
 cd docker/openclaw-user && npm pack openclaw@2026.2.22 && cd ../..
 
-# 6. Fix Dockerfile version mismatch (CRITICAL after git pull)
-sed -i "s/openclaw-2026.2.18.tgz/openclaw-2026.2.22.tgz/g" docker/openclaw-user/Dockerfile
+# 6. Fix Dockerfile version mismatch (CRITICAL after git pull — git pull may restore old tarball ref)
+OLD_VER=$(grep -oP 'openclaw-\K[\d.]+(?=\.tgz)' docker/openclaw-user/Dockerfile | head -1)
+sed -i "s/openclaw-${OLD_VER}.tgz/openclaw-2026.2.22.tgz/g" docker/openclaw-user/Dockerfile
 
 # 7. Verify Dockerfile and tarball match
 grep "openclaw-.*\.tgz" docker/openclaw-user/Dockerfile
 ls docker/openclaw-user/openclaw-*.tgz
 
-# 8. Build new image (increment version number)
-docker build -t clawer-openclaw:v2026.2.32 docker/openclaw-user/
+# 8. Build new image (increment version number — current latest: v2026.2.35)
+docker build -t clawer-openclaw:v2026.2.35 docker/openclaw-user/
 
 # 9. For EACH container (example: clawer_user_39PgWfJYYrb2T36BqfnRgtwlsfM):
 CONTAINER="clawer_user_39PgWfJYYrb2T36BqfnRgtwlsfM"
@@ -357,10 +376,13 @@ docker run -d \
   --health-interval 30s \
   --health-timeout 10s \
   --health-retries 3 \
-  clawer-openclaw:v2026.2.32
+  clawer-openclaw:v2026.2.35
 
-# 14. Wait 45 seconds for gateway warmup
-sleep 45
+# 14. Wait 75 seconds for gateway warmup
+# OpenClaw gateway takes ~60-75s to initialize. Health check hits api-server on port 8081,
+# which only connects after the gateway is up. If health check fails with "Gateway not connected"
+# in container logs, WARMUP_SECONDS is too short.
+sleep 75
 
 # 15. Test the container
 curl -s -X POST http://localhost:4010/api/chat \
@@ -385,6 +407,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}" | grep clawer_
 
 | Version | OpenClaw | Changes | Date |
 |---------|----------|---------|------|
+| `v2026.2.35` | 2026.2.22 | Gateway warmup tuning (WARMUP_SECONDS=75), tarball/Dockerfile fixes | 2026-02-23 |
 | `v2026.2.32` | 2026.2.22 | Context pruning, memory flush, resilient entrypoint (mkdir 2>/dev/null) | 2026-02-23 |
 | `v2026.2.19` | 2026.2.19 | memorySearch config fix, base hardening | 2026-02-20 |
 
@@ -447,7 +470,7 @@ ssh root@YOUR_DOCKER_HOST 'pm2 logs clawer --lines 10 --nostream'
 **Rebuild Docker image:**
 ```bash
 # Use full checklist above — never run this command alone
-ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer && docker build -t clawer-openclaw:v2026.2.32 docker/openclaw-user/'
+ssh root@YOUR_DOCKER_HOST 'cd /opt/clawer && docker build -t clawer-openclaw:v2026.2.35 docker/openclaw-user/'
 ```
 
 ---
