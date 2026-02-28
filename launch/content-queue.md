@@ -72,14 +72,14 @@
 
 ### Week 2: Comparison & Differentiation Posts
 
-4. [ ] `/blog/openclaw-vs-chatgpt`
+4. [x] `/blog/openclaw-vs-chatgpt` (Feb 27)
    - **Title:** "OpenClaw vs ChatGPT: 7 Things Agents Do That Chatbots Can't"
    - **Target keywords:** openclaw vs chatgpt, AI agent vs chatbot, AI assistant automation
    - **Angle:** Concrete use cases — cron jobs, file management, web scraping, multi-channel, persistent memory, tool use, autonomous tasks. Not "AI agents are better" fluff — show real workflows.
    - **Word count:** 2,500-3,500
    - **Priority:** 🟡 Massive awareness traffic, top of funnel
 
-5. [ ] `/blog/openclaw-hosting-cost`
+5. [x] `/blog/openclaw-hosting-cost` — "How Much Does OpenClaw Hosting Actually Cost? The Real Numbers" (Feb 28)
    - **Title:** "How Much Does OpenClaw Hosting Actually Cost?"
    - **Target keywords:** openclaw hosting price, cheapest openclaw hosting, openclaw hosting free, openclaw total cost
    - **Angle:** Hidden costs nobody talks about — API keys, VPS, bandwidth, time, security patching, downtime. Real numbers. Include a calculator-style breakdown.
