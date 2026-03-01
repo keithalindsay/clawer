@@ -86,7 +86,7 @@
    - **Word count:** 2,000-3,000
    - **Priority:** 🟡 Cluster post, commercial intent
 
-6. [ ] `/blog/openclaw-telegram-setup`
+6. [x] `/blog/openclaw-telegram-setup` — "OpenClaw on Telegram: Complete Setup Guide" (Mar 1)
    - **Title:** "OpenClaw on Telegram: Bot Setup Guide"
    - **Target keywords:** AI assistant telegram bot, openclaw telegram setup
    - **Angle:** BotFather walkthrough, webhook vs polling, group vs DM, topic threading. Practical guide with code snippets.
