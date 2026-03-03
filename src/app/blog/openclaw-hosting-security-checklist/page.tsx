@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "OpenClaw Hosting Security: 15 Critical Checks | Clawer",
     description:
-      "Security checklist for OpenClaw hosting. 15 questions to verify before trusting a provider with your AI agent. Container isolation, token handling, updates.",
+      "Security checklist for OpenClaw hosting. 15 questions to ask before trusting a provider with your AI agent. Isolation, tokens, patches.",
   },
   alternates: {
     canonical: "https://clawer.ai/blog/openclaw-hosting-security-checklist",
@@ -430,8 +430,9 @@ export default function BlogPost() {
         <h4>10. How often are OpenClaw updates applied?</h4>
 
         <p>
-          <strong>What it is:</strong> OpenClaw releases security patches regularly. CVE-2026-25253
-          was patched in version 0.8.4, but thousands of instances never updated.
+          <strong>What it is:</strong> OpenClaw releases security patches regularly. A critical
+          vulnerability patched in early 2026 affected the Gateway auth layer, but thousands of
+          instances never updated.
         </p>
 
         <p>
