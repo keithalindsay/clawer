@@ -116,7 +116,7 @@
    - **Word count:** 1,500-2,500
    - **Priority:** 🟡 Purchase objection killer
 
-10. [ ] `/blog/openclaw-hosting-security-checklist`
+10. [x] `/blog/openclaw-hosting-security-checklist` (Mar 3)
     - **Title:** "OpenClaw Hosting Security: What to Look For"
     - **Target keywords:** openclaw hosting security, is openclaw hosting safe, secure openclaw deployment
     - **Angle:** Checklist format — 15 things to verify before trusting a host with your AI agent. Container isolation, token handling, network exposure, update cadence, backup policy. Links to our security page.
