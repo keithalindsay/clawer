@@ -125,7 +125,7 @@
 
 ### Week 3-4: Viral Potential (Researched 2026-02-23)
 
-11. [ ] `/blog/openclaw-cve-2026-exposed`
+11. [x] `/blog/openclaw-cve-2026-exposed` (Mar 4)
     - **Title:** "CVE-2026-25253: Why 42,000 OpenClaw Users Were Exposed"
     - **Target keywords:** openclaw security, openclaw CVE, openclaw port 18789
     - **Angle:** Fresh CVE, 1.5M leaked tokens, security firms covering it. Report facts, position Clawer as the fix. Time-sensitive.
