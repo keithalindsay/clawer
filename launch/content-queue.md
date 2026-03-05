@@ -146,8 +146,8 @@
     - **Word count:** 2,500-3,500
     - **Priority:** 🔴
 
-14. [ ] `/blog/ai-agent-business-140-month`
-    - **Title:** "How to Run Your Entire Business on AI Agents for $140/Month"
+14. [x] `/blog/ai-agent-business-140-month` — "AI Agent Business Automation for $140/Month: The Real Stack" (Mar 5)
+    - **Title:** "AI Agent Business Automation for $140/Month: The Real Stack"
     - **Target keywords:** openclaw business automation, ai agent business, openclaw trading bot
     - **Angle:** Specific dollar amounts + specific workflows. Content + trading + YouTube for $140/mo. Extremely shareable.
     - **Word count:** 3,000-4,000
