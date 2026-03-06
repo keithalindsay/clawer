@@ -139,7 +139,7 @@
     - **Word count:** 3,000-4,000
     - **Priority:** 🔴
 
-13. [ ] `/blog/openclaw-diy-vs-hosted`
+13. [x] `/blog/openclaw-diy-vs-hosted` (Mar 6)
     - **Title:** "OpenClaw DIY vs Hosted: The Honest Comparison"
     - **Target keywords:** openclaw hosting cost, openclaw managed, clawer.ai vs openclaw
     - **Angle:** "$4-8/mo VPS" quote being widely recited. Direct conversion content for people actively evaluating.
