@@ -132,7 +132,7 @@
     - **Word count:** 3,000-4,000
     - **Priority:** 🔴
 
-12. [ ] `/blog/openclaw-clawhub-skill-audit`
+12. [x] `/blog/openclaw-clawhub-skill-audit` (Mar 8)
     - **Title:** "We Audited 1,000 ClawHub Skills So You Don't Have To"
     - **Target keywords:** clawhub malware, openclaw plugin security, openclaw skill audit
     - **Angle:** #1 downloaded skill was wallet-stealing malware. 41% have vulnerabilities. Shareable safety content.
