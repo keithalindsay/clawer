@@ -167,7 +167,7 @@
     - **Word count:** 2,500-3,000
     - **Priority:** 🟡
 
-17. [ ] `/blog/openclaw-agents-md-deep-dive`
+17. [x] `/blog/openclaw-agents-md-deep-dive` — "The 7 Files That Make OpenClaw Actually Smart" (Mar 10)
     - **Title:** "The 7 Files That Make OpenClaw Actually Smart"
     - **Target keywords:** openclaw agents.md, openclaw config, openclaw memory
     - **Angle:** Developer reference content. Bookmark-worthy 7-file breakdown. Strong SEO.
