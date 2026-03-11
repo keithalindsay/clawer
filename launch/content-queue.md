@@ -160,7 +160,7 @@
     - **Word count:** 3,000-4,000
     - **Priority:** 🔴
 
-16. [ ] `/blog/openclaw-telegram-vs-whatsapp`
+16. [x] `/blog/openclaw-telegram-vs-whatsapp` — "Telegram vs WhatsApp: Which Channel Won't Get You Banned" (existing)
     - **Title:** "Telegram vs WhatsApp: Which Channel Won't Get You Banned"
     - **Target keywords:** openclaw telegram, openclaw whatsapp ban
     - **Angle:** Real user got WhatsApp banned chatting with their own agent. Drama + utility.
@@ -174,7 +174,7 @@
     - **Word count:** 3,000-4,000
     - **Priority:** 🟡
 
-18. [ ] `/blog/openclaw-human-use-cases`
+18. [x] `/blog/openclaw-human-use-cases` — "The 10 Most Human OpenClaw Uses (Nothing to Do With Productivity)" (Mar 11)
     - **Title:** "The 10 Most Human OpenClaw Uses (Nothing to Do With Productivity)"
     - **Target keywords:** openclaw use cases, openclaw ideas, what can openclaw do
     - **Angle:** Emotional angle — guy built cron job to send mom cartoons. Counters security fear narrative.
