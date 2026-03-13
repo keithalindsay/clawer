@@ -188,7 +188,7 @@
     - **Word count:** 2,800 (actual)
     - **Priority:** 🟡
 
-20. [ ] `/blog/apple-winning-ai-race`
+20. [x] `/blog/apple-winning-ai-race` (Mar 13)
     - **Title:** "Why Apple Is Winning the AI Race (And It Has Nothing to Do With Apple Intelligence)"
     - **Target keywords:** mac mini openclaw, openclaw local model, apple ai agent
     - **Angle:** Mac Mini shortage for local AI. Finance + tech crossover audience.
