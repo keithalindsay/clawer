@@ -4,6 +4,7 @@
 **Rule:** Pick the top unchecked item. Skip if already exists in `src/app/blog/`.
 
 ## Published ✅
+- [x] `/blog/china-openclaw-boom` — "China's OpenClaw Boom: 7,000 Orders, Government Bans" (Mar 14)
 - [x] `/blog/best-openclaw-hosting` — "Best OpenClaw Hosting in 2026: Honest Comparison" (Feb 17)
 - [x] `/blog/managed-openclaw-hosting` — "Managed OpenClaw Hosting: Stop Wrestling with Docker" (existing)
 - [x] `/blog/openclaw-security-guide` — "OpenClaw Security: Why 42,000+ Instances Are Exposed" (existing)
