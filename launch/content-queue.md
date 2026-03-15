@@ -196,9 +196,16 @@
     - **Word count:** 2,500-3,000
     - **Priority:** 🟡
 
+## Timely/Trending Content (Published)
+
+- [x] `/blog/apple-openclaw-siri-shortcuts` — "Why Apple Won't Build Their Own OpenClaw (And Why That's Okay)" (Mar 15)
+  - **Target keywords:** apple openclaw, siri shortcuts openclaw, openclaw iphone
+  - **Angle:** Reddit post asking if Apple should build secure OpenClaw alternative. Philosophical analysis of why Apple's walled garden is incompatible with agent autonomy. Community Siri Shortcuts workaround, iOS app status, why messaging apps work better.
+  - **Word count:** ~3,400
+
 ## After the Queue
 
-Once all 10 are published, the nightly agent switches to **timely/trending content:**
+Once all queued posts are published, the nightly agent switches to **timely/trending content:**
 - OpenClaw release notes and what they mean for users
 - New skill spotlights from ClawHub
 - Security advisories and CVE analysis
