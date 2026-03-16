@@ -203,6 +203,11 @@
   - **Angle:** Reddit post asking if Apple should build secure OpenClaw alternative. Philosophical analysis of why Apple's walled garden is incompatible with agent autonomy. Community Siri Shortcuts workaround, iOS app status, why messaging apps work better.
   - **Word count:** ~3,400
 
+- [x] `/blog/openclaw-1m-context-era` — "OpenClaw 1M Context: Free Models, Breaking Changes & Real Costs" (Mar 16)
+  - **Target keywords:** openclaw 1m context, openclaw free models, openclaw costs, openclaw 3.11
+  - **Angle:** Claude's 1M context window + free OpenRouter models + breaking change in 3.11. Contrarian take: most people are using it wrong, here's the cost trap and how to avoid it.
+  - **Word count:** ~3,200
+
 ## After the Queue
 
 Once all queued posts are published, the nightly agent switches to **timely/trending content:**
