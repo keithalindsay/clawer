@@ -219,11 +219,21 @@ Once all queued posts are published, the nightly agent switches to **timely/tren
 
 Research via ~/clawd/scripts/search.sh for trending OpenClaw discussions.
 
+- [x] `/blog/openclaw-breaking-changes-2026-3-2` — "OpenClaw 2026.3.2: Breaking Changes That Broke Trust" (Mar 19)
+  - **Target keywords:** openclaw breaking changes, openclaw 2026.3.2, openclaw maintenance, openclaw updates
+  - **Angle:** OpenClaw 2026.3.2 disabled tools by default and broke workflows. Real GitHub issues, Reddit frustration, exact fix + config, why managed hosting exists.
+  - **Word count:** ~3,116
+
 ---
 
-*Last updated: February 23, 2026*
+*Last updated: March 19, 2026*
 
 - [x] `/blog/nvidia-nemoclaw-openclaw-enterprise` — "NVIDIA NemoClaw Proves OpenClaw Isn't Enterprise-Ready" (Mar 17)
   - **Target keywords:** nvidia nemoclaw, openclaw enterprise, is openclaw enterprise ready, nemoclaw vs openclaw
   - **Angle:** Contrarian take: everyone celebrating NemoClaw as validation, but it actually proves OpenClaw has structural gaps. Early-stage alpha, 2027-2028 timeline for maturity.
   - **Word count:** ~3,300
+
+- [x] `/blog/jensen-huang-openclaw-next-chatgpt` — "Jensen Huang Called OpenClaw 'The Next ChatGPT.' Here's What That Means" (Mar 18)
+  - **Target keywords:** jensen huang openclaw, openclaw next chatgpt, nvidia openclaw next chatgpt
+  - **Angle:** Analysis beyond the headlines. What "next ChatGPT" means for adoption, security, infrastructure, why he's right (agents > chatbots, open-source wins), why he's wrong (security disaster, enterprise gaps, 2027-2028 timeline), and what it means for users today.
+  - **Word count:** ~3,200
