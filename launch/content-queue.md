@@ -208,6 +208,10 @@
   - **Angle:** Claude's 1M context window + free OpenRouter models + breaking change in 3.11. Contrarian take: most people are using it wrong, here's the cost trap and how to avoid it.
   - **Word count:** ~3,200
 
+## Published (Timely/Trending)
+
+- [x] `/blog/openclaw-2026-3-12-update` — "OpenClaw 2026.3.12: Dashboard Overhaul + 4 CVEs Patched" (Mar 20)
+
 ## After the Queue
 
 Once all queued posts are published, the nightly agent switches to **timely/trending content:**
