@@ -4,6 +4,7 @@
 **Rule:** Pick the top unchecked item. Skip if already exists in `src/app/blog/`.
 
 ## Published ✅
+- [x] `/blog/ai-models-commodities-openclaw` — "Are AI Models Becoming Commodities? The OpenClaw Debate Explained" (Mar 24)
 - [x] `/blog/openclaw-2026-3-13-broken-release` — "OpenClaw 2026.3.13: The Release They Had to Ship Twice" (Mar 22)
 - [x] `/blog/openclaw-lossless-claw` — "Lossless-Claw: Fix OpenClaw's Overnight Memory Problem" (Mar 21)
 - [x] `/blog/openclaw-2026-3-12-update` — "OpenClaw 2026.3.12: Dashboard Overhaul + 4 CVEs Patched" (Mar 20)
