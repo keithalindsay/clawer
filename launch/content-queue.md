@@ -43,6 +43,10 @@
 
 ## Queue (Priority Order)
 
+### Timely/Trending (New Publications)
+
+1. [x] `/blog/cisco-defenseclaw-enterprise` — "Cisco Releases DefenseClaw: The Enterprise Fix OpenClaw Desperately Needed" (Mar 24)
+
 ### Week 1: High-Intent Commercial Posts
 
 1. [x] `/blog/openclaw-self-hosted-vs-managed` — "OpenClaw Self-Hosted vs Managed: True Cost Comparison" (Feb 18)
@@ -241,6 +245,10 @@
 ## Published (Timely/Trending)
 
 - [x] `/blog/openclaw-2026-3-12-update` — "OpenClaw 2026.3.12: Dashboard Overhaul + 4 CVEs Patched" (Mar 20)
+
+## Published (Timely/Trending — After Queue)
+
+- [x] `/blog/openclaw-2026-3-24-teams-tools` — "OpenClaw 2026.3.24: Teams Gets Smart, Tools Get Visible" (Mar 26)
 
 ## After the Queue
 
