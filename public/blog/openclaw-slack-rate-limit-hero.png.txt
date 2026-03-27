@@ -1,0 +1,1 @@
+Placeholder: Image generation failed - will use stock/generated image
