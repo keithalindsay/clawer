@@ -1,14 +1,15 @@
 {
-  "timestamp": "2026-02-23T15:00:04Z",
+  "timestamp": "2026-03-23T14:00:04Z",
   "hostname": "pop-os",
-  "latest_version": "2026.2.22-2",
-  "local_version": "2026.2.22",
+  "latest_version": "2026.3.22",
+  "local_version": "2026.3.2",
   "docker_version": "2026.2.18",
-  "local_up_to_date": true,
+  "local_up_to_date": false,
   "docker_up_to_date": false,
   "needs_update": true,
   "recommendations": [
-    "Rebuild Docker image with openclaw-2026.2.22-2.tgz: npm pack in moltbot, copy to docker/openclaw-user/, then rebuild",
+    "Update local OpenClaw: cd ~/AIWorkspace/moltbot && git pull && npm install",
+    "Rebuild Docker image with openclaw-2026.3.22.tgz: npm pack in moltbot, copy to docker/openclaw-user/, then rebuild",
     "Run: scripts/build-and-deploy-worker.sh to push updated image to production"
   ]
 }

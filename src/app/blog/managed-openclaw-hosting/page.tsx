@@ -14,12 +14,21 @@ export const metadata: Metadata = {
     authors: ["Clawer Team"],
     tags: ["OpenClaw", "Hosting", "Docker", "AI Teams"],
     url: "https://clawer.ai/blog/managed-openclaw-hosting",
+    images: [
+      {
+        url: "https://clawer.ai/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Managed OpenClaw Hosting — Clawer.ai",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Managed OpenClaw Hosting: Stop Wrestling with Docker and Start Building",
     description:
       "Docker setup, config hell, security patches, model provider juggling — or one click. The case for managed OpenClaw hosting.",
+    images: ["https://clawer.ai/og-image.png"],
   },
   alternates: {
     canonical: "https://clawer.ai/blog/managed-openclaw-hosting",

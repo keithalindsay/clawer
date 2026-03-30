@@ -1,0 +1,114 @@
+DIRECTORY SUBMISSION COPY TEMPLATES
+Use these when submitting to AI/SaaS directories
+=================================================
+
+TOOL NAME: Clawer.ai
+
+TAGLINE OPTIONS (pick best for each directory):
+- "Managed hosting for OpenClaw AI agents — deploy in minutes"
+- "The easiest way to run AI agents in production"
+- "OpenClaw hosting platform: skip the infrastructure, keep the intelligence"
+- "AI agents, fully managed. No servers, no ops, no headaches."
+
+---
+
+SHORT DESCRIPTION (50-100 words):
+Clawer.ai is a managed hosting platform for OpenClaw — the open-source AI agent 
+framework for WhatsApp, Telegram, and custom channels. Deploy AI agents without 
+managing servers, scaling, or uptime. We handle infrastructure, SSL, backups, and 
+monitoring so you can focus on building intelligent workflows. Perfect for developers 
+and businesses who want AI agent capabilities without the ops burden.
+
+---
+
+MEDIUM DESCRIPTION (100-200 words):
+Clawer.ai makes it easy to run OpenClaw AI agents in production without managing 
+infrastructure. OpenClaw is an open-source framework that lets you build AI-powered 
+assistants for WhatsApp, Telegram, Discord, and custom channels — and Clawer.ai is 
+the managed hosting layer on top of it.
+
+With Clawer.ai, you get:
+• One-click deployment of OpenClaw agents
+• Automatic scaling based on message volume
+• 99.9% uptime SLA with redundant infrastructure
+• Built-in monitoring, logs, and alerts
+• SSL, backups, and security handled for you
+• Multiple LLM integrations (GPT-4, Claude, Gemini, local models)
+
+Whether you're a developer building your first WhatsApp bot or a business automating 
+customer support with AI agents, Clawer.ai removes the infrastructure friction so you 
+can focus on intelligence, not ops.
+
+---
+
+LONG DESCRIPTION (300+ words):
+Clawer.ai is a fully managed hosting platform built specifically for OpenClaw AI agents.
+
+OpenClaw is an open-source AI agent framework that powers intelligent assistants 
+across messaging platforms — WhatsApp, Telegram, Discord, Slack, and custom APIs. 
+It handles conversation state, memory, tool use, and multi-model routing. The 
+problem? Running OpenClaw in production requires real infrastructure expertise: 
+containerization, load balancing, monitoring, scaling, database management, and 
+more.
+
+That's exactly what Clawer.ai solves.
+
+We provide a managed cloud environment designed specifically for OpenClaw. You bring 
+your agent configuration and skills — we handle everything else. Our platform gives 
+you:
+
+DEPLOYMENT & OPERATIONS
+• One-click deploy from your OpenClaw config
+• Automatic horizontal scaling during high-volume periods
+• Zero-downtime deployments and rollbacks
+• Health checks and automatic restarts
+
+RELIABILITY
+• 99.9% uptime SLA
+• Redundant infrastructure across multiple availability zones
+• Automated daily backups with point-in-time restore
+• Global CDN for low-latency response times
+
+OBSERVABILITY
+• Real-time logs and error tracking
+• Conversation analytics and usage metrics
+• Latency monitoring per model/skill
+• Alerting via email, Slack, or webhook
+
+SECURITY
+• Automatic SSL/TLS certificates
+• Secrets management for API keys
+• SOC2-aligned infrastructure
+• Network isolation and DDoS protection
+
+MULTI-MODEL SUPPORT
+• GPT-4, Claude, Gemini, Mistral, and local models (Ollama)
+• Hot-swap model providers without downtime
+• Per-skill model routing for cost optimization
+
+Clawer.ai is ideal for:
+• Developers who want to ship AI agents fast without DevOps overhead
+• Businesses automating customer support or workflows via WhatsApp/Telegram
+• Agencies building AI agents for multiple clients
+• Teams that tried self-hosting OpenClaw and hit scaling pain
+
+Start free, scale as you grow. No credit card required for the free tier.
+
+CATEGORIES (use relevant ones per directory):
+AI Tools, AI Agents, Managed Hosting, Cloud Infrastructure, Chatbots, 
+WhatsApp Bots, Telegram Bots, Developer Tools, AI Infrastructure, SaaS
+
+WEBSITE: https://clawer.ai
+TWITTER: @clawerai
+GITHUB: [github.com/your-org]
+PRICING: Free tier available. Paid plans from $X/month.
+FOUNDED: February 2026
+HQ: [Location]
+
+---
+
+LOGO/MEDIA REQUIREMENTS:
+- Have ready: 512x512 PNG logo (square)
+- Have ready: 1200x630 OG image
+- Have ready: Screenshots of dashboard (2-3)
+- Have ready: Short demo GIF or video (optional but increases acceptance rate)

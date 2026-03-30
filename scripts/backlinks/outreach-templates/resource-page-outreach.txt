@@ -1,0 +1,103 @@
+RESOURCE PAGE LINK BUILDING OUTREACH TEMPLATES
+Target: Pages that list AI tools, OpenClaw resources, or hosting options
+================================================================
+
+TEMPLATE 1: "You're missing us from your list"
+
+SUBJECT: Quick suggestion for your [AI tools / OpenClaw resources] page
+
+Hi [NAME],
+
+I came across your [PAGE TITLE] page at [URL] — great roundup of [AI agent tools / OpenClaw resources].
+
+I noticed you don't have Clawer.ai listed. We're a managed hosting platform for 
+OpenClaw AI agents — basically the "deploy to Heroku" equivalent for OpenClaw. 
+
+Given that you cover [related tools they list], I thought it might be a useful addition 
+for your readers who want to run OpenClaw without managing servers.
+
+Our listing would fit alongside [TOOL THEY ALREADY LIST] in your [SECTION NAME] section.
+
+URL: https://clawer.ai
+One-liner: "Managed hosting for OpenClaw AI agents — deploy in minutes, no ops required"
+
+Happy to provide any additional info.
+
+Best,
+Keith
+Founder, Clawer.ai
+
+---
+
+TEMPLATE 2: Broken link replacement
+
+SUBJECT: Broken link on your [PAGE TITLE] page
+
+Hi [NAME],
+
+I was browsing your [PAGE TITLE] at [URL] and noticed that your link to 
+[BROKEN RESOURCE] appears to be broken (returns 404).
+
+I run Clawer.ai, a managed hosting platform for OpenClaw AI agents, which offers 
+similar functionality to what [BROKEN RESOURCE] used to provide — specifically 
+[describe what the broken resource was].
+
+If you're looking to update that link, we'd be a good replacement. Happy to 
+share more details.
+
+Either way, thought you'd want to know about the broken link.
+
+Best,
+Keith
+
+---
+
+TEMPLATE 3: Reaching out to OpenClaw maintainers for README listing
+
+SUBJECT: Adding Clawer.ai to OpenClaw hosted solutions
+
+Hi [OPENCLAW_MAINTAINER],
+
+I'm building Clawer.ai — a managed hosting platform specifically for OpenClaw. 
+We've been running it since [DATE] and have [X] active deployments.
+
+I'd love to be mentioned in the OpenClaw README or docs as a managed hosting option 
+for users who don't want to self-host. I can provide:
+- Accurate description of what we offer
+- Any documentation you'd want linked
+- Status page / uptime data
+
+Happy to also contribute back — we've run into some edge cases in production I can 
+document for the community.
+
+The PR would be simple: add a "Managed Hosting" section to the README listing clawer.ai.
+
+Would that be welcome? Happy to draft it for you.
+
+Best,
+Keith
+
+---
+
+SEARCH QUERIES TO FIND RESOURCE PAGES:
+
+Use these in Google/SearXNG to find targets:
+
+AI agent resource pages:
+- "openclaw" "resources" OR "tools" OR "hosting"
+- "ai agent hosting" inurl:resources
+- "self-hosted ai agent" "alternatives"
+- "awesome openclaw" github.com
+- intitle:"AI agent" "tools" OR "resources" site:github.com
+- "openclaw" site:github.com -site:github.com/openclaw
+- "ai agent framework" "hosted" site:*.io
+
+Broken link finding:
+- Search competitor names + "managed hosting" + "404" 
+- Use Check My Links browser extension on resource pages
+- Ahrefs free broken link checker
+
+Directories that haven't listed us yet:
+- Search: "futurepedia" "openclaw" — if no result, we're not listed
+- Search: "taaft" "clawer.ai" — same
+- Run site:theresanaiforthat.com "clawer" to check status

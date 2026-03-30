@@ -4,6 +4,7 @@
 **Rule:** Pick the top unchecked item. Skip if already exists in `src/app/blog/`.
 
 ## Published ✅
+- [x] `/blog/openclaw-2026-3-29-plugin-approval` — "OpenClaw 2026.3.29: Plugin Approval System Arrives (After 9 CVEs in a Week)" (Mar 30)
 - [x] `/blog/openclaw-nine-cves-march-2026` — "Nine CVEs in Four Days: OpenClaw's March 2026 Security Flood" (Mar 29)
 - [x] `/blog/ai-models-commodities-openclaw` — "Are AI Models Becoming Commodities? The OpenClaw Debate Explained" (Mar 24)
 - [x] `/blog/openclaw-2026-3-13-broken-release` — "OpenClaw 2026.3.13: The Release They Had to Ship Twice" (Mar 22)

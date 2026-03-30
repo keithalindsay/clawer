@@ -14,12 +14,21 @@ export const metadata: Metadata = {
     authors: ["Clawer Team"],
     tags: ["Security", "OpenClaw", "CVE-2026-25253", "ClawHavoc"],
     url: "https://clawer.ai/blog/openclaw-security-guide",
+    images: [
+      {
+        url: "https://clawer.ai/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "OpenClaw Security Guide — Clawer.ai",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "OpenClaw Security: Why 42,000+ Instances Are Exposed (And How to Fix It)",
     description:
       "CVE-2026-25253, 341 malicious skills, 42,000+ exposed instances. Here's what happened and how to protect yourself.",
+    images: ["https://clawer.ai/og-image.png"],
   },
   alternates: {
     canonical: "https://clawer.ai/blog/openclaw-security-guide",

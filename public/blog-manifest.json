@@ -1,0 +1,449 @@
+{
+  "posts": [
+    {
+      "slug": "china-openclaw-boom",
+      "title": "China's OpenClaw Boom: 7,000 Orders, Government Bans",
+      "date": "March 14, 2026",
+      "dateISO": "2026-03-14",
+      "readTime": "8 min read",
+      "excerpt": "One engineer quit his job to run a 100-person OpenClaw installation business. Then China banned it from government computers. What this means for security.",
+      "tags": [
+        "OpenClaw",
+        "China",
+        "Security",
+        "AI Agent",
+        "Government Ban"
+      ],
+      "url": "https://clawer.ai/blog/china-openclaw-boom"
+    },
+    {
+      "slug": "apple-winning-ai-race",
+      "title": "Why Apple Is Winning the AI Race (Without Trying)",
+      "date": "March 13, 2026",
+      "dateISO": "2026-03-13",
+      "readTime": "8 min read",
+      "excerpt": "The $599 Mac Mini accidentally became the best AI infrastructure. Apple's real AI win has nothing to do with Apple Intelligence.",
+      "tags": [
+        "Apple",
+        "Mac Mini",
+        "OpenClaw",
+        "Local AI",
+        "AI Infrastructure"
+      ],
+      "url": "https://clawer.ai/blog/apple-winning-ai-race"
+    },
+    {
+      "slug": "openclaw-honest-review-2026",
+      "title": "OpenClaw Review: Sloppy, Exciting, Worth Watching",
+      "date": "March 12, 2026",
+      "dateISO": "2026-03-12",
+      "readTime": "8 min read",
+      "excerpt": "Honest OpenClaw review after running production deployments. Current problems, why they signal opportunity, and what the trajectory looks like.",
+      "tags": [
+        "OpenClaw",
+        "Review",
+        "AI Assistant",
+        "Self-Hosting",
+        "Honest Opinion"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-honest-review-2026"
+    },
+    {
+      "slug": "openclaw-human-use-cases",
+      "title": "The 10 Most Human OpenClaw Uses (Nothing to Do With Productivity)",
+      "date": "March 11, 2026",
+      "dateISO": "2026-03-11",
+      "readTime": "8 min read",
+      "excerpt": "Real people using AI agents for emotional connection, memory, grief, creativity, and kindness. The opposite of productivity theater.",
+      "tags": [
+        "OpenClaw",
+        "Personal",
+        "Mental Health",
+        "Creativity",
+        "Emotional AI"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-human-use-cases"
+    },
+    {
+      "slug": "openclaw-agents-md-deep-dive",
+      "title": "The 7 Files That Make OpenClaw Actually Smart",
+      "date": "March 10, 2026",
+      "dateISO": "2026-03-10",
+      "readTime": "12 min read",
+      "excerpt": "OpenClaw's 7 core files explained: AGENTS.md, SOUL.md, USER.md, TOOLS.md, IDENTITY.md, BOOTSTRAP.md, MEMORY.md. Real examples and progression guide.",
+      "tags": [
+        "OpenClaw",
+        "AGENTS.md",
+        "Configuration",
+        "AI Assistant",
+        "Best Practices"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-agents-md-deep-dive"
+    },
+    {
+      "slug": "openclaw-telegram-vs-whatsapp",
+      "title": "OpenClaw Telegram vs WhatsApp: The Real Ban Risk",
+      "date": "March 9, 2026",
+      "dateISO": "2026-03-09",
+      "readTime": "8 min read",
+      "excerpt": "WhatsApp banned a user for chatting with their own AI assistant. Learn the real risks, what happens when you're banned, and which channel actually keeps your agent running.",
+      "tags": [
+        "OpenClaw",
+        "Telegram",
+        "WhatsApp",
+        "AI Assistant",
+        "Channel Setup"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-telegram-vs-whatsapp"
+    },
+    {
+      "slug": "openclaw-clawhub-skill-audit",
+      "title": "We Audited 1,000 ClawHub Skills: 41% Have Security Risks",
+      "date": "March 8, 2026",
+      "dateISO": "2026-03-08",
+      "readTime": "8 min read",
+      "excerpt": "1,184 malicious skills found on ClawHub. Crypto stealers, keyloggers, and API key theft. How to verify before installing.",
+      "tags": [
+        "OpenClaw",
+        "Security",
+        "ClawHub",
+        "Malware",
+        "Skills"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-clawhub-skill-audit"
+    },
+    {
+      "slug": "openclaw-multi-agent-team-guide",
+      "title": "Multi-Agent OpenClaw: Routing, Subagents & Teams Explained",
+      "date": "March 7, 2026",
+      "dateISO": "2026-03-07",
+      "readTime": "8 min read",
+      "excerpt": "OpenClaw 'multi-agent' means three different things. Here's what routing, subagents, and teams actually are \u2014 with real examples of when to use each.",
+      "tags": [
+        "OpenClaw",
+        "Multi-Agent",
+        "Subagents",
+        "Routing",
+        "AI Teams"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-multi-agent-team-guide"
+    },
+    {
+      "slug": "openclaw-diy-vs-hosted",
+      "title": "OpenClaw DIY vs Hosted: The Honest Comparison (2026)",
+      "date": "March 6, 2026",
+      "dateISO": "2026-03-06",
+      "readTime": "8 min read",
+      "excerpt": "Self-host vs managed OpenClaw: real costs, time investment, security risks, and a decision framework. TCO analysis from production deployments.",
+      "tags": [
+        "OpenClaw",
+        "Self-Hosted",
+        "Managed Hosting",
+        "DIY",
+        "Cost Comparison"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-diy-vs-hosted"
+    },
+    {
+      "slug": "ai-agent-business-140-month",
+      "title": "Run Your Business on AI Agents for $140/Month",
+      "date": "March 5, 2026",
+      "dateISO": "2026-03-05",
+      "readTime": "10 min read",
+      "excerpt": "Three proven workflows: content automation, trading signals, and YouTube repurposing. Real costs, real ROI, no fluff. Here's the exact $140/month stack.",
+      "tags": [
+        "OpenClaw",
+        "AI Agents",
+        "Business Automation",
+        "Content Creation",
+        "Trading Bots"
+      ],
+      "url": "https://clawer.ai/blog/ai-agent-business-140-month"
+    },
+    {
+      "slug": "openclaw-cve-2026-exposed",
+      "title": "CVE-2026-25253: Why 42,000 OpenClaw Users Were Exposed",
+      "date": "March 4, 2026",
+      "dateISO": "2026-03-04",
+      "readTime": "8 min read",
+      "excerpt": "The OpenClaw security timeline: from 341 malicious skills to localhost takeovers. What happened, who's affected, and what to do right now.",
+      "tags": [
+        "OpenClaw",
+        "Security",
+        "CVE",
+        "AI Assistant",
+        "Vulnerability"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-cve-2026-exposed"
+    },
+    {
+      "slug": "openclaw-hosting-security-checklist",
+      "title": "OpenClaw Hosting Security: 15 Critical Checks",
+      "date": "March 3, 2026",
+      "dateISO": "2026-03-03",
+      "readTime": "8 min read",
+      "excerpt": "15-point security checklist for evaluating OpenClaw hosting. Questions to ask about isolation, credentials, and patches.",
+      "tags": [
+        "OpenClaw",
+        "Security",
+        "Hosting",
+        "Container Isolation",
+        "AI Safety"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-hosting-security-checklist"
+    },
+    {
+      "slug": "openclaw-ai-teams",
+      "title": "OpenClaw Multi-Agent Teams: Deploy Your AI Team in 5 Minutes",
+      "date": "March 2, 2026",
+      "dateISO": "2026-03-02",
+      "readTime": "8 min read",
+      "excerpt": "Stop building AI agents from scratch. Deploy entire AI teams with templates for life management, content creation, and business. No coding required.",
+      "tags": [
+        "OpenClaw",
+        "Multi-Agent",
+        "AI Teams",
+        "AI Assistant",
+        "Templates"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-ai-teams"
+    },
+    {
+      "slug": "openclaw-telegram-setup",
+      "title": "OpenClaw on Telegram: Complete Setup Guide",
+      "date": "March 1, 2026",
+      "dateISO": "2026-03-01",
+      "readTime": "12 min read",
+      "excerpt": "Set up OpenClaw with Telegram in 10 minutes. BotFather walkthrough, DM pairing, group chat config, and production-ready security. Real commands, not theory",
+      "tags": [
+        "OpenClaw",
+        "Telegram",
+        "Bot Setup",
+        "AI Assistant",
+        "Tutorial"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-telegram-setup"
+    },
+    {
+      "slug": "openclaw-hosting-cost",
+      "title": "How Much Does OpenClaw Hosting Actually Cost?",
+      "date": "February 28, 2026",
+      "dateISO": "2026-02-28",
+      "readTime": "15 min read",
+      "excerpt": "VPS + API = $10/month? Not quite. Real OpenClaw hosting costs including time, security, backups, and hidden fees most guides skip.",
+      "tags": [
+        "OpenClaw",
+        "Hosting",
+        "Cost",
+        "VPS",
+        "Self-Hosting"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-hosting-cost"
+    },
+    {
+      "slug": "openclaw-vs-chatgpt",
+      "title": "OpenClaw vs ChatGPT: 7 Things Agents Do That Chatbots Can't",
+      "date": "February 27, 2026",
+      "dateISO": "2026-02-27",
+      "readTime": "8 min read",
+      "excerpt": "Cron jobs, file automation, multi-channel access, sub-agents. Real examples showing what AI agents do that chatbots physically cannot.",
+      "tags": [
+        "OpenClaw",
+        "ChatGPT",
+        "AI Agent",
+        "Chatbot",
+        "Automation"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-vs-chatgpt"
+    },
+    {
+      "slug": "openclaw-content-engine",
+      "title": "OpenClaw as Content Engine: Creator Playbook",
+      "date": "February 24, 2026",
+      "dateISO": "2026-02-24",
+      "readTime": "12 min read",
+      "excerpt": "Real creators hit 820K impressions and millions of TikTok views using OpenClaw. Voice cloning, hook analysis, cross-platform pipelines \u2014 exact workflows.",
+      "tags": [
+        "OpenClaw",
+        "Content Creation",
+        "AI Content",
+        "TikTok",
+        "Social Media Automation"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-content-engine"
+    },
+    {
+      "slug": "openclaw-clawhub-malware-security",
+      "title": "341 Malicious Skills on ClawHub: Protect Your Agent",
+      "date": "February 23, 2026",
+      "dateISO": "2026-02-23",
+      "readTime": "8 min read",
+      "excerpt": "ClawHavoc poisoned 1,184 OpenClaw skills with infostealers and backdoors. How to detect compromise, rotate credentials, and stay safe.",
+      "tags": [
+        "OpenClaw",
+        "Security",
+        "ClawHub",
+        "Malware",
+        "AI Agent Security"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-clawhub-malware-security"
+    },
+    {
+      "slug": "openclaw-agents-md-tips",
+      "title": "5 AGENTS.md Rules That Make Your OpenClaw Agent 10x Better",
+      "date": "February 22, 2026",
+      "dateISO": "2026-02-22",
+      "readTime": "12 min read",
+      "excerpt": "Community-proven AGENTS.md rules that dramatically improve OpenClaw agent behavior. Real before/after examples and copy-paste snippets for immediate use.",
+      "tags": [
+        "OpenClaw",
+        "AGENTS.md",
+        "Tips",
+        "AI Assistant",
+        "Configuration"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-agents-md-tips"
+    },
+    {
+      "slug": "openclaw-wrappers-make-money",
+      "title": "How to Make Money with OpenClaw Wrappers",
+      "date": "February 21, 2026",
+      "dateISO": "2026-02-21",
+      "readTime": "12 min read",
+      "excerpt": "Packaging pre-configured OpenClaw setups for specific niches is a real business. Here's how to build wrappers \u2014 or skip the work with Clawer.ai.",
+      "tags": [
+        "OpenClaw",
+        "Business",
+        "Wrappers",
+        "AI Assistant",
+        "Side Hustle"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-wrappers-make-money"
+    },
+    {
+      "slug": "openclaw-mistakes-cost-money",
+      "title": "10 OpenClaw Mistakes That Waste Money",
+      "date": "February 21, 2026",
+      "dateISO": "2026-02-21",
+      "readTime": "8 min read",
+      "excerpt": "These OpenClaw mistakes waste hundreds monthly on tokens, hosting, and debugging time. Here's what most users get wrong and how to fix it.",
+      "tags": [
+        "OpenClaw",
+        "Tips",
+        "Configuration",
+        "Token Management",
+        "Cost Optimization"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-mistakes-cost-money"
+    },
+    {
+      "slug": "openclaw-whatsapp-setup",
+      "title": "OpenClaw on WhatsApp: Complete Setup Guide (2026)",
+      "date": "February 20, 2026",
+      "dateISO": "2026-02-20",
+      "readTime": "8 min read",
+      "excerpt": "Connect OpenClaw to WhatsApp in 10 minutes. QR code setup, config examples, common errors (status=515 fix), and when to use WhatsApp vs Telegram.",
+      "tags": [
+        "OpenClaw",
+        "WhatsApp",
+        "Setup Guide",
+        "AI Assistant",
+        "Baileys"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-whatsapp-setup"
+    },
+    {
+      "slug": "how-to-set-up-openclaw",
+      "title": "How to Set Up OpenClaw in 2026: Complete Guide",
+      "date": "February 19, 2026",
+      "dateISO": "2026-02-19",
+      "readTime": "25 min read",
+      "excerpt": "Set up OpenClaw on Mac, Linux, Windows, or a VPS \u2014 with real commands, API cost guidance, and a post-install workflow. Includes the no-server option.",
+      "tags": [
+        "OpenClaw",
+        "Setup Guide",
+        "Installation",
+        "AI Assistant",
+        "Tutorial"
+      ],
+      "url": "https://clawer.ai/blog/how-to-set-up-openclaw"
+    },
+    {
+      "slug": "best-openclaw-hosting",
+      "title": "Best OpenClaw Hosting in 2026: Honest Comparison",
+      "date": "February 18, 2026",
+      "dateISO": "2026-02-18",
+      "readTime": "22 min read",
+      "excerpt": "Compare 15+ OpenClaw hosting providers. Pricing, security scores, setup time, and what each actually includes. Written by a hosting provider.",
+      "tags": [
+        "OpenClaw",
+        "Hosting",
+        "Comparison",
+        "AI Assistant",
+        "Managed Hosting"
+      ],
+      "url": "https://clawer.ai/blog/best-openclaw-hosting"
+    },
+    {
+      "slug": "openclaw-self-hosted-vs-managed",
+      "title": "OpenClaw Self-Hosted vs Managed: True Cost Comparison",
+      "date": "February 18, 2026",
+      "dateISO": "2026-02-18",
+      "readTime": "18 min read",
+      "excerpt": "The real TCO of self-hosting OpenClaw vs managed hosting. We do the math across 4 user scenarios so you don't have to guess. Honest numbers, clear verdict.",
+      "tags": [
+        "OpenClaw",
+        "Self-Hosting",
+        "Managed Hosting",
+        "Cost Comparison",
+        "TCO"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-self-hosted-vs-managed"
+    },
+    {
+      "slug": "managed-openclaw-hosting",
+      "title": "Managed OpenClaw Hosting: Stop Wrestling with Docker and Start Building",
+      "date": "February 16, 2026",
+      "dateISO": "2026-02-16",
+      "readTime": "6 min read",
+      "excerpt": "Tired of Docker configs, security patches, and model provider juggling? Managed OpenClaw hosting gives you AI Teams, curated skills, and zero ops. Here's why.",
+      "tags": [
+        "OpenClaw",
+        "Hosting",
+        "Docker",
+        "AI Teams"
+      ],
+      "url": "https://clawer.ai/blog/managed-openclaw-hosting"
+    },
+    {
+      "slug": "openclaw-security-guide",
+      "title": "OpenClaw Security: Why 42,000+ Instances Are Exposed (And How to Fix It)",
+      "date": "February 16, 2026",
+      "dateISO": "2026-02-16",
+      "readTime": "8 min read",
+      "excerpt": "CVE-2026-25253, 341 malicious ClawHub skills, and 42,000+ exposed instances. The OpenClaw security crisis explained \u2014 and how Clawer solves it.",
+      "tags": [
+        "Security",
+        "OpenClaw",
+        "CVE-2026-25253",
+        "ClawHavoc"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-security-guide"
+    },
+    {
+      "slug": "openclaw-security",
+      "title": "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
+      "date": "February 9, 2026",
+      "dateISO": "2026-02-09",
+      "readTime": "6 min read",
+      "excerpt": "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
+      "tags": [
+        "Security",
+        "OpenClaw",
+        "Hosting"
+      ],
+      "url": "https://clawer.ai/blog/openclaw-security"
+    }
+  ],
+  "generated": "2026-03-14T23:59:06.343661Z"
+}

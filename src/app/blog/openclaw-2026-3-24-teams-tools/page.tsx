@@ -257,7 +257,7 @@ export default function OpenClaw2026324Page() {
           </p>
 
           <p>
-            Small change, big reduction in setup friction. Self-hosters who aren't DevOps veterans will
+            Small change, noticeably smoother setup. Self-hosters who aren't DevOps veterans will
             actually get skills working instead of giving up.
           </p>
 
@@ -418,10 +418,7 @@ openclaw --version`}
           </ul>
 
           <p>
-            Self-hosting gives you control. Managed hosting gives you time.
-          </p>
-
-          <p>
+            Self-hosting gives you control. Managed hosting gives you time.{" "}
             <Link href="/pricing" className="text-blue-600 hover:text-blue-800 font-medium">
               See Clawer pricing →
             </Link>

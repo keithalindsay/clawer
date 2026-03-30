@@ -1,0 +1,24 @@
+# Clawer.ai Marketing Pipeline — Crontab Entries
+# Generated: 2026-03-14
+#
+# To install: crontab -e  then paste these lines
+# Or: crontab marketing-crontab.txt  (replaces existing crontab — backup first!)
+#
+# Times are in CT (America/Chicago)
+# Server cron runs in UTC — CT = UTC-6 (CST) / UTC-5 (CDT)
+# 6 AM CT = 12:00 UTC (CST) or 11:00 UTC (CDT)
+# Use 12:00 UTC to safely cover both CST/CDT
+
+# ── Full marketing pipeline ──────────────────────────────────────────────────
+# Runs daily at 6 AM CT (12:00 UTC), after the blog generation at 5 AM CT
+# Steps: Dev.to crosspost → Hashnode crosspost → Reddit monitor → Directory status
+0 12 * * * /home/keith/projects/clawer/scripts/marketing/run-marketing-pipeline.sh >> /home/keith/projects/clawer/logs/marketing-pipeline.log 2>&1
+
+# ── Reddit monitor (every 4 hours) ──────────────────────────────────────────
+# Checks for new opportunities at 0, 4, 8, 12, 16, 20 UTC
+# (0 AM, 4 AM, 8 AM, 12 PM, 4 PM, 8 PM UTC)
+0 */4 * * * /home/keith/projects/clawer/scripts/marketing/run-marketing-pipeline.sh --reddit-only >> /home/keith/projects/clawer/logs/marketing-pipeline.log 2>&1
+
+# ── Optional: Weekly directory report (Mondays at 7 AM CT / 13:00 UTC) ──────
+# Uncomment to enable:
+# 0 13 * * 1 /usr/bin/python3 /home/keith/projects/clawer/scripts/marketing/directory-tracker.py report >> /home/keith/projects/clawer/logs/marketing-pipeline.log 2>&1

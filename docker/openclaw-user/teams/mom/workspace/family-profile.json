@@ -1,0 +1,14 @@
+{
+  "members": [],
+  "preferences": {
+    "dietary": [],
+    "cuisines": [],
+    "budgetLevel": "moderate",
+    "cookingSkill": "intermediate"
+  },
+  "schedule": {
+    "briefingTime": "07:00",
+    "dinnerTime": "18:00",
+    "groceryDay": "saturday"
+  }
+}

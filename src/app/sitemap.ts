@@ -1,7 +1,35 @@
 import type { MetadataRoute } from "next";
+import { promises as fs } from "fs";
+import path from "path";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+interface BlogPost {
+  slug: string;
+  dateISO: string;
+}
+
+async function getBlogPosts(): Promise<BlogPost[]> {
+  try {
+    const manifestPath = path.join(process.cwd(), "public", "blog-manifest.json");
+    const raw = await fs.readFile(manifestPath, "utf-8");
+    const data = JSON.parse(raw);
+    return data.posts as BlogPost[];
+  } catch {
+    console.error("sitemap.ts: Failed to load blog-manifest.json");
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://clawer.ai";
+
+  const blogPosts = await getBlogPosts();
+
+  const blogEntries: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.dateISO),
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
 
   return [
     {
@@ -17,6 +45,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/use-cases`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -25,38 +59,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/managed-openclaw-hosting`,
-      lastModified: new Date("2026-02-18"),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/blog/openclaw-security-guide`,
-      lastModified: new Date("2026-02-18"),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/blog/best-openclaw-hosting`,
-      lastModified: new Date("2026-02-18"),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/blog/openclaw-self-hosted-vs-managed`,
-      lastModified: new Date("2026-02-18"),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/blog/openclaw-security`,
-      lastModified: new Date("2026-02-18"),
-      changeFrequency: "monthly",
-      priority: 0.6,
+      changeFrequency: "daily",
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/sign-up`,
@@ -82,5 +86,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.3,
     },
+    // All blog posts — dynamically loaded from public/blog-manifest.json
+    ...blogEntries,
   ];
 }

@@ -1,0 +1,217 @@
+{
+  "meta": {
+    "version": "1.0",
+    "last_updated": "2026-03-15",
+    "description": "Scheduled community engagement calendar for clawer.ai. Rotate through these to maintain presence without spamming.",
+    "rules": [
+      "Never drop a bare link — always add substantial value first",
+      "1 promotional post per subreddit per month max",
+      "Spend 80% of time answering questions, 20% promoting",
+      "Never automate actual posting — only drafting",
+      "Track karma/account age before posting (new accounts get filtered)"
+    ]
+  },
+  "weekly_schedule": {
+    "monday": {
+      "theme": "Technical deep-dive",
+      "platforms": ["r/selfhosted", "Hacker News"],
+      "content_type": "Tutorial or technical explanation",
+      "example_topics": [
+        "How to configure OpenClaw for production use",
+        "AI agent memory patterns explained",
+        "Debugging slow AI agent responses"
+      ]
+    },
+    "tuesday": {
+      "theme": "Use cases and stories",
+      "platforms": ["r/artificial", "r/ChatGPT"],
+      "content_type": "Use case showcase or before/after",
+      "example_topics": [
+        "How I automated my customer support with an AI agent",
+        "WhatsApp AI assistant for my small business",
+        "Getting 10x more done with AI agents"
+      ]
+    },
+    "wednesday": {
+      "theme": "Community questions — be the expert",
+      "platforms": ["Quora", "Stack Overflow", "r/MachineLearning"],
+      "content_type": "Answer existing questions, no self-promo",
+      "example_topics": [
+        "Answer: 'How do I host an AI agent cheaply?'",
+        "Answer: 'What is OpenClaw?'",
+        "Answer: 'Best way to deploy a WhatsApp bot?'"
+      ]
+    },
+    "thursday": {
+      "theme": "Building in public",
+      "platforms": ["r/SideProject", "Indie Hackers", "r/SaaS"],
+      "content_type": "Progress update, milestones, lessons learned",
+      "example_topics": [
+        "Week X: What I learned building managed AI agent hosting",
+        "Our first 10 customers and what we changed",
+        "Mistakes I made scaling an AI hosting platform"
+      ]
+    },
+    "friday": {
+      "theme": "Content amplification",
+      "platforms": ["Dev.to", "Hashnode", "LinkedIn"],
+      "content_type": "Syndicate best blog post of the week",
+      "notes": "Automate this — cross-post from clawer.ai blog with canonical URL"
+    }
+  },
+  "subreddits": [
+    {
+      "name": "r/selfhosted",
+      "url": "https://reddit.com/r/selfhosted",
+      "members": 350000,
+      "self_promo_rules": "Allowed with genuine value. No bare links.",
+      "best_content_types": ["tutorials", "comparisons", "project showcases"],
+      "posting_frequency": "1 original post/month + daily valuable comments",
+      "priority": "high",
+      "karma_needed": 100,
+      "account_age_needed": "30 days",
+      "top_post_angles": [
+        "Show and tell: running OpenClaw at home vs managed hosting",
+        "Cost breakdown: DIY AI agent hosting in 2026",
+        "I made a managed hosting service for AI agents — here's what I learned"
+      ]
+    },
+    {
+      "name": "r/SideProject",
+      "url": "https://reddit.com/r/SideProject",
+      "members": 250000,
+      "self_promo_rules": "Explicitly allowed. Show what you built.",
+      "best_content_types": ["product showcases", "launch posts", "milestone updates"],
+      "posting_frequency": "1 launch post + monthly updates",
+      "priority": "critical",
+      "karma_needed": 0,
+      "account_age_needed": "none",
+      "top_post_angles": [
+        "I built a managed hosting platform for AI agents (Show HN style)",
+        "6 months of building clawer.ai: lessons and metrics",
+        "From 0 to 100 customers: what I learned about AI agent hosting"
+      ]
+    },
+    {
+      "name": "r/artificial",
+      "url": "https://reddit.com/r/artificial",
+      "members": 800000,
+      "self_promo_rules": "Some allowed, must have value",
+      "best_content_types": ["AI news commentary", "use cases", "tutorials"],
+      "posting_frequency": "2x/month, mostly commenting",
+      "priority": "high",
+      "top_post_angles": [
+        "Building and deploying AI agents: a practical guide for 2026",
+        "The real cost of running your own AI assistant",
+        "How WhatsApp AI bots are changing small business operations"
+      ]
+    },
+    {
+      "name": "r/SaaS",
+      "url": "https://reddit.com/r/SaaS",
+      "members": 150000,
+      "self_promo_rules": "Allowed, be genuine",
+      "best_content_types": ["startup stories", "metrics", "lessons"],
+      "posting_frequency": "Bi-weekly when hitting milestones",
+      "priority": "medium",
+      "top_post_angles": [
+        "Pricing strategy for AI hosting SaaS: what worked for us",
+        "First $1K MRR with an AI agent hosting platform",
+        "Customer acquisition for niche dev tools: what actually works"
+      ]
+    },
+    {
+      "name": "r/Entrepreneur",
+      "url": "https://reddit.com/r/Entrepreneur",
+      "members": 1000000,
+      "self_promo_rules": "Allowed with lessons/value",
+      "best_content_types": ["business lessons", "AMA-style posts"],
+      "posting_frequency": "Monthly",
+      "priority": "medium",
+      "top_post_angles": [
+        "I built a b2b SaaS in 4 months targeting AI developers — AMA",
+        "How I found my niche: managed AI agent hosting"
+      ]
+    },
+    {
+      "name": "r/homelab",
+      "url": "https://reddit.com/r/homelab",
+      "members": 400000,
+      "self_promo_rules": "Friendly community, value-first",
+      "best_content_types": ["setup guides", "comparisons", "tutorials"],
+      "posting_frequency": "Monthly technical guide",
+      "priority": "medium",
+      "top_post_angles": [
+        "When to stop self-hosting your AI agent and go managed",
+        "OpenClaw on Raspberry Pi vs managed cloud: real numbers"
+      ]
+    },
+    {
+      "name": "r/MachineLearning",
+      "url": "https://reddit.com/r/MachineLearning",
+      "members": 2000000,
+      "self_promo_rules": "Very strict — research and papers only",
+      "best_content_types": ["benchmark data", "research findings"],
+      "posting_frequency": "Only when publishing benchmark reports",
+      "priority": "low",
+      "notes": "Only use this if publishing actual research/benchmark data"
+    },
+    {
+      "name": "r/Bots",
+      "url": "https://reddit.com/r/Bots",
+      "members": 100000,
+      "self_promo_rules": "Friendly to bot creators",
+      "best_content_types": ["bot showcases", "tutorials"],
+      "posting_frequency": "Monthly",
+      "priority": "medium",
+      "top_post_angles": [
+        "Built a WhatsApp AI agent that handles customer support — here's how",
+        "Telegram bot powered by OpenClaw: architecture walkthrough"
+      ]
+    }
+  ],
+  "other_communities": [
+    {
+      "platform": "Hacker News",
+      "url": "https://news.ycombinator.com",
+      "strategy": "One 'Show HN' post. Don't repost. Answer AI-related Ask HN threads weekly.",
+      "show_hn_title": "Show HN: Clawer.ai – Managed hosting for OpenClaw AI agents",
+      "best_time": "Tuesday-Thursday, 9am-12pm ET",
+      "automation_potential": "none — human relationship platform"
+    },
+    {
+      "platform": "Indie Hackers",
+      "url": "https://indiehackers.com",
+      "strategy": "Create product page. Post weekly 'building in public' updates. Engage with other founders.",
+      "frequency": "Weekly update posts",
+      "automation_potential": "low"
+    },
+    {
+      "platform": "Discord: AI Tinkerers",
+      "url": "https://aitinkerers.org",
+      "strategy": "Genuine participation. Share use cases. Answer questions about AI agent deployment.",
+      "frequency": "Daily check-in, contribute when relevant",
+      "automation_potential": "none"
+    },
+    {
+      "platform": "Quora",
+      "url": "https://quora.com",
+      "strategy": "Answer questions about: AI agent hosting, OpenClaw, WhatsApp bots, managed AI services. Link when genuinely relevant.",
+      "target_questions": [
+        "How do I host an AI agent?",
+        "What is OpenClaw?",
+        "Best managed AI agent hosting platforms",
+        "How to build a WhatsApp bot with AI",
+        "Self-hosted vs managed AI: which is better?"
+      ],
+      "frequency": "2-3 answers per week",
+      "automation_potential": "low — drafts only"
+    },
+    {
+      "platform": "Dev.to",
+      "url": "https://dev.to",
+      "strategy": "Auto-cross-post all blog articles. Engage with AI agent discussion threads.",
+      "automation_potential": "high — API available"
+    }
+  ]
+}

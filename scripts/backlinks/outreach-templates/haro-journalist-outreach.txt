@@ -1,0 +1,124 @@
+HARO / JOURNALIST OUTREACH TEMPLATES
+For media query responses and proactive journalist pitches
+================================================================
+
+SERVICES TO MONITOR DAILY:
+- Qwoted: https://qwoted.com (best HARO replacement)
+- Connectively: https://connectively.us (HARO's successor)
+- Help a B2B Writer: https://helpab2bwriter.com
+- Featured.com: https://featured.com
+- Source of Sources: https://sourceofsources.substack.com
+
+KEYWORDS TO WATCH FOR:
+- "AI agent" OR "AI agents"
+- "managed hosting" + "AI"
+- "WhatsApp bot" OR "Telegram bot"
+- "OpenClaw"
+- "AI automation" + "hosting"
+- "AI assistant deployment"
+- "self-hosted AI"
+
+---
+
+TEMPLATE 1: Response to journalist media query
+
+Hi [JOURNALIST_NAME],
+
+I saw your query about [TOPIC] — I can help with that.
+
+I'm Keith, founder of Clawer.ai, a managed hosting platform for OpenClaw AI agents. 
+We've [X months] of production data on this exact question.
+
+QUICK TAKE: [2-3 sentence compelling expert quote]
+
+BACKGROUND: I've been building in the AI agent infrastructure space since [DATE], 
+and we've seen [specific data point or observation] that directly relates to your story.
+
+EXPANDED QUOTE (if useful):
+"[Longer expert quote you can use verbatim — 100-150 words, specific and opinionated]"
+
+Happy to jump on a quick call if you need more color. My availability: [LINK TO CALENDAR]
+
+Best,
+Keith
+Founder, Clawer.ai | https://clawer.ai
++1 (860) 681-5315
+
+---
+
+TEMPLATE 2: Proactive pitch to journalist who covered related topic
+
+SUBJECT: Source for your follow-up on [ARTICLE THEY WROTE]
+
+Hi [NAME],
+
+I read your piece on [TOPIC] — great coverage of [specific thing you liked].
+
+One angle you might want to explore for a follow-up: [UNIQUE ANGLE NOBODY HAS COVERED].
+
+I can speak to this directly — I run Clawer.ai, where we've seen [specific data/trend] 
+that makes this interesting. [1-2 sentences of the insight]
+
+Happy to be a source if you cover this angle, or if it fits into a broader AI 
+infrastructure story you're working on.
+
+Best,
+Keith
+Founder, Clawer.ai
+https://clawer.ai
+
+---
+
+TARGET PUBLICATIONS & BEATS:
+
+| Publication | Beat | Why We Fit |
+|-------------|------|------------|
+| TechCrunch | AI startups | Managed AI hosting is a growing category |
+| VentureBeat | Enterprise AI | Business AI automation angle |
+| The Verge | Consumer AI | WhatsApp bot for everyday users |
+| Wired | AI automation | Infrastructure and automation trend |
+| ZDNet | AI tools | AI agent hosting comparison |
+| InfoQ | AI in production | Engineering/infrastructure angle |
+| The New Stack | Cloud/DevOps | AI agent deployment patterns |
+| Ars Technica | AI technology | Technical depth on OpenClaw ecosystem |
+
+---
+
+STORY ANGLES WORTH PITCHING PROACTIVELY:
+
+1. "The managed AI hosting market is having its 'Heroku moment'"
+   - Data: How many developers are self-hosting AI agents vs managed
+   - Hook: History repeats — devs want to ship, not operate
+
+2. "WhatsApp + AI is the next big consumer platform nobody is talking about"
+   - 2B+ WhatsApp users, AI agent enablement
+   - Small businesses automating via WhatsApp bots
+
+3. "OpenClaw is becoming the WordPress of AI agents"
+   - Ecosystem comparison, managed hosting parallel
+   - Market size and growth
+
+4. "The hidden ops burden of AI agents: why managed hosting is inevitable"
+   - Real data on infrastructure complexity
+   - Time cost vs cloud cost tradeoff
+
+---
+
+EXPERT POSITIONING QUOTES (have these ready):
+
+On managed vs self-hosted AI:
+"Most developers underestimate what it takes to run AI agents in production. 
+It's not just deploying a Docker container — it's handling model failovers, 
+context management, rate limiting, scaling under load, and 3am pages when 
+your WhatsApp integration goes down. Managed hosting exists because running 
+AI reliably is a full-time job."
+
+On the AI agent market:
+"We're at the same inflection point with AI agents that happened with web apps 
+in 2009 — everyone wanted to build, but running servers was the bottleneck. 
+Heroku solved that for web apps. Clawer.ai is trying to solve it for AI agents."
+
+On OpenClaw ecosystem:
+"OpenClaw gave developers a powerful framework for AI agents. But a framework 
+is just code — it needs infrastructure, monitoring, and uptime. That's the 
+gap we fill."

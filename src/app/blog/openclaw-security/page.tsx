@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous | Clawer Blog",
   description:
     "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
+  alternates: {
+    canonical: "https://clawer.ai/blog/openclaw-security",
+  },
   openGraph: {
     title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
     description:
@@ -13,18 +16,65 @@ export const metadata: Metadata = {
     publishedTime: "2026-02-09T00:00:00.000Z",
     authors: ["Clawer Team"],
     tags: ["Security", "OpenClaw", "Hosting"],
+    url: "https://clawer.ai/blog/openclaw-security",
+    images: [
+      {
+        url: "https://clawer.ai/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "OpenClaw Security Crisis",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
     description:
       "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
+    images: ["https://clawer.ai/og-image.png"],
   },
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://clawer.ai" },
+    { "@type": "ListItem", position: 2, name: "Blog", item: "https://clawer.ai/blog" },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "OpenClaw Security Crisis",
+      item: "https://clawer.ai/blog/openclaw-security",
+    },
+  ],
+};
+
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline:
+    "OpenClaw's Security Crisis: Why Self-Hosting Your AI Assistant Just Got Dangerous",
+  datePublished: "2026-02-09",
+  dateModified: "2026-02-09",
+  author: { "@type": "Organization", name: "Clawer.ai", url: "https://clawer.ai" },
+  publisher: { "@type": "Organization", name: "Clawer.ai", url: "https://clawer.ai" },
+  url: "https://clawer.ai/blog/openclaw-security",
+  description:
+    "Over 340 malicious skills discovered on ClawHub, 21,000+ exposed instances, and a critical CVE. Here's why hosted AI is the safer choice.",
 };
 
 export default function OpenClawSecurityPost() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -359,7 +409,7 @@ export default function OpenClawSecurityPost() {
             <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 my-8">
               <p className="text-lg font-semibold text-gray-900 mb-3">
                 <a
-                  href="https://clawer.ai/signup"
+                  href="https://clawer.ai/sign-up"
                   className="text-blue-600 hover:text-blue-700 underline"
                 >
                   Start your free trial →

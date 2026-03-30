@@ -2,7 +2,15 @@
  * Sign-in page for Clawer.ai
  */
 
+import type { Metadata } from "next";
 import { SignIn } from '@clerk/nextjs';
+
+export const metadata: Metadata = {
+  title: "Sign In — Clawer.ai",
+  description: "Sign in to your Clawer.ai account to access your AI team.",
+  robots: { index: false, follow: false },
+  alternates: { canonical: "https://clawer.ai/sign-in" },
+};
 
 export default function SignInPage() {
   return (

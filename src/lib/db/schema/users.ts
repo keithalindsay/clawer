@@ -166,6 +166,13 @@ export const users = pgTable('users', {
   morningBriefingChannel: text('morning_briefing_channel').default('whatsapp'),
   morningBriefingTimezone: text('morning_briefing_timezone').default('America/Chicago'),
 
+  // ─── MomBrain / App-level fields ──────────────────────────────────────────
+  /** Display name shown in the app (separate from Clerk name) */
+  displayName: text('display_name'),
+
+  /** User's local timezone for scheduling and briefings */
+  timezone: text('timezone').default('America/Chicago'),
+
   /** Free trial messages used (out of 100, no credit card required) */
   freeMessagesUsed: integer('free_messages_used').notNull().default(0),
   

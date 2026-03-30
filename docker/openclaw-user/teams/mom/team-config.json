@@ -1,42 +1,47 @@
 {
   "industry": "family",
   "name": "Mom's Command Center",
-  "description": "Your household management team. Handles meal planning, schedules, homework help, reminders, and keeping everything running smoothly.",
+  "description": "Your AI chief of staff for family life. Five specialist agents handle meals, schedules, homework, budget, and activities.",
   "members": [
     {
       "id": "planner",
       "name": "Mel",
-      "role": "Meal Planner & Nutrition",
+      "role": "Meal Planner & Kitchen Companion",
       "emoji": "🍳",
-      "triggers": ["meal", "dinner", "lunch", "breakfast", "recipe", "grocery", "food", "cook", "snack", "nutrition", "diet", "allergies", "meal prep"]
+      "triggers": ["meal", "dinner", "lunch", "breakfast", "recipe", "grocery", "food", "cook", "snack", "nutrition", "diet", "allergies", "meal prep", "fridge", "what's for", "ingredients", "menu"],
+      "quickPrompts": ["What's for dinner tonight?", "Generate this week's meal plan", "What can I make with what's in the fridge?", "Add to grocery list"]
     },
     {
       "id": "scheduler",
       "name": "Cal",
       "role": "Schedule & Calendar Manager",
       "emoji": "📅",
-      "triggers": ["schedule", "calendar", "appointment", "practice", "pickup", "dropoff", "carpool", "event", "birthday", "reminder", "when is", "what time"]
+      "triggers": ["schedule", "calendar", "appointment", "practice", "pickup", "dropoff", "event", "birthday", "reminder", "when is", "what time", "deadline", "permission slip", "field trip", "picture day"],
+      "quickPrompts": ["What's on the calendar today?", "Schedule dentist for the kids", "When is the next school event?"]
     },
     {
       "id": "tutor",
       "name": "Prof",
-      "role": "Homework & Learning Helper",
+      "role": "Homework Helper & Tutor",
       "emoji": "📚",
-      "triggers": ["homework", "math", "science", "reading", "essay", "project", "study", "test", "quiz", "grade", "school", "learn", "explain", "help with"]
+      "triggers": ["homework", "math", "science", "reading", "essay", "project", "study", "test", "quiz", "school", "learn", "explain", "help with", "what is this", "bug", "plant", "identify"],
+      "quickPrompts": ["Help with this math problem", "What is this bug/plant?", "Quiz me on spelling words"]
     },
     {
       "id": "organizer",
       "name": "Tidy",
-      "role": "Household Organizer",
+      "role": "Budget & Household Organizer",
       "emoji": "🏠",
-      "triggers": ["chores", "clean", "organize", "laundry", "shopping", "budget", "bills", "supplies", "repair", "maintenance", "todo", "list"]
+      "triggers": ["chores", "clean", "organize", "budget", "bills", "receipt", "spending", "cost", "money", "shopping", "supplies", "repair", "maintenance"],
+      "quickPrompts": ["How much did I spend on groceries this month?", "Track this receipt", "What's my budget looking like?"]
     },
     {
       "id": "wellness",
       "name": "Care",
       "role": "Family Wellness & Activities",
       "emoji": "💚",
-      "triggers": ["activity", "weekend", "fun", "sick", "doctor", "medication", "sleep", "routine", "bedtime", "exercise", "screen time", "behavior"]
+      "triggers": ["activity", "weekend", "fun", "bored", "sick", "doctor", "sleep", "bedtime", "exercise", "screen time", "story", "park", "museum"],
+      "quickPrompts": ["We're bored, what can we do?", "Tell a bedtime story", "What's good for a sick kid?"]
     }
   ]
 }

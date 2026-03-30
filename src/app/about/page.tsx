@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "About — Clawer.ai",
   description:
     "We're an AI-native company on a mission to make AI assistants accessible to everyone, not just developers. Learn about Clawer.ai.",
-  alternates: { canonical: "/about" },
+  alternates: { canonical: "https://clawer.ai/about" },
 };
 
 export default function AboutPage() {

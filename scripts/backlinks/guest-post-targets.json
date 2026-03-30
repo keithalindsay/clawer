@@ -1,0 +1,260 @@
+{
+  "meta": {
+    "version": "1.0",
+    "last_updated": "2026-03-15",
+    "target_site": "clawer.ai",
+    "description": "Publications and blogs for guest posting / content syndication"
+  },
+  "content_angles": [
+    "Why managed hosting beats self-hosting for AI agents (cost + reliability breakdown)",
+    "Building a WhatsApp AI assistant in 15 minutes with OpenClaw",
+    "The self-hosting trap: hidden costs of running AI agents at home",
+    "5 AI agents you can deploy today without writing code",
+    "AI agent infrastructure: what nobody tells you about uptime",
+    "OpenClaw vs alternatives: an honest comparison",
+    "How we automated [task] with a Telegram bot powered by AI",
+    "The developer's guide to AI agent deployment in 2026",
+    "Self-hosted AI: when to host yourself vs. use managed services",
+    "WhatsApp bots for small business: a practical guide"
+  ],
+  "publications": [
+    {
+      "id": "towards-data-science",
+      "name": "Towards Data Science",
+      "url": "https://towardsdatascience.com",
+      "submit_url": "https://towardsdatascience.com/write-for-us",
+      "estimated_da": 82,
+      "estimated_monthly_traffic": "2M+",
+      "audience": "Data scientists, ML engineers, AI researchers",
+      "topics_accepted": ["AI agents", "LLMs", "ML infrastructure", "AI tools"],
+      "submission_process": "Submit via Medium partner program. Apply as writer, then pitch to editors.",
+      "pitch_template": "pitch-towards-data-science.txt",
+      "status": "pending",
+      "priority": "high",
+      "automation_potential": "low",
+      "best_angles": [
+        "OpenClaw architecture deep-dive",
+        "AI agent deployment patterns",
+        "Cost analysis: self-hosted vs managed LLM agents"
+      ],
+      "notes": "High bar for acceptance. Need well-researched technical content."
+    },
+    {
+      "id": "hackernoon",
+      "name": "HackerNoon",
+      "url": "https://hackernoon.com",
+      "submit_url": "https://hackernoon.com/signup",
+      "estimated_da": 75,
+      "estimated_monthly_traffic": "4M+",
+      "audience": "Developers, tech founders, builders",
+      "topics_accepted": ["Dev tools", "AI", "Startups", "Infrastructure"],
+      "submission_process": "Create account, submit stories directly. Editorial review within 1-2 weeks.",
+      "pitch_template": "pitch-hackernoon.txt",
+      "status": "pending",
+      "priority": "high",
+      "automation_potential": "medium",
+      "best_angles": [
+        "Building in public updates",
+        "Technical tutorials",
+        "AI agent use case stories"
+      ],
+      "notes": "Very accessible. Good DA backlink. Can submit multiple articles."
+    },
+    {
+      "id": "the-new-stack",
+      "name": "The New Stack",
+      "url": "https://thenewstack.io",
+      "submit_url": "https://thenewstack.io/contributions/",
+      "estimated_da": 70,
+      "estimated_monthly_traffic": "800K+",
+      "audience": "DevOps, cloud engineers, platform engineers",
+      "topics_accepted": ["Cloud hosting", "AI infrastructure", "DevOps", "Developer tools"],
+      "submission_process": "Email editors with pitch. Responds within 1-2 weeks.",
+      "pitch_template": "pitch-new-stack.txt",
+      "status": "pending",
+      "priority": "high",
+      "automation_potential": "low",
+      "best_angles": [
+        "Managed AI agent infrastructure patterns",
+        "OpenClaw deployment at scale",
+        "AI agent observability and monitoring"
+      ],
+      "notes": "Technical content only. Very developer-focused audience = high quality leads."
+    },
+    {
+      "id": "dzone",
+      "name": "DZone",
+      "url": "https://dzone.com",
+      "submit_url": "https://dzone.com/articles/write-for-dzone",
+      "estimated_da": 65,
+      "estimated_monthly_traffic": "3M+",
+      "audience": "Java/enterprise developers, DevOps",
+      "topics_accepted": ["AI", "DevOps", "Cloud", "Developer tools"],
+      "submission_process": "Register as community author, submit articles directly.",
+      "pitch_template": "pitch-dzone.txt",
+      "status": "pending",
+      "priority": "medium",
+      "automation_potential": "medium",
+      "best_angles": [
+        "Integrating AI agents into enterprise workflows",
+        "AI agent hosting infrastructure guide"
+      ]
+    },
+    {
+      "id": "dev-to",
+      "name": "DEV Community (Dev.to)",
+      "url": "https://dev.to",
+      "submit_url": "https://dev.to/new",
+      "estimated_da": 72,
+      "estimated_monthly_traffic": "12M+",
+      "audience": "Developers of all levels",
+      "topics_accepted": ["Everything developer-related"],
+      "submission_process": "Free. Create account, post directly. Use canonical URL for SEO credit.",
+      "pitch_template": null,
+      "status": "active",
+      "priority": "critical",
+      "automation_potential": "high",
+      "best_angles": [
+        "Beginner tutorials on AI agents",
+        "Code examples with OpenClaw",
+        "How-to guides"
+      ],
+      "notes": "AUTOMATE THIS. Cross-post every blog article here with canonical URL pointing to clawer.ai. Zero effort, compounding backlinks."
+    },
+    {
+      "id": "hashnode",
+      "name": "Hashnode",
+      "url": "https://hashnode.com",
+      "submit_url": "https://hashnode.com/onboard",
+      "estimated_da": 62,
+      "estimated_monthly_traffic": "5M+",
+      "audience": "Developers, tech writers",
+      "topics_accepted": ["Development", "AI", "Infrastructure", "Tutorials"],
+      "submission_process": "Create blog, post directly. Canonical URL support.",
+      "pitch_template": null,
+      "status": "active",
+      "priority": "critical",
+      "automation_potential": "high",
+      "notes": "AUTOMATE THIS. Mirror all blog posts with canonical URL. Hashnode has good developer SEO."
+    },
+    {
+      "id": "medium",
+      "name": "Medium",
+      "url": "https://medium.com",
+      "submit_url": "https://medium.com/new-story",
+      "estimated_da": 95,
+      "estimated_monthly_traffic": "200M+",
+      "audience": "General tech/business audience",
+      "topics_accepted": ["Everything"],
+      "submission_process": "Create account, publish. Submit to AI/tech publications for amplification.",
+      "pitch_template": null,
+      "status": "active",
+      "priority": "high",
+      "automation_potential": "high",
+      "notes": "Cross-post with canonical URL. Also submit to 'Towards Data Science' publication on Medium for amplification."
+    },
+    {
+      "id": "infoq",
+      "name": "InfoQ",
+      "url": "https://infoq.com",
+      "submit_url": "https://www.infoq.com/write-for-infoq/",
+      "estimated_da": 76,
+      "estimated_monthly_traffic": "1.5M+",
+      "audience": "Enterprise developers, architects, CTOs",
+      "topics_accepted": ["AI/ML", "Cloud", "Architecture", "DevOps"],
+      "submission_process": "Apply as content creator. Paid ($100-300/article). Editorial support provided.",
+      "pitch_template": "pitch-infoq.txt",
+      "status": "pending",
+      "priority": "high",
+      "automation_potential": "low",
+      "notes": "They pay writers! Excellent for authority building. Takes 2-4 weeks from pitch to publish."
+    },
+    {
+      "id": "scry-ai",
+      "name": "Scry AI Blog",
+      "url": "https://scryai.com",
+      "submit_url": "https://scryai.com/write-for-us/",
+      "estimated_da": 32,
+      "estimated_monthly_traffic": "50K",
+      "audience": "AI automation practitioners",
+      "topics_accepted": ["AI agents", "AI automation", "Enterprise AI"],
+      "submission_process": "Submit via form on write-for-us page.",
+      "pitch_template": "pitch-generic-ai-blog.txt",
+      "status": "pending",
+      "priority": "medium",
+      "automation_potential": "medium",
+      "notes": "Lower bar for acceptance. Good practice, decent DA."
+    },
+    {
+      "id": "vocso",
+      "name": "Vocso Digital",
+      "url": "https://vocso.com",
+      "submit_url": "https://www.vocso.com/write-for-us-guest-post",
+      "estimated_da": 42,
+      "estimated_monthly_traffic": "100K",
+      "audience": "Businesses, tech managers",
+      "topics_accepted": ["AI", "SaaS", "Web hosting", "Business tech"],
+      "submission_process": "Submit form on write-for-us page.",
+      "pitch_template": "pitch-generic-ai-blog.txt",
+      "status": "pending",
+      "priority": "medium",
+      "automation_potential": "medium",
+      "notes": "Covers AI + hosting = good overlap with clawer.ai."
+    },
+    {
+      "id": "outright-crm",
+      "name": "OutRight Store Blog",
+      "url": "https://store.outrightcrm.com",
+      "submit_url": "https://store.outrightcrm.com/write-for-us-artificial-intelligence/",
+      "estimated_da": 38,
+      "estimated_monthly_traffic": "75K",
+      "audience": "Business tech users",
+      "topics_accepted": ["AI", "ML", "SaaS", "Business solutions"],
+      "submission_process": "Form submission.",
+      "pitch_template": "pitch-generic-ai-blog.txt",
+      "status": "pending",
+      "priority": "low",
+      "automation_potential": "medium"
+    }
+  ],
+  "syndication_platforms": [
+    {
+      "id": "devto-syndication",
+      "platform": "Dev.to",
+      "url": "https://dev.to",
+      "api_available": true,
+      "api_docs": "https://developers.forem.com/api",
+      "canonical_url_support": true,
+      "automation_status": "ready-to-automate",
+      "notes": "Use API to auto-publish all clawer.ai blog posts here with canonical URL"
+    },
+    {
+      "id": "hashnode-syndication",
+      "platform": "Hashnode",
+      "url": "https://hashnode.com",
+      "api_available": true,
+      "api_docs": "https://api.hashnode.com",
+      "canonical_url_support": true,
+      "automation_status": "ready-to-automate",
+      "notes": "GraphQL API. Auto-publish with canonical URL."
+    },
+    {
+      "id": "medium-syndication",
+      "platform": "Medium",
+      "url": "https://medium.com",
+      "api_available": false,
+      "canonical_url_support": true,
+      "automation_status": "manual",
+      "notes": "API deprecated. Manual cross-post or use RSS import. Set canonical URL manually."
+    },
+    {
+      "id": "linkedin-syndication",
+      "platform": "LinkedIn Articles",
+      "url": "https://linkedin.com",
+      "api_available": false,
+      "canonical_url_support": false,
+      "automation_status": "manual",
+      "notes": "Post excerpt + link. No canonical URL but generates referral traffic and social signals."
+    }
+  ]
+}
