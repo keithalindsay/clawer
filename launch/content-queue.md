@@ -256,6 +256,7 @@
 
 - [x] `/blog/openclaw-slack-rate-limit-march-2026` — "OpenClaw Slack Rate Limit: March 2026 Breaking Change" (Mar 27)
 - [x] `/blog/jensen-huang-openclaw-strategy` — "Jensen Huang: Every Company Needs an OpenClaw Strategy" (Mar 28)
+- [x] `/blog/peter-steinberger-tokyo-managed-hosting` — "Steinberger's Tokyo Warning on Managed OpenClaw Hosting" (Mar 31)
 
 Once all queued posts are published, the nightly agent switches to **timely/trending content:**
 - OpenClaw release notes and what they mean for users
