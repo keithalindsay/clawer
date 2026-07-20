@@ -6,3 +6,7 @@ node_modules/
 *.log
 .DS_Store
 dist/
+
+# build artifacts / logs (not for public repo)
+tsconfig.tsbuildinfo
+logs/
