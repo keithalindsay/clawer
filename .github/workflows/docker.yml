@@ -1,10 +1,8 @@
 name: Docker Image CI
 
+# Legacy project: automatic triggers removed 2026-09-17 (deploy target is gone).
+# Run manually from the Actions tab if ever needed.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'docker/openclaw-user/**'
   workflow_dispatch:
 
 jobs:

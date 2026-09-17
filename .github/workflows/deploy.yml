@@ -2,9 +2,10 @@ name: Deploy to Production
 
 # Production deploys ONLY happen by promoting staging → main
 # Workflow: push to staging → auto-deploy staging → test → merge staging into main → auto-deploy prod
+# Legacy project: automatic triggers removed 2026-09-17 (deploy target is gone).
+# Run manually from the Actions tab if ever needed.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: production-deploy
