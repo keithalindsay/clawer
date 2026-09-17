@@ -195,14 +195,54 @@ sophisticated router with no path to the user was classic solo-founder over-buil
 Telegram and WhatsApp (via a QR-link flow) were the real, marketed integrations; Slack and Discord were
 partially built. "Same assistant everywhere" was true for the two that mattered most.
 
-### 3.5 Security posture (honest, brief)
+### 3.5 Container hardening — what shipped, what was designed, what I learned
 
-Real container isolation shipped: a non-root user, dropped Linux capabilities, `no-new-privileges`,
-memory/PID/tmpfs limits, and a loopback-only, **token-authed** API with provider secrets unset after boot.
-It wasn't complete — before running untrusted agents at scale again I'd close the known gaps (seccomp and
-AppArmor profiles, a read-only rootfs, a hardcoded isolated network) and deploy the fully-hardened image I
-had *already built but left on the shelf*. I tracked these as open items in my own security scan; the
-skill worth claiming here isn't "it was airtight" — it's knowing exactly what shipped versus what didn't.
+The part that held up in production was the part Docker itself enforces at the runtime layer — flags
+passed to `docker run`. The parts that failed were the parts that only *looked* like enforcement: a config
+file with security-shaped keys the runtime never reads, and a commit message that claimed more than its
+diff delivered. Here's what we did and what we were attempting to do, without blurring the line between
+them.
+
+| Control | Shipped? | Where |
+|---|---|---|
+| Cap-drop ALL + 4 named cap-adds | yes | `src/lib/provisioner.ts` (`docker run`, ~L263) |
+| `no-new-privileges` | yes | same `docker run` |
+| Resource limits (`--pids-limit=256`, `--memory=2g --memory-swap=2g`, `--cpus=1`, `--ulimit nofile`) | yes | same `docker run` |
+| `--tmpfs /tmp:rw,noexec,nosuid,size=256m` | yes | same `docker run` |
+| Non-root container user (`USER 1000`) | yes | `docker/openclaw-user/Dockerfile` |
+| API bound to loopback only (`127.0.0.1:${apiPort}:8081`) | yes | `src/lib/provisioner.ts` |
+| Isolated Docker network | optional | `--network` only when `DOCKER_NETWORK` env var is set — never enforced |
+| Read-only rootfs | no | image is compatible (entrypoint only writes under `/home/user`), flag never added |
+| Seccomp / AppArmor profiles | no | recommended in the Feb 8 scan, never implemented |
+| Multi-stage minimal image, dedicated `agent` user, `dumb-init` | designed only | `docker/openclaw-user/Dockerfile.secure` — never successfully built |
+| App-level policy in config (tool allow/deny, egress allowlist, rate limits, jailbreak guard) | inert | `config-template.secure.json` — keys OpenClaw doesn't read |
+
+The one decision worth explaining to a Docker reader is the cap-drop, because it's also a small case
+study in drift. Every container starts with `--cap-drop=ALL`, then adds back exactly four: `CHOWN`,
+`SETUID`, `SETGID`, `DAC_OVERRIDE`. That allowlist landed on Feb 12 (commit `3bb99a7`), when the image
+still ran as root and those were the only capabilities a root entrypoint had any business holding — no
+`NET_ADMIN`, no `SYS_ADMIN`. Eleven days later (`b518baa`) the image moved to `USER 1000`, and the
+cap-adds were never revisited. A non-root process without file capabilities gets no effective
+capabilities regardless, so today those four lines are dead weight; the honest setting is `--cap-drop=ALL`
+with nothing added back. The flags were right for the container they were written against and stale for
+the one that shipped.
+
+The more useful lesson didn't come from what shipped — it came from what didn't do anything.
+`config-template.secure.json` carries `security`, `rateLimits`, `audit`, and `jailbreak` blocks: tool
+allow/deny lists, an egress allowlist, secret redaction, a prompt-injection guard. I checked those keys
+against OpenClaw 2026.2.18's actual config schema: none of them exist. OpenClaw doesn't validate unknown
+keys, so the whole block loaded silently and enforced nothing — it read like a policy and did zero
+policing. Four companion docs in the same directory (`HARDENING-SUMMARY.md`, `README-SECURE.md`,
+`VALIDATION-REPORT.md`, `QUICK-REFERENCE.md`) were written the same day and had already drifted from the
+Dockerfile they described — a different user name, resource limits that don't appear in the file, a
+healthcheck that isn't there. I'm keeping them as history, not as documentation. The same failure mode
+shows up one layer up: commit `b518baa`'s message claims `--read-only` and `--ipc=none` were added to the
+`docker run`; the diff only touches the Dockerfile and entrypoint — those two flags were never in the
+actual command. Enforcement lives where the runtime reads it, and the only way to know it's there is to
+grep the schema and diff the commit, not to trust the docs or the message.
+
+The skill worth claiming here isn't "it was airtight" — it's knowing exactly what shipped versus what was
+designed versus what only looked like it worked.
 
 ---
 
@@ -238,8 +278,10 @@ already own the SEO, the reviews, the datacenters, and the certifications.
    three monitoring systems, and 361 docs — and near-zero on SEO, reviews, and a launch motion. In a market
    that rewards brand/trust over depth, that ratio is backwards. Two articles a week beat a second control
    plane.
-3. **Ship the hardening you built.** The strongest security layer existed and never went live. "Built but
-   not deployed" is worth zero — and worse than zero if docs imply it *is* deployed. Match claims to reality.
+3. **Verify enforcement, not just ship it.** The hardened image was designed but never built successfully,
+   and the policy config written for it was a block the runtime would have silently ignored. "Built but not
+   deployed" is worth zero, and a policy the runtime never reads is worth less. Grep the schema, don't trust
+   the docs.
 4. **Cut scope to the moatable core.** A marketing suite, an engagement dashboard, and ~3,500 lines of dead
    code were solo-founder over-building. The disciplined move was to validate distribution *before* building
    the fleet.
